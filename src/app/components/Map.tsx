@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Polyline } from '@react-google-maps/api';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
@@ -58,7 +58,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   };
 
   // 現在位置のマーカーを更新
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map || !currentLocation || !isMapReady) return;
 
     // 既存のマーカーを削除
@@ -74,6 +74,10 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     });
 
     setMarker(newMarker);
+
+    // 地図の中心位置を現在地に更新
+    map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
+    map.setZoom(15); // 現在地にズーム
 
     return () => {
       if (newMarker) {
