@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
+import { api } from '@/utils/api';
 
 type RouteSelectorProps = {
   startLocation: Location | null;
@@ -14,27 +15,37 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
   onRouteSelect
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRouteSelect = (routeId: number) => {
+  const handleRouteSelect = async (routeId: number) => {
+    if (!startLocation || !endLocation) {
+      setError('出発地と目的地を選択してください');
+      return;
+    }
+
     setIsLoading(true);
-    // モックデータの生成
-    const mockRoute: Route = {
-      routeId,
-      path: [
-        [35.6812, 139.7671],
-        [35.6815, 139.7675],
-        [35.6820, 139.7680]
-      ],
-      distance: 2.5,
-      duration: 15,
-      isTollRoad: routeId === 2
-    };
+    setError(null);
 
-    // 実際のAPIでは、ここでサーバーからルート情報を取得
-    setTimeout(() => {
-      onRouteSelect(mockRoute);
+    try {
+      // 実際のAPIからルート情報を取得
+      const routes = await api.searchRoute(
+        [startLocation.lat, startLocation.lng],
+        [endLocation.lat, endLocation.lng]
+      );
+
+      // 選択されたルートを探す
+      const selectedRoute = routes.find(route => route.routeId === routeId);
+      if (!selectedRoute) {
+        throw new Error('選択されたルートが見つかりません');
+      }
+
+      onRouteSelect(selectedRoute);
+    } catch (error) {
+      console.error('ルート検索エラー:', error);
+      setError('ルートの検索に失敗しました。もう一度お試しください。');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -61,6 +72,12 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
           />
         </div>
       </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3">
         <button
