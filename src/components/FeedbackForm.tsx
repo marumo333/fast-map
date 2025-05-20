@@ -36,10 +36,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow max-w-md mx-auto">
       <div>
         <label htmlFor="rating" className="block text-sm font-medium mb-1">評価</label>
-        <div className="flex space-x-1">
+        <div className="flex space-x-1 justify-center sm:justify-start">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
@@ -47,10 +47,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
               id={`rating-${star}`}
               name="rating"
               className={
-                'text-2xl ' + (rating >= star ? 'text-yellow-400' : 'text-gray-300')
+                'text-2xl p-2 ' + (rating >= star ? 'text-yellow-400' : 'text-gray-300')
               }
               onClick={() => setRating(star)}
               disabled={isSubmitting}
+              aria-label={`${star}つ星評価`}
             >
               ★
             </button>
@@ -62,18 +63,19 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
         <textarea
           id="comment"
           name="comment"
-          className="w-full border rounded p-2"
+          className="w-full border rounded p-2 text-base resize-none"
           rows={3}
           value={comment}
           onChange={e => setComment(e.target.value)}
           disabled={isSubmitting}
+          placeholder="コメントを入力してください（任意）"
         />
       </div>
-      {error && <div className="text-red-600 text-sm">{error}</div>}
-      {success && <div className="text-green-600 text-sm">送信が完了しました！</div>}
+      {error && <div className="text-red-600 text-sm text-center sm:text-left">{error}</div>}
+      {success && <div className="text-green-600 text-sm text-center sm:text-left">送信が完了しました！</div>}
       <button
         type="submit"
-        className="w-full bg-blue-500 text-white py-2 rounded disabled:opacity-50"
+        className="w-full bg-blue-500 text-white py-2 rounded disabled:opacity-50 text-base font-medium hover:bg-blue-600 transition-colors"
         disabled={isSubmitting || rating === 0}
       >
         {isSubmitting ? '送信中...' : 'フィードバック送信'}
