@@ -4,6 +4,9 @@ import { GoogleMap, useJsApiLoader, Polyline } from '@react-google-maps/api';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 
+// 静的なライブラリ配列を定義
+const GOOGLE_MAPS_LIBRARIES: ("marker")[] = ["marker"];
+
 type MapProps = {
   selectedRoute: Route | null;
   currentLocation: Location | null;
@@ -28,7 +31,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['marker']
+    libraries: GOOGLE_MAPS_LIBRARIES
   });
 
   const onLoad = useCallback((map: google.maps.Map) => {
