@@ -7,6 +7,9 @@ import { Route } from '@/types/route';
 // 静的なライブラリ配列を定義
 const GOOGLE_MAPS_LIBRARIES: ("marker")[] = ["marker"];
 
+// Map IDを定義
+const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID || '';
+
 type MapProps = {
   selectedRoute: Route | null;
   currentLocation: Location | null;
@@ -113,7 +116,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           mapTypeControl: false,
           fullscreenControl: false,
           minZoom: 5,
-          maxZoom: 18
+          maxZoom: 18,
+          mapId: MAP_ID
         }}
       >
         {selectedRoute && (
