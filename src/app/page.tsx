@@ -4,19 +4,15 @@ import dynamic from 'next/dynamic';
 import RouteSelector from './components/RouteSelector';
 import { useTrafficPolling } from '../utils/trafficPolling';
 import { Location } from '@/types/location';
+import { Route } from '@/types/route';
+import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
+import RouteNotification from '@/components/RouteNotification';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
   loading: () => <div>地図を読み込み中...</div>
 });
-
-type Route = {
-  routeId: number;
-  path: [number, number][];
-  distance: number;
-  duration: number;
-};
 
 export default function Home() {
   const [startLocation, setStartLocation] = useState<Location | null>(null);
@@ -52,9 +48,20 @@ export default function Home() {
     }
   );
 
+  // ルート変更の検出
+  const { routeChange, clearRouteChange } = useRouteChangeDetection(
+    selectedRoute,
+    trafficInfo
+  );
+
   const handleRouteSelect = (route: Route) => {
     console.log('ルート選択:', route);
     setSelectedRoute(route);
+  };
+
+  const handleRouteChange = (newRoute: Route) => {
+    setSelectedRoute(newRoute);
+    clearRouteChange();
   };
 
   return (
@@ -84,6 +91,16 @@ export default function Home() {
             <p>遅延: {trafficInfo.delay}分</p>
             <p>最終更新: {new Date(trafficInfo.lastUpdated).toLocaleString()}</p>
           </div>
+        )}
+
+        {routeChange && selectedRoute && (
+          <RouteNotification
+            currentRoute={selectedRoute}
+            suggestedRoute={routeChange.suggestedRoute}
+            reason={routeChange.reason}
+            onAccept={() => handleRouteChange(routeChange.suggestedRoute)}
+            onDismiss={clearRouteChange}
+          />
         )}
       </div>
     </main>
