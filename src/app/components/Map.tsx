@@ -78,21 +78,23 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
   // 現在位置のマーカーを更新
   useEffect(() => {
-    console.log('現在位置の更新を検知:', currentLocation);
-    if (!map || !currentLocation || !isMapReady) {
-      console.log('地図の準備ができていないか、現在位置がありません');
+    if (!map || !isMapReady) {
+      console.log('地図の準備ができていません');
+      return;
+    }
+
+    if (!currentLocation) {
+      console.log('現在位置がありません');
       return;
     }
 
     try {
       // 既存のマーカーを削除
       if (marker) {
-        console.log('既存のマーカーを削除');
         marker.map = null;
       }
 
       // 新しいマーカーを作成
-      console.log('新しいマーカーを作成:', currentLocation);
       const newMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: { lat: currentLocation.lat, lng: currentLocation.lng },
@@ -102,9 +104,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       setMarker(newMarker);
 
       // 地図の中心位置を現在地に更新
-      console.log('地図の中心位置を更新:', currentLocation);
       map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
-      map.setZoom(15); // 現在地にズーム
+      map.setZoom(15);
     } catch (error) {
       console.error('マーカーの作成に失敗しました:', error);
       setMapError('マーカーの表示に失敗しました。');
@@ -112,7 +113,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
     return () => {
       if (marker) {
-        console.log('マーカーのクリーンアップ');
         marker.map = null;
       }
     };
@@ -138,7 +138,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }
 
   if (!isLoaded) {
-    console.log('地図の読み込み中...');
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
         <div className="text-gray-600">地図を読み込み中...</div>
