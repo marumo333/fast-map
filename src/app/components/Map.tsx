@@ -25,7 +25,8 @@ type MapProps = {
 
 const containerStyle = {
   width: '100%',
-  height: '100%'
+  height: '100%',
+  minHeight: '400px'  // 最小の高さを設定
 };
 
 const defaultCenter = {
@@ -58,7 +59,13 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     setMap(map);
     setIsMapReady(true);
     setMapError(null);
-  }, []);
+
+    // 地図の初期表示位置を設定
+    if (currentLocation) {
+      map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
+      map.setZoom(15);
+    }
+  }, [currentLocation]);
 
   const onUnmount = useCallback(() => {
     console.log('地図のアンロードが完了しました');
@@ -146,7 +153,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" style={{ minHeight: '400px' }}>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={currentLocation ? { lat: currentLocation.lat, lng: currentLocation.lng } : defaultCenter}
@@ -162,7 +169,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           minZoom: 5,
           maxZoom: 18,
           mapId: MAP_ID,
-          mapTypeId: 'roadmap'
+          mapTypeId: 'roadmap',
+          gestureHandling: 'greedy'
         }}
       >
         {selectedRoute && (
