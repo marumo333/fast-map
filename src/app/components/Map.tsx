@@ -1,5 +1,5 @@
+'use client';
 import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
@@ -11,11 +11,15 @@ type MapProps = {
 
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const routeLayerRef = useRef<L.Polyline | null>(null);
-  const currentLocationMarkerRef = useRef<L.Marker | null>(null);
+  const mapRef = useRef<any>(null);
+  const routeLayerRef = useRef<any>(null);
+  const currentLocationMarkerRef = useRef<any>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const L = require('leaflet');
+
     if (mapContainerRef.current && !mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current, {
         zoomControl: false, // デフォルトのズームコントロールを無効化
@@ -31,10 +35,21 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
         position: 'bottomright'
       }).addTo(mapRef.current);
     }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []);
 
   // 現在地の更新
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const L = require('leaflet');
+
     if (currentLocation && mapRef.current) {
       if (currentLocationMarkerRef.current) {
         mapRef.current.removeLayer(currentLocationMarkerRef.current);
@@ -56,6 +71,10 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
 
   // ルートの更新
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const L = require('leaflet');
+
     if (selectedRoute && mapRef.current) {
       const startTime = performance.now();
       console.log('ルート描画開始:', {
