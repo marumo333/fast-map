@@ -38,12 +38,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
       <div>
-        <label className="block text-sm font-medium mb-1">評価</label>
+        <label htmlFor="rating" className="block text-sm font-medium mb-1">評価</label>
         <div className="flex space-x-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
               type="button"
+              id={`rating-${star}`}
+              name="rating"
               className={
                 'text-2xl ' + (rating >= star ? 'text-yellow-400' : 'text-gray-300')
               }
@@ -56,8 +58,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">コメント</label>
+        <label htmlFor="comment" className="block text-sm font-medium mb-1">コメント</label>
         <textarea
+          id="comment"
+          name="comment"
           className="w-full border rounded p-2"
           rows={3}
           value={comment}
