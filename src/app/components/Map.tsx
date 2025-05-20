@@ -14,27 +14,37 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
   const mapRef = useRef<any>(null);
   const routeLayerRef = useRef<any>(null);
   const currentLocationMarkerRef = useRef<any>(null);
+  const LRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const L = require('leaflet');
+    const initMap = async () => {
+      try {
+        const L = await import('leaflet');
+        LRef.current = L.default;
 
-    if (mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current, {
-        zoomControl: false, // デフォルトのズームコントロールを無効化
-      }).setView([35.6812, 139.7671], 13);
+        if (mapContainerRef.current && !mapRef.current) {
+          mapRef.current = LRef.current.map(mapContainerRef.current, {
+            zoomControl: false, // デフォルトのズームコントロールを無効化
+          }).setView([35.6812, 139.7671], 13);
 
-      // タイルレイヤーの追加
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(mapRef.current);
+          // タイルレイヤーの追加
+          LRef.current.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(mapRef.current);
 
-      // カスタムズームコントロールの追加（右下に配置）
-      L.control.zoom({
-        position: 'bottomright'
-      }).addTo(mapRef.current);
-    }
+          // カスタムズームコントロールの追加（右下に配置）
+          LRef.current.control.zoom({
+            position: 'bottomright'
+          }).addTo(mapRef.current);
+        }
+      } catch (error) {
+        console.error('Leafletの読み込みに失敗しました:', error);
+      }
+    };
+
+    initMap();
 
     return () => {
       if (mapRef.current) {
@@ -46,77 +56,69 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
 
   // 現在地の更新
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!LRef.current || !currentLocation || !mapRef.current) return;
 
-    const L = require('leaflet');
-
-    if (currentLocation && mapRef.current) {
-      if (currentLocationMarkerRef.current) {
-        mapRef.current.removeLayer(currentLocationMarkerRef.current);
-      }
-
-      // 現在地マーカーの作成
-      const marker = L.marker([currentLocation.lat, currentLocation.lng], {
-        icon: L.divIcon({
-          className: 'current-location-marker',
-          html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>',
-          iconSize: [16, 16],
-          iconAnchor: [8, 8]
-        })
-      }).addTo(mapRef.current);
-
-      currentLocationMarkerRef.current = marker;
+    if (currentLocationMarkerRef.current) {
+      mapRef.current.removeLayer(currentLocationMarkerRef.current);
     }
+
+    // 現在地マーカーの作成
+    const marker = LRef.current.marker([currentLocation.lat, currentLocation.lng], {
+      icon: LRef.current.divIcon({
+        className: 'current-location-marker',
+        html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      })
+    }).addTo(mapRef.current);
+
+    currentLocationMarkerRef.current = marker;
   }, [currentLocation]);
 
   // ルートの更新
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!LRef.current || !selectedRoute || !mapRef.current) return;
 
-    const L = require('leaflet');
+    const startTime = performance.now();
+    console.log('ルート描画開始:', {
+      timestamp: new Date().toISOString(),
+      routeId: selectedRoute.routeId,
+      pathLength: selectedRoute.path.length
+    });
 
-    if (selectedRoute && mapRef.current) {
-      const startTime = performance.now();
-      console.log('ルート描画開始:', {
-        timestamp: new Date().toISOString(),
-        routeId: selectedRoute.routeId,
-        pathLength: selectedRoute.path.length
-      });
-
-      // 既存のルートをクリア
-      if (routeLayerRef.current) {
-        mapRef.current.removeLayer(routeLayerRef.current);
-      }
-
-      // 新しいルートを描画
-      const routeLayer = L.polyline(selectedRoute.path, {
-        color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
-        weight: 6,
-        opacity: 0.8,
-        lineJoin: 'round',
-        lineCap: 'round'
-      }).addTo(mapRef.current);
-
-      // ルートの境界を取得してマップをフィット
-      const bounds = routeLayer.getBounds();
-      mapRef.current.fitBounds(bounds, {
-        padding: [50, 50],
-        maxZoom: 15
-      });
-
-      // レイヤー参照を保存
-      routeLayerRef.current = routeLayer;
-
-      const endTime = performance.now();
-      console.log('ルート描画完了:', {
-        routeId: selectedRoute.routeId,
-        pathLength: selectedRoute.path.length,
-        distance: selectedRoute.distance,
-        duration: selectedRoute.duration,
-        color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
-        processingTime: `${(endTime - startTime).toFixed(2)}ms`
-      });
+    // 既存のルートをクリア
+    if (routeLayerRef.current) {
+      mapRef.current.removeLayer(routeLayerRef.current);
     }
+
+    // 新しいルートを描画
+    const routeLayer = LRef.current.polyline(selectedRoute.path, {
+      color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
+      weight: 6,
+      opacity: 0.8,
+      lineJoin: 'round',
+      lineCap: 'round'
+    }).addTo(mapRef.current);
+
+    // ルートの境界を取得してマップをフィット
+    const bounds = routeLayer.getBounds();
+    mapRef.current.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 15
+    });
+
+    // レイヤー参照を保存
+    routeLayerRef.current = routeLayer;
+
+    const endTime = performance.now();
+    console.log('ルート描画完了:', {
+      routeId: selectedRoute.routeId,
+      pathLength: selectedRoute.path.length,
+      distance: selectedRoute.distance,
+      duration: selectedRoute.duration,
+      color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
+      processingTime: `${(endTime - startTime).toFixed(2)}ms`
+    });
   }, [selectedRoute]);
 
   return (
