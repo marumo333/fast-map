@@ -1,5 +1,6 @@
 import { Route } from '@/types/route';
 import { TrafficInfo } from './trafficPolling';
+import { Feedback } from '@/components/FeedbackForm';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -63,6 +64,25 @@ export const api = {
       return await response.json();
     } catch (error) {
       console.error('ルート変更提案エラー:', error);
+      throw error;
+    }
+  },
+
+  // フィードバック送信
+  sendFeedback: async (feedback: Feedback): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedback),
+      });
+      if (!response.ok) {
+        throw new Error('フィードバック送信に失敗しました');
+      }
+    } catch (error) {
+      console.error('フィードバック送信エラー:', error);
       throw error;
     }
   },

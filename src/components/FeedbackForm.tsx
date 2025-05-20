@@ -1,97 +1,78 @@
 import React, { useState } from 'react';
 
+export type Feedback = {
+  routeId: number;
+  rating: number;
+  comment: string;
+};
+
 type FeedbackFormProps = {
   routeId: number;
-  onSubmit: (feedback: {
-    routeId: number;
-    rating: number;
-    comment: string;
-  }) => void;
+  onSubmit: (feedback: Feedback) => Promise<void>;
 };
 
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
-  const [rating, setRating] = useState<number>(0);
-  const [comment, setComment] = useState<string>('');
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
+    setSuccess(false);
     try {
-      await onSubmit({
-        routeId,
-        rating,
-        comment
-      });
-
-      // フォームをリセット
+      await onSubmit({ routeId, rating, comment });
+      setSuccess(true);
       setRating(0);
       setComment('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'フィードバックの送信に失敗しました');
+      setError('送信に失敗しました。もう一度お試しください。');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          評価
-        </label>
-        <div className="flex space-x-2 mt-1">
-          {[1, 2, 3, 4, 5].map((value) => (
+        <label className="block text-sm font-medium mb-1">評価</label>
+        <div className="flex space-x-1">
+          {[1, 2, 3, 4, 5].map((star) => (
             <button
-              key={value}
+              key={star}
               type="button"
-              onClick={() => setRating(value)}
-              className={`p-2 rounded-full ${
-                rating >= value
-                  ? 'text-yellow-400'
-                  : 'text-gray-300'
-              }`}
+              className={
+                'text-2xl ' + (rating >= star ? 'text-yellow-400' : 'text-gray-300')
+              }
+              onClick={() => setRating(star)}
+              disabled={isSubmitting}
             >
               ★
             </button>
           ))}
         </div>
       </div>
-
       <div>
-        <label
-          htmlFor="comment"
-          className="block text-sm font-medium text-gray-700"
-        >
-          コメント
-        </label>
+        <label className="block text-sm font-medium mb-1">コメント</label>
         <textarea
-          id="comment"
+          className="w-full border rounded p-2"
+          rows={3}
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={4}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          placeholder="ルートについての感想を入力してください"
+          onChange={e => setComment(e.target.value)}
+          disabled={isSubmitting}
         />
       </div>
-
-      {error && (
-        <div className="text-red-600 text-sm">{error}</div>
-      )}
-
+      {error && <div className="text-red-600 text-sm">{error}</div>}
+      {success && <div className="text-green-600 text-sm">送信が完了しました！</div>}
       <button
         type="submit"
+        className="w-full bg-blue-500 text-white py-2 rounded disabled:opacity-50"
         disabled={isSubmitting || rating === 0}
-        className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-          isSubmitting || rating === 0
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700'
-        }`}
       >
-        {isSubmitting ? '送信中...' : 'フィードバックを送信'}
+        {isSubmitting ? '送信中...' : 'フィードバック送信'}
       </button>
     </form>
   );
