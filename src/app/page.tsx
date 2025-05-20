@@ -21,10 +21,12 @@ export default function Home() {
   const [trafficInfo, setTrafficInfo] = useState<any>(null);
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isLocationRequested, setIsLocationRequested] = useState(false);
 
-  // 現在地を取得
-  useEffect(() => {
+  // 現在地を取得する関数
+  const getCurrentLocation = () => {
     if ("geolocation" in navigator) {
+      setIsLocationRequested(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setCurrentLocation({
@@ -34,10 +36,11 @@ export default function Home() {
         },
         (error) => {
           console.error("現在地の取得に失敗しました:", error);
+          setIsLocationRequested(false);
         }
       );
     }
-  }, []);
+  };
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -80,12 +83,25 @@ export default function Home() {
       <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-4 z-10">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold">Fast-Map</h1>
-          <button
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium"
-          >
-            {isSearchOpen ? '地図を表示' : 'ルート検索'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={getCurrentLocation}
+              disabled={isLocationRequested}
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                isLocationRequested
+                  ? 'bg-gray-300 text-gray-500'
+                  : 'bg-green-500 text-white hover:bg-green-600'
+              }`}
+            >
+              {isLocationRequested ? '位置情報取得中...' : '現在地を取得'}
+            </button>
+            <button
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600"
+            >
+              {isSearchOpen ? '地図を表示' : 'ルート検索'}
+            </button>
+          </div>
         </div>
       </div>
 

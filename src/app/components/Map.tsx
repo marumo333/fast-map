@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
