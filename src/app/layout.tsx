@@ -10,7 +10,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <div className="min-h-screen">{children}</div>
+      <head />
+      <body>
+        <div className="min-h-screen">{children}</div>
+      </body>
     </html>
   )
 }
