@@ -39,11 +39,13 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   });
 
   const onLoad = useCallback((map: google.maps.Map) => {
+    console.log('地図の読み込みが完了しました');
     setMap(map);
     setIsMapReady(true);
   }, []);
 
   const onUnmount = useCallback(() => {
+    console.log('地図のアンロードが完了しました');
     setMap(null);
     setIsMapReady(false);
     setMarker(null);
@@ -60,14 +62,20 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
   // 現在位置のマーカーを更新
   useEffect(() => {
-    if (!map || !currentLocation || !isMapReady) return;
+    console.log('現在位置の更新を検知:', currentLocation);
+    if (!map || !currentLocation || !isMapReady) {
+      console.log('地図の準備ができていないか、現在位置がありません');
+      return;
+    }
 
     // 既存のマーカーを削除
     if (marker) {
+      console.log('既存のマーカーを削除');
       marker.map = null;
     }
 
     // 新しいマーカーを作成
+    console.log('新しいマーカーを作成:', currentLocation);
     const newMarker = new google.maps.marker.AdvancedMarkerElement({
       map,
       position: { lat: currentLocation.lat, lng: currentLocation.lng },
@@ -77,11 +85,13 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     setMarker(newMarker);
 
     // 地図の中心位置を現在地に更新
+    console.log('地図の中心位置を更新:', currentLocation);
     map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
     map.setZoom(15); // 現在地にズーム
 
     return () => {
       if (newMarker) {
+        console.log('マーカーのクリーンアップ');
         newMarker.map = null;
       }
     };
@@ -99,6 +109,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   };
 
   if (loadError) {
+    console.error('地図の読み込みエラー:', loadError);
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
         <div className="text-red-600">地図の読み込みに失敗しました。ページを更新してください。</div>
@@ -107,6 +118,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }
 
   if (!isLoaded) {
+    console.log('地図の読み込み中...');
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
         <div className="text-gray-600">地図を読み込み中...</div>
