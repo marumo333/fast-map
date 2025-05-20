@@ -48,6 +48,43 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     version: 'weekly'
   });
 
+  // 現在位置を取得する関数
+  const getCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setMapError('お使いのブラウザは位置情報をサポートしていません。');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        onLocationSelect(location);
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error('位置情報の取得に失敗しました:', error);
+        setMapError('位置情報の取得に失敗しました。位置情報の使用を許可してください。');
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
+  }, [onLocationSelect]);
+
+  // 地図の読み込みが完了したら現在地を取得
+  useEffect(() => {
+    if (isLoaded && !currentLocation) {
+      getCurrentLocation();
+    }
+  }, [isLoaded, currentLocation, getCurrentLocation]);
+
   useEffect(() => {
     if (loadError) {
       console.error('Google Maps APIの読み込みエラー:', loadError);
@@ -83,36 +120,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       });
     }
   };
-
-  // 現在位置を取得する関数
-  const getCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setMapError('お使いのブラウザは位置情報をサポートしていません。');
-      return;
-    }
-
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        onLocationSelect(location);
-        setIsLocating(false);
-      },
-      (error) => {
-        console.error('位置情報の取得に失敗しました:', error);
-        setMapError('位置情報の取得に失敗しました。位置情報の使用を許可してください。');
-        setIsLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
-    );
-  }, [onLocationSelect]);
 
   // 現在位置のマーカーを更新
   useEffect(() => {
