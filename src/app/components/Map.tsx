@@ -10,6 +10,13 @@ const GOOGLE_MAPS_LIBRARIES: ("marker" | "places" | "geometry")[] = ["marker", "
 // Map IDを定義
 const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID || '';
 
+// APIキーの取得
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+if (!API_KEY) {
+  console.error('Google Maps APIキーが設定されていません。.env.localファイルを確認してください。');
+}
+
 type MapProps = {
   selectedRoute: Route | null;
   currentLocation: Location | null;
@@ -30,18 +37,27 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    googleMapsApiKey: API_KEY || '',
     libraries: GOOGLE_MAPS_LIBRARIES,
     version: 'weekly'
   });
+
+  useEffect(() => {
+    if (loadError) {
+      console.error('Google Maps APIの読み込みエラー:', loadError);
+      setMapError('地図の読み込みに失敗しました。APIキーを確認してください。');
+    }
+  }, [loadError]);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     console.log('地図の読み込みが完了しました');
     setMap(map);
     setIsMapReady(true);
+    setMapError(null);
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -68,31 +84,36 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       return;
     }
 
-    // 既存のマーカーを削除
-    if (marker) {
-      console.log('既存のマーカーを削除');
-      marker.map = null;
+    try {
+      // 既存のマーカーを削除
+      if (marker) {
+        console.log('既存のマーカーを削除');
+        marker.map = null;
+      }
+
+      // 新しいマーカーを作成
+      console.log('新しいマーカーを作成:', currentLocation);
+      const newMarker = new google.maps.marker.AdvancedMarkerElement({
+        map,
+        position: { lat: currentLocation.lat, lng: currentLocation.lng },
+        content: createMarkerContent()
+      });
+
+      setMarker(newMarker);
+
+      // 地図の中心位置を現在地に更新
+      console.log('地図の中心位置を更新:', currentLocation);
+      map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
+      map.setZoom(15); // 現在地にズーム
+    } catch (error) {
+      console.error('マーカーの作成に失敗しました:', error);
+      setMapError('マーカーの表示に失敗しました。');
     }
 
-    // 新しいマーカーを作成
-    console.log('新しいマーカーを作成:', currentLocation);
-    const newMarker = new google.maps.marker.AdvancedMarkerElement({
-      map,
-      position: { lat: currentLocation.lat, lng: currentLocation.lng },
-      content: createMarkerContent()
-    });
-
-    setMarker(newMarker);
-
-    // 地図の中心位置を現在地に更新
-    console.log('地図の中心位置を更新:', currentLocation);
-    map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
-    map.setZoom(15); // 現在地にズーム
-
     return () => {
-      if (newMarker) {
+      if (marker) {
         console.log('マーカーのクリーンアップ');
-        newMarker.map = null;
+        marker.map = null;
       }
     };
   }, [map, currentLocation, isMapReady]);
@@ -108,11 +129,10 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     return div;
   };
 
-  if (loadError) {
-    console.error('地図の読み込みエラー:', loadError);
+  if (mapError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-red-600">地図の読み込みに失敗しました。ページを更新してください。</div>
+        <div className="text-red-600">{mapError}</div>
       </div>
     );
   }
