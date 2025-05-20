@@ -117,7 +117,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           fullscreenControl: false,
           minZoom: 5,
           maxZoom: 18,
-          mapId: MAP_ID
+          mapId: MAP_ID,
+          mapTypeId: 'roadmap'
         }}
       >
         {selectedRoute && (
