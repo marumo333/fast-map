@@ -42,6 +42,11 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
     setRoutes(mockRoutes);
   };
 
+  // 時間差を計算
+  const getTimeDifference = (route1: Route, route2: Route) => {
+    return Math.abs(route1.estimatedTime - route2.estimatedTime);
+  };
+
   return (
     <div className="w-full">
       <div className="flex flex-col space-y-4">
@@ -74,17 +79,38 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
               onClick={() => onRouteSelect(route)}
             >
               <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-semibold">
-                    {route.isTollRoad ? '有料ルート' : '無料ルート'}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    距離: {route.distance}m / 所要時間: {route.duration}分
-                  </p>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-semibold">
+                      {route.isTollRoad ? '有料ルート' : '無料ルート'}
+                    </h3>
+                    {route.isTollRoad && (
+                      <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">
+                        有料
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-gray-600">
+                      距離: {(route.distance / 1000).toFixed(1)}km
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      所要時間: {route.estimatedTime}分
+                    </p>
+                    {route.isTollRoad && (
+                      <p className="text-sm text-red-600">
+                        料金: ¥{route.tollFee.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {route.isTollRoad && (
-                  <div className="text-red-500 font-bold">
-                    ¥{route.tollFee.toLocaleString()}
+                {routes.length > 1 && (
+                  <div className="ml-4 text-sm text-gray-500">
+                    {route.isTollRoad ? (
+                      <p>無料ルートより{getTimeDifference(route, routes[0])}分早い</p>
+                    ) : (
+                      <p>有料ルートより{getTimeDifference(route, routes[1])}分遅い</p>
+                    )}
                   </div>
                 )}
               </div>
