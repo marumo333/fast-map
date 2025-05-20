@@ -1,19 +1,15 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import RouteSelector from './components/RouteSelector';
 import { useTrafficPolling } from '../utils/trafficPolling';
+import { Location } from '@/types/location';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
   loading: () => <div>地図を読み込み中...</div>
 });
-
-type Location = {
-  lat: number;
-  lng: number;
-};
 
 type Route = {
   routeId: number;
@@ -27,6 +23,24 @@ export default function Home() {
   const [endLocation, setEndLocation] = useState<Location | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [trafficInfo, setTrafficInfo] = useState<any>(null);
+  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+
+  // 現在地を取得
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error("現在地の取得に失敗しました:", error);
+        }
+      );
+    }
+  }, []);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -57,7 +71,10 @@ export default function Home() {
         </div>
 
         <div className="h-[600px] w-full border rounded-lg overflow-hidden">
-          <Map selectedRoute={selectedRoute} />
+          <Map 
+            selectedRoute={selectedRoute} 
+            currentLocation={currentLocation}
+          />
         </div>
 
         {trafficInfo && (

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Location } from '@/types/location';
 
 type Route = {
   routeId: number;
@@ -11,6 +12,7 @@ type Route = {
 
 type MapProps = {
   selectedRoute: Route | null;
+  currentLocation: Location | null;
 };
 
 const getRouteColor = (routeId: number): string => {
@@ -22,10 +24,11 @@ const getRouteColor = (routeId: number): string => {
   }
 };
 
-const Map: React.FC<MapProps> = ({ selectedRoute }) => {
+const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const routeLayerRef = useRef<L.Polyline | null>(null);
+  const currentLocationMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
@@ -33,6 +36,18 @@ const Map: React.FC<MapProps> = ({ selectedRoute }) => {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
     }
   }, []);
+
+  // 現在地の更新
+  useEffect(() => {
+    if (currentLocation && mapRef.current) {
+      if (currentLocationMarkerRef.current) {
+        mapRef.current.removeLayer(currentLocationMarkerRef.current);
+      }
+
+      const marker = L.marker([currentLocation.lat, currentLocation.lng]).addTo(mapRef.current);
+      currentLocationMarkerRef.current = marker;
+    }
+  }, [currentLocation]);
 
   useEffect(() => {
     if (selectedRoute && mapRef.current) {
