@@ -1,6 +1,6 @@
 'use client';
 import React, { useCallback, useState } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Polyline } from '@react-google-maps/api';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 
@@ -23,10 +23,12 @@ const defaultCenter = {
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect }) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    libraries: ['marker']
   });
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -37,6 +39,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   const onUnmount = useCallback(() => {
     setMap(null);
     setIsMapReady(false);
+    setMarker(null);
   }, []);
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
@@ -46,6 +49,42 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         lng: e.latLng.lng()
       });
     }
+  };
+
+  // 現在位置のマーカーを更新
+  React.useEffect(() => {
+    if (!map || !currentLocation || !isMapReady) return;
+
+    // 既存のマーカーを削除
+    if (marker) {
+      marker.map = null;
+    }
+
+    // 新しいマーカーを作成
+    const newMarker = new google.maps.marker.AdvancedMarkerElement({
+      map,
+      position: { lat: currentLocation.lat, lng: currentLocation.lng },
+      content: createMarkerContent()
+    });
+
+    setMarker(newMarker);
+
+    return () => {
+      if (newMarker) {
+        newMarker.map = null;
+      }
+    };
+  }, [map, currentLocation, isMapReady]);
+
+  // マーカーのコンテンツを作成
+  const createMarkerContent = () => {
+    const div = document.createElement('div');
+    div.style.width = '16px';
+    div.style.height = '16px';
+    div.style.backgroundColor = '#3B82F6';
+    div.style.border = '2px solid #FFFFFF';
+    div.style.borderRadius = '50%';
+    return div;
   };
 
   if (!isLoaded) {
@@ -74,20 +113,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           maxZoom: 18
         }}
       >
-        {currentLocation && (
-          <Marker
-            position={{ lat: currentLocation.lat, lng: currentLocation.lng }}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: '#3B82F6',
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 2
-            }}
-          />
-        )}
-
         {selectedRoute && (
           <Polyline
             path={selectedRoute.path.map(point => ({
