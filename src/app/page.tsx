@@ -28,24 +28,54 @@ export default function Home() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLocationRequested, setIsLocationRequested] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // 現在地を取得する関数
   const getCurrentLocation = () => {
-    if ("geolocation" in navigator) {
-      setIsLocationRequested(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.error("現在地の取得に失敗しました:", error);
-          setIsLocationRequested(false);
-        }
-      );
+    if (!navigator.geolocation) {
+      setLocationError('お使いのブラウザは位置情報をサポートしていません。');
+      return;
     }
+
+    setIsLocationRequested(true);
+    setLocationError(null);
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log('位置情報取得成功:', position);
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        console.log('新しい位置情報:', newLocation);
+        setCurrentLocation(newLocation);
+        setIsLocationRequested(false);
+      },
+      (error) => {
+        console.error('位置情報取得エラー:', error);
+        setIsLocationRequested(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('位置情報の使用が許可されていません。');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('位置情報を取得できませんでした。');
+            break;
+          case error.TIMEOUT:
+            setLocationError('位置情報の取得がタイムアウトしました。');
+            break;
+          default:
+            setLocationError('位置情報の取得中にエラーが発生しました。');
+        }
+      },
+      options
+    );
   };
 
   // 交通情報のポーリング
@@ -206,6 +236,13 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* 位置情報エラーメッセージ */}
+      {locationError && (
+        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded z-20">
+          {locationError}
+        </div>
+      )}
 
       {/* 検索パネル */}
       <div className={`absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 z-10 transition-transform duration-300 ${
