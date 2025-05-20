@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { api } from './api';
 
 export type TrafficInfo = {
   routeId: number;
@@ -17,19 +18,22 @@ export const useTrafficPolling = (
   useEffect(() => {
     const fetchTrafficInfo = async () => {
       try {
-        const response = await fetch(`/api/traffic/${routeId}`);
-        const data = await response.json();
-        onUpdate(data);
+        const info = await api.getTrafficInfo(routeId);
+        onUpdate(info);
       } catch (error) {
         console.error('交通情報の取得に失敗しました:', error);
       }
     };
 
     // 初回実行
-    fetchTrafficInfo();
+    if (routeId > 0) {
+      fetchTrafficInfo();
+    }
 
     // 定期的なポーリングを開始
-    timerRef.current = setInterval(fetchTrafficInfo, interval);
+    if (routeId > 0) {
+      timerRef.current = setInterval(fetchTrafficInfo, interval);
+    }
 
     // クリーンアップ
     return () => {
