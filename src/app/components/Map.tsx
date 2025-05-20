@@ -5,7 +5,7 @@ import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 
 // 静的なライブラリ配列を定義
-const GOOGLE_MAPS_LIBRARIES: ("marker")[] = ["marker"];
+const GOOGLE_MAPS_LIBRARIES: ("marker" | "places" | "geometry")[] = ["marker", "places", "geometry"];
 
 // Map IDを定義
 const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID || '';
@@ -31,10 +31,11 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   const [isMapReady, setIsMapReady] = useState(false);
   const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
 
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: GOOGLE_MAPS_LIBRARIES
+    libraries: GOOGLE_MAPS_LIBRARIES,
+    version: 'weekly'
   });
 
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -96,6 +97,14 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     div.style.borderRadius = '50%';
     return div;
   };
+
+  if (loadError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="text-red-600">地図の読み込みに失敗しました。ページを更新してください。</div>
+      </div>
+    );
+  }
 
   if (!isLoaded) {
     return (
