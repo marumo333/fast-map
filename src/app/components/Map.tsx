@@ -2,26 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Location } from '@/types/location';
-
-type Route = {
-  routeId: number;
-  path: [number, number][];
-  distance: number;
-  duration: number;
-};
+import { Route } from '@/types/route';
 
 type MapProps = {
   selectedRoute: Route | null;
   currentLocation: Location | null;
-};
-
-const getRouteColor = (routeId: number): string => {
-  switch (routeId) {
-    case 1: return '#FF0000'; // 赤 - 最短ルート
-    case 2: return '#00FF00'; // 緑 - 混雑回避ルート
-    case 3: return '#0000FF'; // 青 - 景色の良いルート
-    default: return '#808080';
-  }
 };
 
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
@@ -32,8 +17,19 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
 
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView([35.6812, 139.7671], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
+      mapRef.current = L.map(mapContainerRef.current, {
+        zoomControl: false, // デフォルトのズームコントロールを無効化
+      }).setView([35.6812, 139.7671], 13);
+
+      // タイルレイヤーの追加
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(mapRef.current);
+
+      // カスタムズームコントロールの追加（右下に配置）
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(mapRef.current);
     }
   }, []);
 
@@ -44,11 +40,21 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
         mapRef.current.removeLayer(currentLocationMarkerRef.current);
       }
 
-      const marker = L.marker([currentLocation.lat, currentLocation.lng]).addTo(mapRef.current);
+      // 現在地マーカーの作成
+      const marker = L.marker([currentLocation.lat, currentLocation.lng], {
+        icon: L.divIcon({
+          className: 'current-location-marker',
+          html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8]
+        })
+      }).addTo(mapRef.current);
+
       currentLocationMarkerRef.current = marker;
     }
   }, [currentLocation]);
 
+  // ルートの更新
   useEffect(() => {
     if (selectedRoute && mapRef.current) {
       const startTime = performance.now();
@@ -65,7 +71,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
 
       // 新しいルートを描画
       const routeLayer = L.polyline(selectedRoute.path, {
-        color: getRouteColor(selectedRoute.routeId),
+        color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
         weight: 6,
         opacity: 0.8,
         lineJoin: 'round',
@@ -88,14 +94,18 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
         pathLength: selectedRoute.path.length,
         distance: selectedRoute.distance,
         duration: selectedRoute.duration,
-        color: getRouteColor(selectedRoute.routeId),
+        color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
         processingTime: `${(endTime - startTime).toFixed(2)}ms`
       });
     }
   }, [selectedRoute]);
 
   return (
-    <div ref={mapContainerRef} style={{ width: '100%', height: '300px' }} />
+    <div 
+      ref={mapContainerRef} 
+      className="w-full h-full"
+      style={{ touchAction: 'none' }} // モバイルでのタッチ操作を最適化
+    />
   );
 };
 

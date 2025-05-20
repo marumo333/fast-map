@@ -4,6 +4,6 @@ export type Route = {
   distance: number;
   duration: number;
   isTollRoad: boolean;
-  tollFee: number;
-  estimatedTime: number;
+  tollFee?: number;
+  estimatedTime?: number;
 }; 

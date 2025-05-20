@@ -20,6 +20,7 @@ export default function Home() {
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [trafficInfo, setTrafficInfo] = useState<any>(null);
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // 現在地を取得
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function Home() {
   const handleRouteSelect = (route: Route) => {
     console.log('ルート選択:', route);
     setSelectedRoute(route);
+    setIsSearchOpen(false);
   };
 
   const handleRouteChange = (newRoute: Route) => {
@@ -65,44 +67,68 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4">
-      <h1 className="text-2xl font-bold mb-4">Fast-Map</h1>
-      
-      <div className="w-full max-w-4xl">
-        <div className="mb-4">
+    <main className="relative w-full h-screen">
+      {/* 地図表示エリア */}
+      <div className="absolute inset-0">
+        <Map 
+          selectedRoute={selectedRoute} 
+          currentLocation={currentLocation}
+        />
+      </div>
+
+      {/* ヘッダー */}
+      <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-4 z-10">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold">Fast-Map</h1>
+          <button
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            {isSearchOpen ? '地図を表示' : 'ルート検索'}
+          </button>
+        </div>
+      </div>
+
+      {/* 検索パネル */}
+      <div className={`absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 z-10 transition-transform duration-300 ${
+        isSearchOpen ? 'translate-y-0' : '-translate-y-full'
+      }`}>
+        <div className="max-w-4xl mx-auto">
           <RouteSelector
             startLocation={startLocation}
             endLocation={endLocation}
             onRouteSelect={handleRouteSelect}
           />
         </div>
-
-        <div className="h-[600px] w-full border rounded-lg overflow-hidden">
-          <Map 
-            selectedRoute={selectedRoute} 
-            currentLocation={currentLocation}
-          />
-        </div>
-
-        {trafficInfo && (
-          <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-            <h2 className="text-lg font-semibold mb-2">交通情報</h2>
-            <p>混雑度: {trafficInfo.congestion}</p>
-            <p>遅延: {trafficInfo.delay}分</p>
-            <p>最終更新: {new Date(trafficInfo.lastUpdated).toLocaleString()}</p>
-          </div>
-        )}
-
-        {routeChange && selectedRoute && (
-          <RouteNotification
-            currentRoute={selectedRoute}
-            suggestedRoute={routeChange.suggestedRoute}
-            reason={routeChange.reason}
-            onAccept={() => handleRouteChange(routeChange.suggestedRoute)}
-            onDismiss={clearRouteChange}
-          />
-        )}
       </div>
+
+      {/* 交通情報パネル */}
+      {trafficInfo && (
+        <div className="absolute bottom-20 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-base font-semibold">交通情報</h2>
+              <p className="text-sm text-gray-600">
+                混雑度: {trafficInfo.congestion} / 遅延: {trafficInfo.delay}分
+              </p>
+            </div>
+            <p className="text-xs text-gray-500">
+              {new Date(trafficInfo.lastUpdated).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ルート変更通知 */}
+      {routeChange && selectedRoute && (
+        <RouteNotification
+          currentRoute={selectedRoute}
+          suggestedRoute={routeChange.suggestedRoute}
+          reason={routeChange.reason}
+          onAccept={() => handleRouteChange(routeChange.suggestedRoute)}
+          onDismiss={clearRouteChange}
+        />
+      )}
     </main>
   );
 } 
