@@ -39,6 +39,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   const [isMapReady, setIsMapReady] = useState(false);
   const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -82,6 +83,36 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       });
     }
   };
+
+  // 現在位置を取得する関数
+  const getCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setMapError('お使いのブラウザは位置情報をサポートしていません。');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        onLocationSelect(location);
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error('位置情報の取得に失敗しました:', error);
+        setMapError('位置情報の取得に失敗しました。位置情報の使用を許可してください。');
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
+  }, [onLocationSelect]);
 
   // 現在位置のマーカーを更新
   useEffect(() => {
@@ -187,6 +218,24 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           />
         )}
       </GoogleMap>
+      <button
+        onClick={getCurrentLocation}
+        disabled={isLocating}
+        className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="現在地を取得"
+      >
+        {isLocating ? (
+          <svg className="w-6 h-6 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        )}
+      </button>
     </div>
   );
 };
