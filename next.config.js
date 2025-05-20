@@ -13,7 +13,7 @@ const nextConfig = {
   },
   transpilePackages: ['leaflet'],
   experimental: {
-    esmExternals: 'loose'
+    esmExternals: false
   }
 };
 
