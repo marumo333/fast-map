@@ -24,21 +24,19 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
         const L = await import('leaflet');
         LRef.current = L.default;
 
-        if (mapContainerRef.current && !mapRef.current) {
-          mapRef.current = LRef.current.map(mapContainerRef.current, {
-            zoomControl: false, // デフォルトのズームコントロールを無効化
-          }).setView([35.6812, 139.7671], 13);
+        if (!LRef.current || !mapContainerRef.current || mapRef.current) return;
 
-          // タイルレイヤーの追加
-          LRef.current.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(mapRef.current);
+        mapRef.current = LRef.current.map(mapContainerRef.current, {
+          zoomControl: false,
+        }).setView([35.6812, 139.7671], 13);
 
-          // カスタムズームコントロールの追加（右下に配置）
-          LRef.current.control.zoom({
-            position: 'bottomright'
-          }).addTo(mapRef.current);
-        }
+        LRef.current.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(mapRef.current);
+
+        LRef.current.control.zoom({
+          position: 'bottomright'
+        }).addTo(mapRef.current);
       } catch (error) {
         console.error('Leafletの読み込みに失敗しました:', error);
       }
