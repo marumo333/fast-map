@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
@@ -7,14 +7,16 @@ import { Route } from '@/types/route';
 type MapProps = {
   selectedRoute: Route | null;
   currentLocation: Location | null;
+  onLocationSelect: (location: Location) => void;
 };
 
-const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
+const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const routeLayerRef = useRef<any>(null);
   const currentLocationMarkerRef = useRef<any>(null);
   const LRef = useRef<any>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -37,6 +39,14 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
         LRef.current.control.zoom({
           position: 'bottomright'
         }).addTo(mapRef.current);
+
+        // 地図クリックイベントの追加
+        mapRef.current.on('click', (e: any) => {
+          const { lat, lng } = e.latlng;
+          onLocationSelect({ lat, lng });
+        });
+
+        setIsMapReady(true);
       } catch (error) {
         console.error('Leafletの読み込みに失敗しました:', error);
       }
@@ -50,7 +60,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [onLocationSelect]);
 
   // 現在地の更新
   useEffect(() => {
@@ -60,7 +70,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
       mapRef.current.removeLayer(currentLocationMarkerRef.current);
     }
 
-    // 現在地マーカーの作成
     const marker = LRef.current.marker([currentLocation.lat, currentLocation.lng], {
       icon: LRef.current.divIcon({
         className: 'current-location-marker',
@@ -77,19 +86,10 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
   useEffect(() => {
     if (!LRef.current || !selectedRoute || !mapRef.current) return;
 
-    const startTime = performance.now();
-    console.log('ルート描画開始:', {
-      timestamp: new Date().toISOString(),
-      routeId: selectedRoute.routeId,
-      pathLength: selectedRoute.path.length
-    });
-
-    // 既存のルートをクリア
     if (routeLayerRef.current) {
       mapRef.current.removeLayer(routeLayerRef.current);
     }
 
-    // 新しいルートを描画
     const routeLayer = LRef.current.polyline(selectedRoute.path, {
       color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
       weight: 6,
@@ -98,33 +98,28 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
       lineCap: 'round'
     }).addTo(mapRef.current);
 
-    // ルートの境界を取得してマップをフィット
     const bounds = routeLayer.getBounds();
     mapRef.current.fitBounds(bounds, {
       padding: [50, 50],
       maxZoom: 15
     });
 
-    // レイヤー参照を保存
     routeLayerRef.current = routeLayer;
-
-    const endTime = performance.now();
-    console.log('ルート描画完了:', {
-      routeId: selectedRoute.routeId,
-      pathLength: selectedRoute.path.length,
-      distance: selectedRoute.distance,
-      duration: selectedRoute.duration,
-      color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
-      processingTime: `${(endTime - startTime).toFixed(2)}ms`
-    });
   }, [selectedRoute]);
 
   return (
-    <div 
-      ref={mapContainerRef} 
-      className="w-full h-full"
-      style={{ touchAction: 'none' }} // モバイルでのタッチ操作を最適化
-    />
+    <div className="relative w-full h-full">
+      <div 
+        ref={mapContainerRef} 
+        className="w-full h-full"
+        style={{ touchAction: 'none' }}
+      />
+      {!isMapReady && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-75">
+          <div className="text-gray-600">地図を読み込み中...</div>
+        </div>
+      )}
+    </div>
   );
 };
 
