@@ -4,8 +4,10 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --background-rgb: 255, 255, 255;
+  --primary-color: 96, 165, 250; /* 薄い青色 */
+  --secondary-color: 191, 219, 254; /* より薄い青色 */
+  --accent-color: 59, 130, 246; /* アクセント用の青色 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,10 +20,40 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(var(--background-end-rgb))
-  )
-  rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* カスタムユーティリティクラス */
+@layer utilities {
+  .text-primary {
+    color: rgb(var(--primary-color));
+  }
+  
+  .bg-primary {
+    background-color: rgb(var(--primary-color));
+  }
+  
+  .text-secondary {
+    color: rgb(var(--secondary-color));
+  }
+  
+  .bg-secondary {
+    background-color: rgb(var(--secondary-color));
+  }
+  
+  .text-accent {
+    color: rgb(var(--accent-color));
+  }
+  
+  .bg-accent {
+    background-color: rgb(var(--accent-color));
+  }
+  
+  .hover-primary:hover {
+    color: rgb(var(--primary-color));
+  }
+  
+  .hover-bg-primary:hover {
+    background-color: rgb(var(--primary-color));
+  }
 } 
