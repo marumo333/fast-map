@@ -1,19 +1,22 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import RouteSelector from './components/RouteSelector';
 import { useTrafficPolling } from '../utils/trafficPolling';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
 import RouteNotification from '@/components/RouteNotification';
-import Map from './components/Map';
+import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
 
 // Leafletのマップコンポーネントを動的にインポート
-const MapComponent = dynamic(() => import('./components/Map'), {
+const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
-  loading: () => <div>地図を読み込み中...</div>
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+      <div className="text-gray-600">地図を読み込み中...</div>
+    </div>
+  )
 });
 
 export default function Home() {
