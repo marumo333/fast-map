@@ -1,9 +1,8 @@
 'use client';
-
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import RouteSelector from './components/RouteSelector';
-import { useTrafficPolling } from '@/utils/trafficPolling';
+import { useTrafficPolling } from '../utils/trafficPolling';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('./components/Map'), {
@@ -31,7 +30,7 @@ export default function Home() {
 
   // 交通情報のポーリング
   useTrafficPolling(
-    selectedRoute?.routeId,
+    selectedRoute?.routeId ?? 0,
     30000,
     (info) => {
       console.log('交通情報更新:', info);
