@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import * as L from 'leaflet';
+import { Map as LeafletMap, TileLayer, Marker, Polyline, Control, divIcon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
@@ -11,23 +11,23 @@ type MapProps = {
 
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const routeLayerRef = useRef<L.Polyline | null>(null);
-  const currentLocationMarkerRef = useRef<L.Marker | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const routeLayerRef = useRef<Polyline | null>(null);
+  const currentLocationMarkerRef = useRef<Marker | null>(null);
 
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current, {
+      mapRef.current = new LeafletMap(mapContainerRef.current, {
         zoomControl: false, // デフォルトのズームコントロールを無効化
       }).setView([35.6812, 139.7671], 13);
 
       // タイルレイヤーの追加
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      new TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(mapRef.current);
 
       // カスタムズームコントロールの追加（右下に配置）
-      L.control.zoom({
+      new Control.Zoom({
         position: 'bottomright'
       }).addTo(mapRef.current);
     }
@@ -41,8 +41,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
       }
 
       // 現在地マーカーの作成
-      const marker = L.marker([currentLocation.lat, currentLocation.lng], {
-        icon: L.divIcon({
+      const marker = new Marker([currentLocation.lat, currentLocation.lng], {
+        icon: divIcon({
           className: 'current-location-marker',
           html: '<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>',
           iconSize: [16, 16],
@@ -70,7 +70,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation }) => {
       }
 
       // 新しいルートを描画
-      const routeLayer = L.polyline(selectedRoute.path, {
+      const routeLayer = new Polyline(selectedRoute.path, {
         color: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
         weight: 6,
         opacity: 0.8,
