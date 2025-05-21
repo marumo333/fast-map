@@ -37,23 +37,52 @@ const defaultCenter = {
 // カスタムマーカーのスタイル
 const createCustomMarker = (isCurrentLocation: boolean) => {
   const div = document.createElement('div');
-  div.style.width = '24px';
-  div.style.height = '24px';
+  div.style.width = '32px';
+  div.style.height = '32px';
   div.style.backgroundColor = isCurrentLocation ? '#3B82F6' : '#EF4444';
-  div.style.border = '2px solid #FFFFFF';
+  div.style.border = '3px solid #FFFFFF';
   div.style.borderRadius = '50%';
   div.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
   div.style.display = 'flex';
   div.style.alignItems = 'center';
   div.style.justifyContent = 'center';
+  div.style.position = 'relative';
 
   // 内側の円を追加
   const innerCircle = document.createElement('div');
-  innerCircle.style.width = '8px';
-  innerCircle.style.height = '8px';
+  innerCircle.style.width = '12px';
+  innerCircle.style.height = '12px';
   innerCircle.style.backgroundColor = '#FFFFFF';
   innerCircle.style.borderRadius = '50%';
   div.appendChild(innerCircle);
+
+  // 現在地の場合、パルスアニメーションを追加
+  if (isCurrentLocation) {
+    const pulse = document.createElement('div');
+    pulse.style.position = 'absolute';
+    pulse.style.width = '100%';
+    pulse.style.height = '100%';
+    pulse.style.borderRadius = '50%';
+    pulse.style.backgroundColor = 'rgba(59, 130, 246, 0.3)';
+    pulse.style.animation = 'pulse 2s infinite';
+    div.appendChild(pulse);
+
+    // パルスアニメーションのスタイルを追加
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   return div;
 };
