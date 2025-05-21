@@ -177,7 +177,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         currentMarker.map = null;
       }
     };
-  }, [map, currentLocation, isMapReady, currentMarker]);
+  }, [map, currentLocation, isMapReady]);
 
   // 目的地のマーカーを更新
   useEffect(() => {
@@ -195,7 +195,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       const newDestinationMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: { lat: destination[0], lng: destination[1] },
-        content: createCustomMarker(false)
+        content: createCustomMarker(false),
+        title: '目的地'
       });
 
       setDestinationMarker(newDestinationMarker);
