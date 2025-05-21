@@ -8,7 +8,7 @@ import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
 import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
-import Header from '@/components/Header';
+import Header from './components/Header';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('./components/Map'), {
