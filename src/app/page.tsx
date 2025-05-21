@@ -8,7 +8,6 @@ import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
 import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
-import Header from '@/components/Header';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
@@ -129,7 +128,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onToggleMenu={() => setIsMenuOpen(!isMenuOpen)} onGetCurrentLocation={getCurrentLocation} />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
           最適なルートを探す
