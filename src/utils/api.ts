@@ -2,16 +2,24 @@ import { Route } from '@/types/route';
 import { TrafficInfo } from './trafficPolling';
 import { Feedback } from '@/components/FeedbackForm';
 
+// APIのベースURLを設定
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
 export const api = {
   // ルート検索
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
     try {
+      console.log('ルート検索API呼び出し:', `${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`);
       const response = await fetch(`${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`);
 
       if (!response.ok) {
-        throw new Error('ルート検索に失敗しました');
+        const errorText = await response.text();
+        console.error('ルート検索エラー:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`ルート検索に失敗しました: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -25,10 +33,17 @@ export const api = {
   // 交通情報の取得
   getTrafficInfo: async (routeId: number): Promise<TrafficInfo> => {
     try {
+      console.log('交通情報API呼び出し:', `${API_BASE_URL}/traffic/${routeId}`);
       const response = await fetch(`${API_BASE_URL}/traffic/${routeId}`);
 
       if (!response.ok) {
-        throw new Error('交通情報の取得に失敗しました');
+        const errorText = await response.text();
+        console.error('交通情報取得エラー:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`交通情報の取得に失敗しました: ${response.status} ${response.statusText}`);
       }
 
       return await response.json();
@@ -44,6 +59,7 @@ export const api = {
     reason: 'congestion' | 'accident' | 'clear'
   ): Promise<Route> => {
     try {
+      console.log('ルート変更提案API呼び出し:', `${API_BASE_URL}/routes/suggest`);
       const response = await fetch(`${API_BASE_URL}/routes/suggest`, {
         method: 'POST',
         headers: {
@@ -53,7 +69,13 @@ export const api = {
       });
 
       if (!response.ok) {
-        throw new Error('ルート変更の提案に失敗しました');
+        const errorText = await response.text();
+        console.error('ルート変更提案エラー:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`ルート変更の提案に失敗しました: ${response.status} ${response.statusText}`);
       }
 
       return await response.json();
@@ -66,6 +88,7 @@ export const api = {
   // フィードバック送信
   sendFeedback: async (feedback: Feedback): Promise<void> => {
     try {
+      console.log('フィードバック送信API呼び出し:', `${API_BASE_URL}/feedback`);
       const response = await fetch(`${API_BASE_URL}/feedback`, {
         method: 'POST',
         headers: {
@@ -74,7 +97,13 @@ export const api = {
         body: JSON.stringify(feedback),
       });
       if (!response.ok) {
-        throw new Error('フィードバック送信に失敗しました');
+        const errorText = await response.text();
+        console.error('フィードバック送信エラー:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`フィードバック送信に失敗しました: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('フィードバック送信エラー:', error);

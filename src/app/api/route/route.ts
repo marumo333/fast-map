@@ -17,10 +17,19 @@ export async function GET(request: NextRequest) {
   const endLng = searchParams.get('endLng');
   const routeId = searchParams.get('routeId');
 
+  console.log('ルート検索リクエスト:', {
+    startLat,
+    startLng,
+    endLat,
+    endLng,
+    routeId
+  });
+
   // routeIdが指定されている場合は、そのルートのみを返す
   if (routeId) {
     const routeIdNum = parseInt(routeId, 10);
     if (isNaN(routeIdNum)) {
+      console.error('無効なルートID:', routeId);
       return NextResponse.json(
         { error: '無効なルートIDです' },
         { status: 400 }
@@ -32,6 +41,7 @@ export async function GET(request: NextRequest) {
     for (const cache of cachedRoutes) {
       const route = cache.routes.find((r: Route) => r.routeId === routeIdNum);
       if (route) {
+        console.log('キャッシュからルートを返却:', routeIdNum);
         return NextResponse.json({
           routes: [route],
           fromCache: true
@@ -39,6 +49,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    console.error('ルートが見つかりません:', routeIdNum);
     return NextResponse.json(
       { error: 'ルートが見つかりません' },
       { status: 404 }
@@ -47,6 +58,7 @@ export async function GET(request: NextRequest) {
 
   // 通常のルート検索
   if (!startLat || !startLng || !endLat || !endLng) {
+    console.error('座標が不足しています:', { startLat, startLng, endLat, endLng });
     return NextResponse.json(
       { error: '出発地と目的地の座標が必要です' },
       { status: 400 }
@@ -59,6 +71,7 @@ export async function GET(request: NextRequest) {
 
   // キャッシュが有効な場合はキャッシュから返す
   if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+    console.log('キャッシュからルートを返却:', cacheKey);
     return NextResponse.json({
       routes: cachedData.routes,
       fromCache: true
@@ -66,18 +79,27 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('Google Maps Directions APIを呼び出し開始');
     // Google Maps Directions APIを呼び出す
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
     );
 
     if (!response.ok) {
-      throw new Error('Google Maps Directions APIの呼び出しに失敗しました');
+      const errorText = await response.text();
+      console.error('Google Maps Directions APIの呼び出しに失敗:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Google Maps Directions APIの呼び出しに失敗しました: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log('Google Maps Directions APIの応答:', data);
 
     if (data.status !== 'OK') {
+      console.error('Google Maps Directions APIエラー:', data);
       throw new Error(`Google Maps Directions APIエラー: ${data.status}`);
     }
 
@@ -134,6 +156,8 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    console.log('ルートデータを生成:', routes);
+
     // ルートデータをキャッシュに保存
     routeCache.set(cacheKey, {
       routes,
@@ -147,7 +171,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('ルート検索エラー:', error);
     return NextResponse.json(
-      { error: 'ルートの検索に失敗しました' },
+      { error: error instanceof Error ? error.message : 'ルートの検索に失敗しました' },
       { status: 500 }
     );
   }
