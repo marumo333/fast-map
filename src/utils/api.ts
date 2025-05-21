@@ -8,19 +8,14 @@ export const api = {
   // ルート検索
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/routes/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ start, end }),
-      });
+      const response = await fetch(`${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`);
 
       if (!response.ok) {
         throw new Error('ルート検索に失敗しました');
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data.routes;
     } catch (error) {
       console.error('ルート検索エラー:', error);
       throw error;
