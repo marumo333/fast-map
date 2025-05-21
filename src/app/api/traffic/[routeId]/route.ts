@@ -46,9 +46,20 @@ export async function GET(
   }
 
   try {
+    // ルート情報を取得
+    const routeResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'}/route/${routeId}`
+    );
+
+    if (!routeResponse.ok) {
+      throw new Error('ルート情報の取得に失敗しました');
+    }
+
+    const routeData = await routeResponse.json();
+
     // Google Maps Traffic APIを呼び出す
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/traffic/json?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${routeData.start.lat},${routeData.start.lng}&destination=${routeData.end.lat},${routeData.end.lng}&departure_time=now&traffic_model=best_guess&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
     );
 
     if (!response.ok) {
@@ -62,10 +73,15 @@ export async function GET(
     }
 
     // 交通情報を生成
+    const route = data.routes[0];
+    const durationInTraffic = route.legs[0].duration_in_traffic.value;
+    const duration = route.legs[0].duration.value;
+    const delay = Math.max(0, Math.round((durationInTraffic - duration) / 60)); // 分単位の遅延
+
     const trafficInfo: TrafficInfo = {
       routeId,
-      congestion: getCongestionLevel(data.severity || 1),
-      delay: Math.round(data.delay || 0),
+      congestion: getCongestionLevel(Math.ceil(delay / 5)), // 5分ごとに混雑度を上げる
+      delay,
       lastUpdated: new Date().toISOString()
     };
 
