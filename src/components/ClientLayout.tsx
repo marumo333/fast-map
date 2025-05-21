@@ -1,40 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { LocationProvider, useLocation } from '@/contexts/LocationContext';
 
 type ClientLayoutProps = {
   children: React.ReactNode;
 };
 
-const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      console.error('お使いのブラウザは位置情報をサポートしていません。');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        setCurrentLocation(newLocation);
-      },
-      (error) => {
-        console.error('位置情報取得エラー:', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
-    );
-  };
+const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
+  const { getCurrentLocation } = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,6 +20,14 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
       </main>
       <Footer />
     </div>
+  );
+};
+
+const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
+  return (
+    <LocationProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </LocationProvider>
   );
 };
 
