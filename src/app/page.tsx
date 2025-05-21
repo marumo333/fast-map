@@ -115,6 +115,13 @@ export default function Home() {
     }
   };
 
+  // 現在地が取得されたら出発地として設定
+  useEffect(() => {
+    if (currentLocation && !startLocation) {
+      setStartLocation(currentLocation);
+    }
+  }, [currentLocation, startLocation]);
+
   const handleFeedbackSubmit = async (feedback: any) => {
     // フィードバック送信処理
     console.log('フィードバック送信:', feedback);
