@@ -39,7 +39,9 @@ export default function Home() {
     (info) => {
       console.log('交通情報更新:', info);
       setTrafficInfo(info);
-    }
+    },
+    startLocation ?? undefined,
+    endLocation ?? undefined
   );
 
   // ルート変更の検出

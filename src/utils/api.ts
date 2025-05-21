@@ -31,17 +31,22 @@ export const api = {
   },
 
   // 交通情報の取得
-  getTrafficInfo: async (routeId: number): Promise<TrafficInfo> => {
+  getTrafficInfo: async (routeId: number, start?: [number, number], end?: [number, number]): Promise<TrafficInfo> => {
     try {
-      console.log('交通情報API呼び出し:', `${API_BASE_URL}/traffic/${routeId}`);
-      const response = await fetch(`${API_BASE_URL}/traffic/${routeId}`);
+      let url = `${API_BASE_URL}/traffic/${routeId}`;
+      if (start && end) {
+        url += `?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`;
+      }
+      console.log('交通情報API呼び出し:', url);
+      const response = await fetch(url);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('交通情報取得エラー:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorText
+          error: errorText,
+          url
         });
         throw new Error(`交通情報の取得に失敗しました: ${response.status} ${response.statusText}`);
       }

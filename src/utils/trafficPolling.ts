@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { api } from './api';
+import { Location } from '@/types/location';
 
 export type TrafficInfo = {
   routeId: number;
@@ -11,14 +12,18 @@ export type TrafficInfo = {
 export const useTrafficPolling = (
   routeId: number,
   interval: number = 30000, // デフォルト30秒
-  onUpdate: (info: TrafficInfo) => void
+  onUpdate: (info: TrafficInfo) => void,
+  startLocation?: Location,
+  endLocation?: Location
 ) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchTrafficInfo = async () => {
       try {
-        const info = await api.getTrafficInfo(routeId);
+        const start = startLocation ? [startLocation.lat, startLocation.lng] as [number, number] : undefined;
+        const end = endLocation ? [endLocation.lat, endLocation.lng] as [number, number] : undefined;
+        const info = await api.getTrafficInfo(routeId, start, end);
         onUpdate(info);
       } catch (error) {
         console.error('交通情報の取得に失敗しました:', error);
@@ -41,5 +46,5 @@ export const useTrafficPolling = (
         clearInterval(timerRef.current);
       }
     };
-  }, [routeId, interval, onUpdate]);
+  }, [routeId, interval, onUpdate, startLocation, endLocation]);
 }; 
