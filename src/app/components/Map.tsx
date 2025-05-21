@@ -106,6 +106,13 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     );
   }, [onLocationSelect]);
 
+  // コンポーネントマウント時に現在地を取得
+  useEffect(() => {
+    if (!hasRequestedLocation) {
+      getCurrentLocation();
+    }
+  }, [getCurrentLocation, hasRequestedLocation]);
+
   useEffect(() => {
     if (loadError) {
       console.error('Google Maps APIの読み込みエラー:', loadError);
@@ -158,7 +165,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       const newCurrentMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: { lat: currentLocation.lat, lng: currentLocation.lng },
-        content: createCustomMarker(true)
+        content: createCustomMarker(true),
+        title: '現在地'
       });
 
       setCurrentMarker(newCurrentMarker);
@@ -176,7 +184,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         currentMarker.map = null;
       }
     };
-  }, [map, currentLocation, isMapReady]);
+  }, [map, currentLocation, isMapReady, currentMarker]);
 
   // 目的地のマーカーを更新
   useEffect(() => {
