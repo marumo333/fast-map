@@ -48,7 +48,7 @@ export async function GET(
   try {
     // ルート情報を取得
     const routeResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'}/route/${routeId}`
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'}/route?routeId=${routeId}`
     );
 
     if (!routeResponse.ok) {
@@ -56,10 +56,15 @@ export async function GET(
     }
 
     const routeData = await routeResponse.json();
+    const route = routeData.routes[0];
+
+    if (!route) {
+      throw new Error('ルートが見つかりません');
+    }
 
     // Google Maps Traffic APIを呼び出す
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${routeData.start.lat},${routeData.start.lng}&destination=${routeData.end.lat},${routeData.end.lng}&departure_time=now&traffic_model=best_guess&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${route.path[0][0]},${route.path[0][1]}&destination=${route.path[route.path.length - 1][0]},${route.path[route.path.length - 1][1]}&departure_time=now&traffic_model=best_guess&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
     );
 
     if (!response.ok) {
@@ -73,9 +78,9 @@ export async function GET(
     }
 
     // 交通情報を生成
-    const route = data.routes[0];
-    const durationInTraffic = route.legs[0].duration_in_traffic.value;
-    const duration = route.legs[0].duration.value;
+    const routeInfo = data.routes[0];
+    const durationInTraffic = routeInfo.legs[0].duration_in_traffic.value;
+    const duration = routeInfo.legs[0].duration.value;
     const delay = Math.max(0, Math.round((durationInTraffic - duration) / 60)); // 分単位の遅延
 
     const trafficInfo: TrafficInfo = {
