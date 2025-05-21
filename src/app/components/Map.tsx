@@ -227,7 +227,12 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: '400px' }}>
+    <div 
+      className="relative w-full h-full" 
+      style={{ minHeight: '400px' }}
+      onMouseMove={() => setShowLocationButton(true)}
+      onMouseLeave={() => setShowLocationButton(false)}
+    >
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={currentLocation ? { lat: currentLocation.lat, lng: currentLocation.lng } : defaultCenter}
@@ -235,8 +240,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         onLoad={onLoad}
         onUnmount={onUnmount}
         onClick={handleMapClick}
-        onMouseMove={() => setShowLocationButton(true)}
-        onMouseLeave={() => setShowLocationButton(false)}
         options={{
           zoomControl: true,
           streetViewControl: false,
