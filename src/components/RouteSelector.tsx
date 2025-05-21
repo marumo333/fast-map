@@ -94,13 +94,6 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
         >
           {isLoading ? '読み込み中...' : '混雑回避ルート'}
         </button>
-        <button
-          onClick={() => handleRouteSelect(3)}
-          disabled={isLoading}
-          className="w-full p-4 bg-purple-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-purple-600 active:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? '読み込み中...' : '景色の良いルート'}
-        </button>
       </div>
     </div>
   );
