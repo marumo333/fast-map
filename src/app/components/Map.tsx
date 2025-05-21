@@ -106,13 +106,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     );
   }, [onLocationSelect]);
 
-  // コンポーネントマウント時に現在地を取得
-  useEffect(() => {
-    if (!hasRequestedLocation) {
-      getCurrentLocation();
-    }
-  }, [getCurrentLocation, hasRequestedLocation]);
-
   useEffect(() => {
     if (loadError) {
       console.error('Google Maps APIの読み込みエラー:', loadError);
