@@ -62,7 +62,7 @@ export default function Home() {
   const handleLocationSelect = (location: Location) => {
     if (!startLocation) {
       setStartLocation(location);
-    } else if (!endLocation) {
+    } else {
       setEndLocation(location);
     }
   };
