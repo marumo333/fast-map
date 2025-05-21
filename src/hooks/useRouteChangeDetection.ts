@@ -26,7 +26,7 @@ export const useRouteChangeDetection = (
         routeId: 2,
         isTollRoad: true,
         tollFee: 1000,
-        estimatedTime: currentRoute.estimatedTime - 5, // 5分早いと仮定
+        estimatedTime: (currentRoute.estimatedTime ?? 0) - 5, // 5分早いと仮定
       };
       setRouteChange({
         suggestedRoute,
@@ -39,7 +39,7 @@ export const useRouteChangeDetection = (
       const suggestedRoute: Route = {
         ...currentRoute,
         routeId: 3,
-        estimatedTime: currentRoute.estimatedTime - 10, // 10分早いと仮定
+        estimatedTime: (currentRoute.estimatedTime ?? 0) - 10, // 10分早いと仮定
       };
       setRouteChange({
         suggestedRoute,
@@ -57,7 +57,7 @@ export const useRouteChangeDetection = (
         routeId: 1,
         isTollRoad: false,
         tollFee: 0,
-        estimatedTime: currentRoute.estimatedTime + 5, // 5分遅いと仮定
+        estimatedTime: (currentRoute.estimatedTime ?? 0) + 5, // 5分遅いと仮定
       };
       setRouteChange({
         suggestedRoute,
