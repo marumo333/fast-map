@@ -1,12 +1,5 @@
-import { NextResponse } from 'next/server';
-
-type Route = {
-  routeId: number;
-  path: [number, number][];
-  distance: number;
-  duration: number;
-  isTollRoad: boolean;
-};
+import { NextRequest, NextResponse } from 'next/server';
+import { Route } from '@/types/route';
 
 // キャッシュの実装
 const routeCache = new Map<string, {
@@ -16,13 +9,43 @@ const routeCache = new Map<string, {
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5分
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const startLat = searchParams.get('startLat');
   const startLng = searchParams.get('startLng');
   const endLat = searchParams.get('endLat');
   const endLng = searchParams.get('endLng');
+  const routeId = searchParams.get('routeId');
 
+  // routeIdが指定されている場合は、そのルートのみを返す
+  if (routeId) {
+    const routeIdNum = parseInt(routeId, 10);
+    if (isNaN(routeIdNum)) {
+      return NextResponse.json(
+        { error: '無効なルートIDです' },
+        { status: 400 }
+      );
+    }
+
+    // キャッシュから該当するルートを探す
+    const cachedRoutes = Array.from(routeCache.values());
+    for (const cache of cachedRoutes) {
+      const route = cache.routes.find((r: Route) => r.routeId === routeIdNum);
+      if (route) {
+        return NextResponse.json({
+          routes: [route],
+          fromCache: true
+        });
+      }
+    }
+
+    return NextResponse.json(
+      { error: 'ルートが見つかりません' },
+      { status: 404 }
+    );
+  }
+
+  // 通常のルート検索
   if (!startLat || !startLng || !endLat || !endLng) {
     return NextResponse.json(
       { error: '出発地と目的地の座標が必要です' },
