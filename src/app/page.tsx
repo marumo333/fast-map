@@ -8,6 +8,7 @@ import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
 import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
+import Header from '@/components/Header';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('./components/Map'), {
@@ -29,6 +30,7 @@ export default function Home() {
   const [isLocationRequested, setIsLocationRequested] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 現在地を取得する関数
   const getCurrentLocation = () => {
@@ -119,7 +121,8 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <Header onToggleMenu={() => setIsMenuOpen(!isMenuOpen)} onGetCurrentLocation={getCurrentLocation} />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
           最適なルートを探す
@@ -211,32 +214,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ヘッダー */}
-      <div className="absolute top-0 left-0 right-0 bg-white/90 backdrop-blur-sm p-4 z-10">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">Fast-Map</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={getCurrentLocation}
-              disabled={isLocationRequested}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                isLocationRequested
-                  ? 'bg-gray-300 text-gray-500'
-                  : 'bg-green-500 text-white hover:bg-green-600'
-              }`}
-            >
-              {isLocationRequested ? '位置情報取得中...' : '現在地を取得'}
-            </button>
-            <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600"
-            >
-              {isSearchOpen ? '地図を表示' : 'ルート検索'}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* 位置情報エラーメッセージ */}
       {locationError && (
         <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded z-20">
@@ -284,6 +261,6 @@ export default function Home() {
           onDismiss={clearRouteChange}
         />
       )}
-    </main>
+    </div>
   );
 } 
