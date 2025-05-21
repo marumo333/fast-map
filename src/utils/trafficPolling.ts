@@ -3,9 +3,9 @@ import { api } from './api';
 
 export type TrafficInfo = {
   routeId: number;
-  congestion: 'low' | 'medium' | 'high';
-  delay: number; // 分単位の遅延
-  lastUpdated: Date;
+  congestion: string;
+  delay: number;
+  lastUpdated: string;
 };
 
 export const useTrafficPolling = (

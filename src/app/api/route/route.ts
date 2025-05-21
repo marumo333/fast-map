@@ -61,12 +61,43 @@ export async function GET(request: Request) {
     // ルートデータを変換
     const routes: Route[] = data.routes.map((route: any, index: number) => {
       // パスデータを抽出
-      const path: [number, number][] = route.overview_polyline.points
-        .split(' ')
-        .map((point: string) => {
-          const [lat, lng] = point.split(',').map(Number);
-          return [lat, lng] as [number, number];
+      const path: [number, number][] = [];
+      route.legs.forEach((leg: any) => {
+        leg.steps.forEach((step: any) => {
+          const points = step.polyline.points;
+          let index = 0;
+          let lat = 0;
+          let lng = 0;
+
+          while (index < points.length) {
+            let shift = 0;
+            let result = 0;
+
+            do {
+              let b = points.charCodeAt(index++) - 63;
+              result |= (b & 0x1f) << shift;
+              shift += 5;
+            } while (result >= 0x20);
+
+            let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+
+            shift = 0;
+            result = 0;
+
+            do {
+              let b = points.charCodeAt(index++) - 63;
+              result |= (b & 0x1f) << shift;
+              shift += 5;
+            } while (result >= 0x20);
+
+            let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+
+            path.push([lat * 1e-5, lng * 1e-5]);
+          }
         });
+      });
 
       // 有料道路の判定（legsのtoll_roadフラグを確認）
       const isTollRoad = route.legs.some((leg: any) => leg.toll_road === true);
