@@ -66,6 +66,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   const [mapError, setMapError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [showLocationButton, setShowLocationButton] = useState(false);
+  const [hasRequestedLocation, setHasRequestedLocation] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -82,6 +83,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     }
 
     setIsLocating(true);
+    setHasRequestedLocation(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const location = {
@@ -103,13 +105,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       }
     );
   }, [onLocationSelect]);
-
-  // 地図の読み込みが完了したら現在地を取得
-  useEffect(() => {
-    if (isLoaded && !currentLocation) {
-      getCurrentLocation();
-    }
-  }, [isLoaded, currentLocation, getCurrentLocation]);
 
   useEffect(() => {
     if (loadError) {
@@ -257,7 +252,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           />
         )}
       </GoogleMap>
-      {showLocationButton && (
+      {showLocationButton && !hasRequestedLocation && (
         <button
           onClick={getCurrentLocation}
           disabled={isLocating}
