@@ -1,6 +1,6 @@
 'use client';
 import React, { useCallback, useState, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Polyline, Marker } from '@react-google-maps/api';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 
@@ -34,12 +34,38 @@ const defaultCenter = {
   lng: 139.7671
 };
 
+// カスタムマーカーのスタイル
+const createCustomMarker = (isCurrentLocation: boolean) => {
+  const div = document.createElement('div');
+  div.style.width = '24px';
+  div.style.height = '24px';
+  div.style.backgroundColor = isCurrentLocation ? '#3B82F6' : '#EF4444';
+  div.style.border = '2px solid #FFFFFF';
+  div.style.borderRadius = '50%';
+  div.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+  div.style.display = 'flex';
+  div.style.alignItems = 'center';
+  div.style.justifyContent = 'center';
+
+  // 内側の円を追加
+  const innerCircle = document.createElement('div');
+  innerCircle.style.width = '8px';
+  innerCircle.style.height = '8px';
+  innerCircle.style.backgroundColor = '#FFFFFF';
+  innerCircle.style.borderRadius = '50%';
+  div.appendChild(innerCircle);
+
+  return div;
+};
+
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect }) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const [currentMarker, setCurrentMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const [destinationMarker, setDestinationMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [showLocationButton, setShowLocationButton] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -109,70 +135,74 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     console.log('地図のアンロードが完了しました');
     setMap(null);
     setIsMapReady(false);
-    setMarker(null);
+    setCurrentMarker(null);
+    setDestinationMarker(null);
   }, []);
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
-      onLocationSelect({
+      const location = {
         lat: e.latLng.lat(),
         lng: e.latLng.lng()
-      });
+      };
+      onLocationSelect(location);
     }
   };
 
-  // 現在位置のマーカーを更新
+  // マーカーを更新
   useEffect(() => {
     if (!map || !isMapReady) {
       console.log('地図の準備ができていません');
       return;
     }
 
-    if (!currentLocation) {
-      console.log('現在位置がありません');
-      return;
-    }
-
     try {
-      // 既存のマーカーを削除
-      if (marker) {
-        marker.map = null;
+      // 現在位置のマーカーを更新
+      if (currentLocation) {
+        if (currentMarker) {
+          currentMarker.map = null;
+        }
+        const newCurrentMarker = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: { lat: currentLocation.lat, lng: currentLocation.lng },
+          content: createCustomMarker(true)
+        });
+        setCurrentMarker(newCurrentMarker);
       }
 
-      // 新しいマーカーを作成
-      const newMarker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: { lat: currentLocation.lat, lng: currentLocation.lng },
-        content: createMarkerContent()
-      });
-
-      setMarker(newMarker);
+      // 目的地のマーカーを更新
+      if (selectedRoute?.path[selectedRoute.path.length - 1]) {
+        const destination = selectedRoute.path[selectedRoute.path.length - 1];
+        if (destinationMarker) {
+          destinationMarker.map = null;
+        }
+        const newDestinationMarker = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: { lat: destination[0], lng: destination[1] },
+          content: createCustomMarker(false)
+        });
+        setDestinationMarker(newDestinationMarker);
+      }
 
       // 地図の中心位置を現在地に更新
-      map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
-      map.setZoom(15);
+      if (currentLocation) {
+        map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
+        map.setZoom(15);
+      }
     } catch (error) {
       console.error('マーカーの作成に失敗しました:', error);
       setMapError('マーカーの表示に失敗しました。');
     }
 
     return () => {
-      if (marker) {
-        marker.map = null;
+      if (currentMarker) {
+        currentMarker.map = null;
+      }
+      if (destinationMarker) {
+        destinationMarker.map = null;
       }
     };
-  }, [map, currentLocation, isMapReady]);
-
-  // マーカーのコンテンツを作成
-  const createMarkerContent = () => {
-    const div = document.createElement('div');
-    div.style.width = '16px';
-    div.style.height = '16px';
-    div.style.backgroundColor = '#3B82F6';
-    div.style.border = '2px solid #FFFFFF';
-    div.style.borderRadius = '50%';
-    return div;
-  };
+  }, [map, currentLocation, selectedRoute, isMapReady]);
 
   if (mapError) {
     return (
@@ -199,6 +229,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         onLoad={onLoad}
         onUnmount={onUnmount}
         onClick={handleMapClick}
+        onMouseMove={() => setShowLocationButton(true)}
+        onMouseLeave={() => setShowLocationButton(false)}
         options={{
           zoomControl: true,
           streetViewControl: false,
@@ -225,24 +257,26 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           />
         )}
       </GoogleMap>
-      <button
-        onClick={getCurrentLocation}
-        disabled={isLocating}
-        className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        title="現在地を取得"
-      >
-        {isLocating ? (
-          <svg className="w-6 h-6 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-        ) : (
-          <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        )}
-      </button>
+      {showLocationButton && (
+        <button
+          onClick={getCurrentLocation}
+          disabled={isLocating}
+          className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-300"
+          title="現在地を取得"
+        >
+          {isLocating ? (
+            <svg className="w-6 h-6 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )}
+        </button>
+      )}
     </div>
   );
 };
