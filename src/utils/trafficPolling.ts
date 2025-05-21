@@ -21,12 +21,40 @@ export const useTrafficPolling = (
   useEffect(() => {
     const fetchTrafficInfo = async () => {
       try {
-        const start = startLocation ? [startLocation.lat, startLocation.lng] as [number, number] : undefined;
-        const end = endLocation ? [endLocation.lat, endLocation.lng] as [number, number] : undefined;
+        if (!startLocation || !endLocation) {
+          console.warn('出発地または目的地が設定されていません');
+          return;
+        }
+
+        // 座標の範囲チェック
+        const isValidCoordinate = (lat: number, lng: number) => {
+          return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+        };
+
+        if (!isValidCoordinate(startLocation.lat, startLocation.lng) || 
+            !isValidCoordinate(endLocation.lat, endLocation.lng)) {
+          console.error('座標が範囲外です:', { startLocation, endLocation });
+          return;
+        }
+
+        const start = [startLocation.lat, startLocation.lng] as [number, number];
+        const end = [endLocation.lat, endLocation.lng] as [number, number];
+
+        console.log('交通情報取得開始:', {
+          routeId,
+          start,
+          end
+        });
+
         const info = await api.getTrafficInfo(routeId, start, end);
         onUpdate(info);
       } catch (error) {
-        console.error('交通情報の取得に失敗しました:', error);
+        console.error('交通情報の取得に失敗しました:', {
+          error,
+          routeId,
+          startLocation,
+          endLocation
+        });
       }
     };
 

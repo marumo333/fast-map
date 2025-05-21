@@ -30,6 +30,7 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
   };
 
   const getTimeDifference = () => {
+    if (suggestedRoute.estimatedTime == null || currentRoute.estimatedTime == null) return 0;
     return Math.abs(suggestedRoute.estimatedTime - currentRoute.estimatedTime);
   };
 
@@ -68,7 +69,7 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
             </div>
             {suggestedRoute.isTollRoad && (
               <p className="text-red-600 font-medium">
-                ¥{suggestedRoute.tollFee.toLocaleString()}
+                ¥{suggestedRoute.tollFee != null ? suggestedRoute.tollFee : '不明'}
               </p>
             )}
           </div>

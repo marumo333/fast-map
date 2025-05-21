@@ -108,8 +108,27 @@ export async function GET(
       throw new Error('ルートのパスが無効です');
     }
 
+    // パスの最初と最後の点を取得
     const startPoint = route.path[0];
     const endPoint = route.path[route.path.length - 1];
+
+    // 座標の検証
+    if (!Array.isArray(startPoint) || startPoint.length !== 2 || 
+        !Array.isArray(endPoint) || endPoint.length !== 2) {
+      console.error('無効な座標形式:', { startPoint, endPoint });
+      throw new Error('無効な座標形式です');
+    }
+
+    // 座標の範囲チェック
+    const isValidCoordinate = (lat: number, lng: number) => {
+      return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+    };
+
+    if (!isValidCoordinate(startPoint[0], startPoint[1]) || 
+        !isValidCoordinate(endPoint[0], endPoint[1])) {
+      console.error('座標が範囲外です:', { startPoint, endPoint });
+      throw new Error('座標が範囲外です');
+    }
 
     console.log('Google Maps Traffic APIを呼び出し開始:', {
       start: startPoint,
@@ -123,16 +142,36 @@ export async function GET(
       throw new Error('Google Maps APIキーが設定されていません');
     }
 
-    const trafficUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint[0]},${startPoint[1]}&destination=${endPoint[0]},${endPoint[1]}&departure_time=now&traffic_model=best_guess&key=${apiKey}`;
+    // 座標を文字列に変換（小数点以下6桁まで）
+    const formatCoordinate = (coord: number) => coord.toFixed(6);
+    const origin = `${formatCoordinate(startPoint[0])},${formatCoordinate(startPoint[1])}`;
+    const destination = `${formatCoordinate(endPoint[0])},${formatCoordinate(endPoint[1])}`;
+
+    const trafficUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&departure_time=now&traffic_model=best_guess&key=${apiKey}`;
     console.log('Google Maps Traffic API URL:', trafficUrl);
 
     const response = await fetchWithRetry(trafficUrl);
     const data = await response.json();
     console.log('Google Maps Traffic APIの応答:', data);
 
+    if (data.status === 'ZERO_RESULTS') {
+      console.error('ルートが見つかりません:', {
+        origin,
+        destination,
+        status: data.status,
+        error_message: data.error_message
+      });
+      throw new Error('指定された地点間でルートが見つかりません');
+    }
+
     if (data.status !== 'OK') {
-      console.error('Google Maps Traffic APIエラー:', data);
-      throw new Error(`Google Maps Traffic APIエラー: ${data.status}`);
+      console.error('Google Maps Traffic APIエラー:', {
+        status: data.status,
+        error_message: data.error_message,
+        origin,
+        destination
+      });
+      throw new Error(`Google Maps Traffic APIエラー: ${data.status}${data.error_message ? ` - ${data.error_message}` : ''}`);
     }
 
     // 交通情報を生成
