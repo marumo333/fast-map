@@ -21,6 +21,7 @@ type MapProps = {
   selectedRoute: Route | null;
   currentLocation: Location | null;
   onLocationSelect: (location: Location) => void;
+  endLocation?: Location | null;
 };
 
 const containerStyle = {
@@ -87,7 +88,7 @@ const createCustomMarker = (isCurrentLocation: boolean) => {
   return div;
 };
 
-const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect }) => {
+const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect, endLocation }) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [currentMarker, setCurrentMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
@@ -210,10 +211,14 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
   // 目的地のマーカーを更新
   useEffect(() => {
-    if (!map || !isMapReady || !selectedRoute?.path.length) return;
+    if (!map || !isMapReady) return;
 
     try {
-      const destination = selectedRoute.path[selectedRoute.path.length - 1];
+      // 目的地の位置を取得（selectedRouteがある場合はその最後のポイント、ない場合はendLocation）
+      const destination = selectedRoute?.path[selectedRoute.path.length - 1] || 
+        (endLocation ? [endLocation.lat, endLocation.lng] : null);
+
+      if (!destination) return;
       
       // 既存のマーカーを削除
       if (destinationMarker) {
@@ -239,7 +244,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         destinationMarker.map = null;
       }
     };
-  }, [map, selectedRoute, isMapReady]);
+  }, [map, selectedRoute, endLocation, isMapReady]);
 
   if (mapError) {
     return (

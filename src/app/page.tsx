@@ -166,6 +166,7 @@ export default function Home() {
                 selectedRoute={selectedRoute}
                 currentLocation={currentLocation}
                 onLocationSelect={handleLocationSelect}
+                endLocation={endLocation}
               />
             </div>
           </div>
