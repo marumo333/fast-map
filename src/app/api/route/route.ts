@@ -5,6 +5,7 @@ type Route = {
   path: [number, number][];
   distance: number;
   duration: number;
+  isTollRoad: boolean;
 };
 
 // キャッシュの実装
@@ -42,25 +43,51 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 実際のルート検索APIを呼び出す
+    // Google Maps Directions APIを呼び出す
     const response = await fetch(
-      `https://api.example.com/routes?startLat=${startLat}&startLng=${startLng}&endLat=${endLat}&endLng=${endLng}`
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
     );
 
     if (!response.ok) {
-      throw new Error('ルート検索APIの呼び出しに失敗しました');
+      throw new Error('Google Maps Directions APIの呼び出しに失敗しました');
     }
 
     const data = await response.json();
 
+    if (data.status !== 'OK') {
+      throw new Error(`Google Maps Directions APIエラー: ${data.status}`);
+    }
+
+    // ルートデータを変換
+    const routes: Route[] = data.routes.map((route: any, index: number) => {
+      // パスデータを抽出
+      const path: [number, number][] = route.overview_polyline.points
+        .split(' ')
+        .map((point: string) => {
+          const [lat, lng] = point.split(',').map(Number);
+          return [lat, lng] as [number, number];
+        });
+
+      // 有料道路の判定（legsのtoll_roadフラグを確認）
+      const isTollRoad = route.legs.some((leg: any) => leg.toll_road === true);
+
+      return {
+        routeId: index + 1,
+        path,
+        distance: route.legs.reduce((sum: number, leg: any) => sum + leg.distance.value, 0),
+        duration: route.legs.reduce((sum: number, leg: any) => sum + leg.duration.value, 0),
+        isTollRoad
+      };
+    });
+
     // ルートデータをキャッシュに保存
     routeCache.set(cacheKey, {
-      routes: data.routes,
+      routes,
       timestamp: Date.now()
     });
 
     return NextResponse.json({
-      routes: data.routes,
+      routes,
       fromCache: false
     });
   } catch (error) {
