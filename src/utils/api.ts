@@ -3,21 +3,23 @@ import { TrafficInfo } from './trafficPolling';
 import { Feedback } from '@/components/FeedbackForm';
 
 // APIのベースURLを設定
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = 'https://fast-map-five.vercel.app/api';
 
 // 共通のヘッダー設定
 const headers = {
   'Content-Type': 'application/json',
-  'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+  'x-api-key': process.env.NEXT_PUBLIC_API_KEY || 'your_api_key_here'
 };
 
 export const api = {
   // ルート検索
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
     try {
-      console.log('ルート検索API呼び出し:', `${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`);
-      const response = await fetch(`${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`, {
-        headers
+      const url = `${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`;
+      console.log('ルート検索API呼び出し:', url);
+      const response = await fetch(url, {
+        headers,
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -47,7 +49,8 @@ export const api = {
       }
       console.log('交通情報API呼び出し:', url);
       const response = await fetch(url, {
-        headers
+        headers,
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -74,10 +77,12 @@ export const api = {
     reason: 'congestion' | 'accident' | 'clear'
   ): Promise<Route> => {
     try {
-      console.log('ルート変更提案API呼び出し:', `${API_BASE_URL}/routes/suggest`);
-      const response = await fetch(`${API_BASE_URL}/routes/suggest`, {
+      const url = `${API_BASE_URL}/routes/suggest`;
+      console.log('ルート変更提案API呼び出し:', url);
+      const response = await fetch(url, {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ currentRouteId, reason }),
       });
 
