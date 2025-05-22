@@ -10,8 +10,15 @@ const HistoryPage = () => {
       path: [[35.6812, 139.7671], [35.6812, 139.7671]],
       distance: 5000,
       duration: 1800,
+      duration_in_traffic: 2000,
       isTollRoad: false,
-      estimatedTime: 1800
+      trafficInfo: [
+        {
+          duration_in_traffic: 2000,
+          traffic_level: '通常'
+        }
+      ],
+      estimatedTime: 30
     },
     // 他の履歴データを追加
   ];
