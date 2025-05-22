@@ -9,6 +9,12 @@ const routeCache = new Map<string, {
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5分
 
+// APIキーの検証
+function validateApiKey(request: NextRequest): boolean {
+  const apiKey = request.headers.get('x-api-key');
+  return apiKey === process.env.API_KEY;
+}
+
 // リトライ付きのfetch関数
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3): Promise<Response> {
   try {
@@ -46,6 +52,14 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
 }
 
 export async function GET(request: NextRequest) {
+  // APIキーの検証
+  if (!validateApiKey(request)) {
+    return NextResponse.json(
+      { error: '認証に失敗しました' },
+      { status: 401 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const startLat = searchParams.get('startLat');
   const startLng = searchParams.get('startLng');

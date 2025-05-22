@@ -5,12 +5,20 @@ import { Feedback } from '@/components/FeedbackForm';
 // APIのベースURLを設定
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
+// 共通のヘッダー設定
+const headers = {
+  'Content-Type': 'application/json',
+  'x-api-key': process.env.NEXT_PUBLIC_API_KEY || ''
+};
+
 export const api = {
   // ルート検索
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
     try {
       console.log('ルート検索API呼び出し:', `${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`);
-      const response = await fetch(`${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`);
+      const response = await fetch(`${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`, {
+        headers
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -38,7 +46,9 @@ export const api = {
         url += `?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`;
       }
       console.log('交通情報API呼び出し:', url);
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -67,9 +77,7 @@ export const api = {
       console.log('ルート変更提案API呼び出し:', `${API_BASE_URL}/routes/suggest`);
       const response = await fetch(`${API_BASE_URL}/routes/suggest`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ currentRouteId, reason }),
       });
 
