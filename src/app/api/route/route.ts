@@ -122,13 +122,28 @@ export async function GET(request: NextRequest) {
         console.log('Google Maps Directions APIを呼び出し開始（routeId指定）');
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         if (!apiKey) {
+          console.error('Google Maps APIキーが設定されていません');
           throw new Error('Google Maps APIキーが設定されていません');
+        }
+
+        // APIキーの形式を確認
+        if (!apiKey.match(/^[A-Za-z0-9_-]{39}$/)) {
+          console.error('Google Maps APIキーの形式が不正です');
+          throw new Error('Google Maps APIキーの形式が不正です');
+        }
+
+        // リファラーの確認
+        const referer = request.headers.get('referer');
+        if (!referer || !referer.startsWith('https://fast-map-five.vercel.app')) {
+          console.error('不正なリファラー:', referer);
+          throw new Error('不正なリファラーです');
         }
 
         const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${apiKey}`;
         console.log('Google Maps API呼び出し:', {
           url: url.replace(apiKey, '***'),
-          apiKey: apiKey ? '***' : '未設定'
+          apiKey: apiKey ? '***' : '未設定',
+          env: process.env.NODE_ENV
         });
         
         const response = await fetchWithRetry(url);
@@ -138,7 +153,8 @@ export async function GET(request: NextRequest) {
           console.error('Google Maps APIエラー詳細:', {
             status: data.status,
             error_message: data.error_message,
-            url: url.replace(apiKey, '***')
+            url: url.replace(apiKey, '***'),
+            env: process.env.NODE_ENV
           });
           throw new Error(`Google Maps Directions APIエラー: ${data.status}${data.error_message ? ` - ${data.error_message}` : ''}`);
         }
@@ -254,6 +270,19 @@ export async function GET(request: NextRequest) {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
       throw new Error('Google Maps APIキーが設定されていません');
+    }
+
+    // APIキーの形式を確認
+    if (!apiKey.match(/^[A-Za-z0-9_-]{39}$/)) {
+      console.error('Google Maps APIキーの形式が不正です');
+      throw new Error('Google Maps APIキーの形式が不正です');
+    }
+
+    // リファラーの確認
+    const referer = request.headers.get('referer');
+    if (!referer || !referer.startsWith('https://fast-map-five.vercel.app')) {
+      console.error('不正なリファラー:', referer);
+      throw new Error('不正なリファラーです');
     }
 
     const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${apiKey}`;
