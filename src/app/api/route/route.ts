@@ -12,6 +12,14 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分
 // APIキーの検証
 function validateApiKey(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-api-key');
+  console.log('APIキー検証:', {
+    receivedKey: apiKey,
+    expectedKey: process.env.API_KEY
+  });
+  // 開発環境では認証をスキップ
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
   return apiKey === process.env.API_KEY;
 }
 
@@ -54,6 +62,9 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
 export async function GET(request: NextRequest) {
   // APIキーの検証
   if (!validateApiKey(request)) {
+    console.error('認証エラー:', {
+      headers: Object.fromEntries(request.headers.entries())
+    });
     return NextResponse.json(
       { error: '認証に失敗しました' },
       { status: 401 }

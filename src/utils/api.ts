@@ -8,8 +8,14 @@ const API_BASE_URL = 'https://fast-map-five.vercel.app/api';
 // 共通のヘッダー設定
 const headers = {
   'Content-Type': 'application/json',
-  'x-api-key': process.env.NEXT_PUBLIC_API_KEY || 'your_api_key_here'
+  'x-api-key': process.env.NEXT_PUBLIC_API_KEY || 'fast-map-api-key-2024'
 };
+
+// APIキーの設定をログ出力
+console.log('API設定:', {
+  baseUrl: API_BASE_URL,
+  apiKey: headers['x-api-key']
+});
 
 export const api = {
   // ルート検索
