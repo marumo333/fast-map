@@ -12,7 +12,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分
 // APIキーの検証
 function validateApiKey(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-api-key');
-  const expectedKey = 'fast-map-api-key-2024';
+  const expectedKey = 'fast-map-api-key-2025';
   
   console.log('APIキー検証:', {
     receivedKey: apiKey,

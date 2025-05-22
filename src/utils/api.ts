@@ -6,7 +6,7 @@ import { Feedback } from '@/components/FeedbackForm';
 const API_BASE_URL = 'https://fast-map-five.vercel.app/api';
 
 // APIキーの設定
-const API_KEY = 'fast-map-api-key-2024';
+const API_KEY = 'fast-map-api-key-2025';
 
 // 共通のヘッダー設定
 const headers = {
