@@ -126,11 +126,21 @@ export async function GET(request: NextRequest) {
         }
 
         const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${apiKey}`;
+        console.log('Google Maps API呼び出し:', {
+          url: url.replace(apiKey, '***'),
+          apiKey: apiKey ? '***' : '未設定'
+        });
+        
         const response = await fetchWithRetry(url);
         const data = await response.json();
 
         if (data.status !== 'OK') {
-          throw new Error(`Google Maps Directions APIエラー: ${data.status}`);
+          console.error('Google Maps APIエラー詳細:', {
+            status: data.status,
+            error_message: data.error_message,
+            url: url.replace(apiKey, '***')
+          });
+          throw new Error(`Google Maps Directions APIエラー: ${data.status}${data.error_message ? ` - ${data.error_message}` : ''}`);
         }
 
         // ルートデータを変換
