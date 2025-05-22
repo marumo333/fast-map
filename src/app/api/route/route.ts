@@ -12,16 +12,21 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分
 // APIキーの検証
 function validateApiKey(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-api-key');
+  const expectedKey = 'fast-map-api-key-2024';
+  
   console.log('APIキー検証:', {
     receivedKey: apiKey,
-    expectedKey: process.env.NEXT_PUBLIC_API_KEY,
-    env: process.env.NODE_ENV
+    expectedKey,
+    env: process.env.NODE_ENV,
+    headers: Object.fromEntries(request.headers.entries())
   });
+  
   // 開発環境では認証をスキップ
   if (process.env.NODE_ENV === 'development') {
     return true;
   }
-  return apiKey === process.env.NEXT_PUBLIC_API_KEY;
+  
+  return apiKey === expectedKey;
 }
 
 // リトライ付きのfetch関数

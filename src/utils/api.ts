@@ -5,16 +5,20 @@ import { Feedback } from '@/components/FeedbackForm';
 // APIのベースURLを設定
 const API_BASE_URL = 'https://fast-map-five.vercel.app/api';
 
+// APIキーの設定
+const API_KEY = 'fast-map-api-key-2024';
+
 // 共通のヘッダー設定
 const headers = {
   'Content-Type': 'application/json',
-  'x-api-key': process.env.NEXT_PUBLIC_API_KEY || 'fast-map-api-key-2024'
+  'x-api-key': API_KEY
 };
 
 // APIキーの設定をログ出力
 console.log('API設定:', {
   baseUrl: API_BASE_URL,
-  apiKey: headers['x-api-key'],
+  apiKey: API_KEY,
+  headers,
   env: process.env.NODE_ENV
 });
 
@@ -23,7 +27,10 @@ export const api = {
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
     try {
       const url = `${API_BASE_URL}/route?startLat=${start[0]}&startLng=${start[1]}&endLat=${end[0]}&endLng=${end[1]}`;
-      console.log('ルート検索API呼び出し:', url);
+      console.log('ルート検索API呼び出し:', {
+        url,
+        headers
+      });
       const response = await fetch(url, {
         headers,
         credentials: 'include'
