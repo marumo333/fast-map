@@ -14,13 +14,14 @@ function validateApiKey(request: NextRequest): boolean {
   const apiKey = request.headers.get('x-api-key');
   console.log('APIキー検証:', {
     receivedKey: apiKey,
-    expectedKey: process.env.API_KEY
+    expectedKey: process.env.NEXT_PUBLIC_API_KEY,
+    env: process.env.NODE_ENV
   });
   // 開発環境では認証をスキップ
   if (process.env.NODE_ENV === 'development') {
     return true;
   }
-  return apiKey === process.env.API_KEY;
+  return apiKey === process.env.NEXT_PUBLIC_API_KEY;
 }
 
 // リトライ付きのfetch関数
