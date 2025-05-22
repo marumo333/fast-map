@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
           throw new Error('不正なリファラーです');
         }
 
-        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${apiKey}`;
+        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&departure_time=now&traffic_model=best_guess&key=${apiKey}`;
         console.log('Google Maps API呼び出し:', {
           url: url.replace(apiKey, '***'),
           apiKey: apiKey ? '***' : '未設定',
@@ -200,13 +200,19 @@ export async function GET(request: NextRequest) {
           });
 
           const isTollRoad = route.legs.some((leg: any) => leg.toll_road === true);
+          const trafficInfo = route.legs.map((leg: any) => ({
+            duration_in_traffic: leg.duration_in_traffic?.value || leg.duration.value,
+            traffic_level: leg.duration_in_traffic ? '混雑' : '通常'
+          }));
 
           return {
             routeId: index + 1,
             path,
             distance: route.legs.reduce((sum: number, leg: any) => sum + leg.distance.value, 0),
             duration: route.legs.reduce((sum: number, leg: any) => sum + leg.duration.value, 0),
-            isTollRoad
+            duration_in_traffic: route.legs.reduce((sum: number, leg: any) => sum + (leg.duration_in_traffic?.value || leg.duration.value), 0),
+            isTollRoad,
+            trafficInfo
           };
         });
 
@@ -285,7 +291,7 @@ export async function GET(request: NextRequest) {
       throw new Error('不正なリファラーです');
     }
 
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&departure_time=now&traffic_model=best_guess&key=${apiKey}`;
     const response = await fetchWithRetry(url);
     const data = await response.json();
 
@@ -334,13 +340,19 @@ export async function GET(request: NextRequest) {
       });
 
       const isTollRoad = route.legs.some((leg: any) => leg.toll_road === true);
+      const trafficInfo = route.legs.map((leg: any) => ({
+        duration_in_traffic: leg.duration_in_traffic?.value || leg.duration.value,
+        traffic_level: leg.duration_in_traffic ? '混雑' : '通常'
+      }));
 
       return {
         routeId: index + 1,
         path,
         distance: route.legs.reduce((sum: number, leg: any) => sum + leg.distance.value, 0),
         duration: route.legs.reduce((sum: number, leg: any) => sum + leg.duration.value, 0),
-        isTollRoad
+        duration_in_traffic: route.legs.reduce((sum: number, leg: any) => sum + (leg.duration_in_traffic?.value || leg.duration.value), 0),
+        isTollRoad,
+        trafficInfo
       };
     });
 
