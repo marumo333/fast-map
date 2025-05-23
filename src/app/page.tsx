@@ -38,7 +38,7 @@ export default function Home() {
   // 交通情報のポーリング
   useTrafficPolling(
     selectedRoute?.routeId ?? 0,
-    30000,
+    30000, // 30秒ごとに更新
     (info) => {
       console.log('交通情報更新:', info);
       setTrafficInfo(info);
@@ -70,7 +70,7 @@ export default function Home() {
     // 選択したルートの情報を表示
     toast({
       title: 'ルートを選択しました',
-      description: `所要時間: ${Math.round(route.duration_in_traffic / 60)}分`,
+      description: `車での所要時間: ${Math.round(route.duration.driving / 60)}分\n徒歩での所要時間: ${Math.round(route.duration.walking / 60)}分`,
       status: 'success',
       duration: 3000,
       isClosable: true,
