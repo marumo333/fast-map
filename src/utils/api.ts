@@ -78,7 +78,8 @@ export const api = {
           drivingOptions: {
             departureTime: new Date(),
             trafficModel: 'bestguess'
-          }
+          },
+          alternatives: true
         },
         (result: any, status: string) => {
           if (status === 'OK') {
@@ -88,6 +89,7 @@ export const api = {
               traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
             });
           } else {
+            console.error('ルート取得失敗:', status);
             reject(new Error(`Google Maps APIエラー: ${status}`));
           }
         }
