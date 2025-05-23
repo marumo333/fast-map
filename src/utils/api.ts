@@ -90,7 +90,7 @@ export const api = {
             departureTime: new Date(),
             trafficModel: 'bestguess'
           },
-          alternatives: true
+          provideRouteAlternatives: true
         },
         (result: any, status: string) => {
           if (status === 'OK') {
