@@ -16,6 +16,32 @@ if (!API_KEY) {
   console.error('Google Maps APIキーが設定されていません');
 }
 
+// 交通情報の取得
+export const getTrafficInfo = async (
+  routeId: number,
+  startLocation: Location,
+  endLocation: Location
+): Promise<TrafficInfo> => {
+  try {
+    // ここで実際のAPIを呼び出す代わりに、モックデータを返す
+    const mockTrafficInfo: TrafficInfo = {
+      congestion: '混雑',
+      delay: 5,
+      lastUpdated: Date.now(),
+      duration: {
+        driving: 1800, // 30分
+        walking: 3600  // 60分
+      },
+      traffic_level: '混雑'
+    };
+
+    return mockTrafficInfo;
+  } catch (error) {
+    console.error('交通情報の取得に失敗:', error);
+    throw error;
+  }
+};
+
 export const api = {
   // ルート検索
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
@@ -84,31 +110,6 @@ export const api = {
         }
       );
     });
-  },
-
-  // 交通情報の取得
-  getTrafficInfo: async (
-    routeId: number,
-    startLocation: Location,
-    endLocation: Location
-  ): Promise<TrafficInfo> => {
-    try {
-      // ここで実際のAPIを呼び出す代わりに、モックデータを返す
-      const mockTrafficInfo: TrafficInfo = {
-        congestion: '混雑',
-        delay: 5,
-        lastUpdated: Date.now(),
-        duration: {
-          driving: 1800, // 30分
-          walking: 3600  // 60分
-        }
-      };
-
-      return mockTrafficInfo;
-    } catch (error) {
-      console.error('交通情報の取得に失敗:', error);
-      throw error;
-    }
   },
 
   // フィードバック送信

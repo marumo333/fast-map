@@ -10,6 +10,7 @@ export interface TrafficInfo {
     driving: number;
     walking: number;
   };
+  traffic_level: string;
 }
 
 export const useTrafficPolling = (
@@ -36,7 +37,8 @@ export const useTrafficPolling = (
             lastInfoRef.current.congestion !== info.congestion ||
             lastInfoRef.current.delay !== info.delay ||
             lastInfoRef.current.duration.driving !== info.duration.driving ||
-            lastInfoRef.current.duration.walking !== info.duration.walking) {
+            lastInfoRef.current.duration.walking !== info.duration.walking ||
+            lastInfoRef.current.traffic_level !== info.traffic_level) {
           
           lastInfoRef.current = info;
           onUpdate(info);
