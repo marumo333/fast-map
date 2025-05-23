@@ -34,6 +34,7 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentLocation } = useLocation();
   const [showNotification, setShowNotification] = useState(false);
+  const [showTrafficInfo, setShowTrafficInfo] = useState(false);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -42,6 +43,11 @@ export default function Home() {
     (info) => {
       console.log('交通情報更新:', info);
       setTrafficInfo(info);
+      setShowTrafficInfo(true);
+      // 3秒後に通知を非表示
+      setTimeout(() => {
+        setShowTrafficInfo(false);
+      }, 3000);
     },
     startLocation ?? undefined,
     endLocation ?? undefined
@@ -95,11 +101,10 @@ export default function Home() {
     if (selectedRoute) {
       const updatedRoute = {
         ...selectedRoute,
-        duration_in_traffic: info.duration_in_traffic,
-        trafficInfo: [{
-          duration_in_traffic: info.duration_in_traffic,
-          traffic_level: info.traffic_level
-        }]
+        duration: {
+          driving: info.duration.driving,
+          walking: info.duration.walking
+        }
       };
       setSelectedRoute(updatedRoute);
     }
@@ -225,8 +230,8 @@ export default function Home() {
         </div>
 
         {/* 交通情報パネル */}
-        {trafficInfo && (
-          <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10">
+        {trafficInfo && showTrafficInfo && (
+          <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10 transition-opacity duration-300">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-base font-semibold text-gray-900">交通情報</h2>
