@@ -234,7 +234,7 @@ export default function Home() {
           <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10 transition-opacity duration-300">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">交通情報</h2>
+                <h2 className="text-base font-semibold text-black-900">交通情報</h2>
                 <div className="space-y-1 mt-1">
                   <p className="text-sm text-gray-900">
                     混雑度: {trafficInfo.congestion}
