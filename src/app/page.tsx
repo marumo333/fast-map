@@ -234,7 +234,7 @@ export default function Home() {
         <RouteNotification
           currentRoute={selectedRoute}
           suggestedRoute={selectedRoute}
-          reason="ルート変更の通知"
+          reason="congestion"
           onAccept={() => handleRouteSelect(selectedRoute)}
           onDismiss={() => {}}
         />
