@@ -49,7 +49,7 @@ export default function Home() {
 
   // ルート変更の検出
   useRouteChangeDetection(
-    selectedRoute,
+    selectedRoute ?? undefined,
     trafficInfo,
     (newRoute) => {
       setSelectedRoute(newRoute);
