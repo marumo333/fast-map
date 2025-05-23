@@ -158,7 +158,7 @@ export default function Home() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">所要時間:</span>
-                    <span className="font-medium">{Math.round(selectedRoute.duration / 60)}分</span>
+                    <span className="font-medium">{Math.round(selectedRoute.duration.driving / 60)}分</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">有料道路:</span>
