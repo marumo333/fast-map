@@ -99,10 +99,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Toaster />
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <ToastContainer />
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow bg-gray-50 pb-32">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             最適なルートを探す
@@ -150,7 +148,7 @@ export default function Home() {
               )}
 
               {selectedRoute && (
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                   <h2 className="text-xl font-semibold text-gray-800 mb-4">
                     ルート情報
                   </h2>
@@ -201,13 +199,13 @@ export default function Home() {
 
         {/* 位置情報エラーメッセージ */}
         {locationError && (
-          <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded z-20">
+          <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded z-20">
             {locationError}
           </div>
         )}
 
         {/* 検索パネル */}
-        <div className={`absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 z-10 transition-transform duration-300 ${
+        <div className={`fixed top-16 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 z-10 transition-transform duration-300 ${
           isSearchOpen ? 'translate-y-0' : '-translate-y-full'
         }`}>
           <div className="max-w-4xl mx-auto">
