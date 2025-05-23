@@ -229,12 +229,23 @@ export default function Home() {
           <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold">交通情報</h2>
-                <p className="text-sm text-gray-600">
-                  混雑度: {trafficInfo.congestion} / 遅延: {trafficInfo.delay}分
-                </p>
+                <h2 className="text-base font-semibold text-gray-900">交通情報</h2>
+                <div className="space-y-1 mt-1">
+                  <p className="text-sm text-gray-900">
+                    混雑度: {trafficInfo.congestion}
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    遅延: {trafficInfo.delay}分
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    車での所要時間: {Math.round(trafficInfo.duration.driving / 60)}分
+                  </p>
+                  <p className="text-sm text-gray-900">
+                    徒歩での所要時間: {Math.round(trafficInfo.duration.walking / 60)}分
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-900">
                 {new Date(trafficInfo.lastUpdated).toLocaleString()}
               </p>
             </div>

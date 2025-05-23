@@ -1,6 +1,7 @@
 import { Route } from '@/types/route';
 import { TrafficInfo } from './trafficPolling';
 import { Feedback } from '@/components/FeedbackForm';
+import { Location } from '@/types/location';
 
 declare global {
   interface Window {
@@ -86,65 +87,28 @@ export const api = {
   },
 
   // 交通情報の取得
-  getTrafficInfo: async (routeId: number): Promise<TrafficInfo> => {
-    return new Promise((resolve, reject) => {
-      const directionsService = new window.google.maps.DirectionsService();
-
-      // ルートIDから出発地と目的地を取得する必要があります
-      // この例では、現在のルート情報を保持する必要があります
-      const currentRoute = window.localStorage.getItem(`route_${routeId}`);
-      if (!currentRoute) {
-        reject(new Error('ルート情報が見つかりません'));
-        return;
-      }
-
-      const { start, end } = JSON.parse(currentRoute);
-
-      // 車でのルート検索
-      directionsService.route(
-        {
-          origin: { lat: start[0], lng: start[1] },
-          destination: { lat: end[0], lng: end[1] },
-          travelMode: window.google.maps.TravelMode.DRIVING,
-          drivingOptions: {
-            departureTime: new Date(),
-            trafficModel: 'bestguess'
-          }
-        },
-        (result: any, status: string) => {
-          if (status === 'OK') {
-            // 徒歩でのルート検索
-            directionsService.route(
-              {
-                origin: { lat: start[0], lng: start[1] },
-                destination: { lat: end[0], lng: end[1] },
-                travelMode: window.google.maps.TravelMode.WALKING
-              },
-              (walkingResult: any, walkingStatus: string) => {
-                if (walkingStatus === 'OK') {
-                  const route = result.routes[0];
-                  const walkingRoute = walkingResult.routes[0];
-                  resolve({
-                    duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-                    traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常',
-                    duration: {
-                      driving: route.legs[0].duration.value,
-                      walking: walkingRoute.legs[0].duration.value
-                    }
-                  });
-                } else {
-                  console.error('徒歩ルート検索失敗:', walkingStatus);
-                  reject(new Error(`Google Maps APIエラー: ${walkingStatus}`));
-                }
-              }
-            );
-          } else {
-            console.error('車ルート検索失敗:', status);
-            reject(new Error(`Google Maps APIエラー: ${status}`));
-          }
+  getTrafficInfo: async (
+    routeId: number,
+    startLocation: Location,
+    endLocation: Location
+  ): Promise<TrafficInfo> => {
+    try {
+      // ここで実際のAPIを呼び出す代わりに、モックデータを返す
+      const mockTrafficInfo: TrafficInfo = {
+        congestion: '混雑',
+        delay: 5,
+        lastUpdated: Date.now(),
+        duration: {
+          driving: 1800, // 30分
+          walking: 3600  // 60分
         }
-      );
-    });
+      };
+
+      return mockTrafficInfo;
+    } catch (error) {
+      console.error('交通情報の取得に失敗:', error);
+      throw error;
+    }
   },
 
   // フィードバック送信
