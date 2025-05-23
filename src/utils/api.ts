@@ -34,20 +34,31 @@ export const api = {
         },
         (result: any, status: string) => {
           if (status === 'OK') {
-            const routes = result.routes.map((route: any, index: number) => ({
-              routeId: index + 1,
-              path: route.overview_path.map((point: any) => [point.lat(), point.lng()]),
-              distance: route.legs[0].distance.value,
-              duration: route.legs[0].duration.value,
-              duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-              isTollRoad: route.legs[0].steps.some((step: any) => step.toll_road),
-              trafficInfo: [{
+            const routes = result.routes.map((route: any, index: number) => {
+              const routeId = index + 1;
+              // ルート情報をローカルストレージに保存
+              window.localStorage.setItem(`route_${routeId}`, JSON.stringify({
+                start,
+                end,
+                routeId
+              }));
+
+              return {
+                routeId,
+                path: route.overview_path.map((point: any) => [point.lat(), point.lng()]),
+                distance: route.legs[0].distance.value,
+                duration: route.legs[0].duration.value,
                 duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-                traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
-              }]
-            }));
+                isTollRoad: route.legs[0].steps.some((step: any) => step.toll_road),
+                trafficInfo: [{
+                  duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+                  traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
+                }]
+              };
+            });
             resolve(routes);
           } else {
+            console.error('ルート検索失敗:', status);
             reject(new Error(`Google Maps APIエラー: ${status}`));
           }
         }
