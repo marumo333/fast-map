@@ -101,7 +101,7 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen">
       <Toaster />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-20">
         <ToastContainer />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -221,7 +221,7 @@ export default function Home() {
 
         {/* 交通情報パネル */}
         {trafficInfo && (
-          <div className="absolute bottom-20 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10">
+          <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10">
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-base font-semibold">交通情報</h2>
@@ -238,13 +238,15 @@ export default function Home() {
 
         {/* ルート変更通知 */}
         {selectedRoute && (
-          <RouteNotification
-            currentRoute={selectedRoute}
-            suggestedRoute={selectedRoute}
-            reason="congestion"
-            onAccept={() => handleRouteSelect(selectedRoute)}
-            onDismiss={() => {}}
-          />
+          <div className="fixed bottom-4 left-4 right-4 z-20">
+            <RouteNotification
+              currentRoute={selectedRoute}
+              suggestedRoute={selectedRoute}
+              reason="congestion"
+              onAccept={() => handleRouteSelect(selectedRoute)}
+              onDismiss={() => {}}
+            />
+          </div>
         )}
       </div>
     </div>
