@@ -5,6 +5,10 @@ import { api } from '@/utils/api';
 export interface TrafficInfo {
   duration_in_traffic: number;
   traffic_level: string;
+  duration: {
+    driving: number;
+    walking: number;
+  };
 }
 
 export const useTrafficPolling = (

@@ -100,6 +100,7 @@ export const api = {
 
       const { start, end } = JSON.parse(currentRoute);
 
+      // 車でのルート検索
       directionsService.route(
         {
           origin: { lat: start[0], lng: start[1] },
@@ -108,18 +109,37 @@ export const api = {
           drivingOptions: {
             departureTime: new Date(),
             trafficModel: 'bestguess'
-          },
-          provideRouteAlternatives: true
+          }
         },
         (result: any, status: string) => {
           if (status === 'OK') {
-            const route = result.routes[0];
-            resolve({
-              duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-              traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
-            });
+            // 徒歩でのルート検索
+            directionsService.route(
+              {
+                origin: { lat: start[0], lng: start[1] },
+                destination: { lat: end[0], lng: end[1] },
+                travelMode: window.google.maps.TravelMode.WALKING
+              },
+              (walkingResult: any, walkingStatus: string) => {
+                if (walkingStatus === 'OK') {
+                  const route = result.routes[0];
+                  const walkingRoute = walkingResult.routes[0];
+                  resolve({
+                    duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+                    traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常',
+                    duration: {
+                      driving: route.legs[0].duration.value,
+                      walking: walkingRoute.legs[0].duration.value
+                    }
+                  });
+                } else {
+                  console.error('徒歩ルート検索失敗:', walkingStatus);
+                  reject(new Error(`Google Maps APIエラー: ${walkingStatus}`));
+                }
+              }
+            );
           } else {
-            console.error('ルート取得失敗:', status);
+            console.error('車ルート検索失敗:', status);
             reject(new Error(`Google Maps APIエラー: ${status}`));
           }
         }
