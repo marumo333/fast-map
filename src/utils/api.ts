@@ -21,6 +21,7 @@ export const api = {
     return new Promise((resolve, reject) => {
       const directionsService = new window.google.maps.DirectionsService();
 
+      // 車でのルート検索
       directionsService.route(
         {
           origin: { lat: start[0], lng: start[1] },
@@ -32,33 +33,51 @@ export const api = {
           },
           provideRouteAlternatives: true
         },
-        (result: any, status: string) => {
+        async (result: any, status: string) => {
           if (status === 'OK') {
-            const routes = result.routes.map((route: any, index: number) => {
-              const routeId = index + 1;
-              // ルート情報をローカルストレージに保存
-              window.localStorage.setItem(`route_${routeId}`, JSON.stringify({
-                start,
-                end,
-                routeId
-              }));
+            // 徒歩でのルート検索
+            directionsService.route(
+              {
+                origin: { lat: start[0], lng: start[1] },
+                destination: { lat: end[0], lng: end[1] },
+                travelMode: window.google.maps.TravelMode.WALKING
+              },
+              (walkingResult: any, walkingStatus: string) => {
+                if (walkingStatus === 'OK') {
+                  const routes = result.routes.map((route: any, index: number) => {
+                    const routeId = index + 1;
+                    // ルート情報をローカルストレージに保存
+                    window.localStorage.setItem(`route_${routeId}`, JSON.stringify({
+                      start,
+                      end,
+                      routeId
+                    }));
 
-              return {
-                routeId,
-                path: route.overview_path.map((point: any) => [point.lat(), point.lng()]),
-                distance: route.legs[0].distance.value,
-                duration: route.legs[0].duration.value,
-                duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-                isTollRoad: route.legs[0].steps.some((step: any) => step.toll_road),
-                trafficInfo: [{
-                  duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-                  traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
-                }]
-              };
-            });
-            resolve(routes);
+                    return {
+                      routeId,
+                      path: route.overview_path.map((point: any) => [point.lat(), point.lng()]),
+                      distance: route.legs[0].distance.value,
+                      duration: {
+                        driving: route.legs[0].duration.value,
+                        walking: walkingResult.routes[0].legs[0].duration.value
+                      },
+                      duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+                      isTollRoad: route.legs[0].steps.some((step: any) => step.toll_road),
+                      trafficInfo: [{
+                        duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+                        traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
+                      }]
+                    };
+                  });
+                  resolve(routes);
+                } else {
+                  console.error('徒歩ルート検索失敗:', walkingStatus);
+                  reject(new Error(`Google Maps APIエラー: ${walkingStatus}`));
+                }
+              }
+            );
           } else {
-            console.error('ルート検索失敗:', status);
+            console.error('車ルート検索失敗:', status);
             reject(new Error(`Google Maps APIエラー: ${status}`));
           }
         }
