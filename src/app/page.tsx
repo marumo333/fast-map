@@ -311,8 +311,13 @@ export default function Home() {
             currentRoute={selectedRoute}
             suggestedRoute={selectedRoute}
             reason="congestion"
-            onAccept={() => handleRouteSelect(selectedRoute)}
-            onDismiss={() => {}}
+            onAccept={() => {
+              handleRouteSelect(selectedRoute);
+              toast.remove(); // 通知を閉じる
+            }}
+            onDismiss={() => {
+              toast.remove(); // 通知を閉じる
+            }}
           />
         )}
       </div>
