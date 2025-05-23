@@ -52,55 +52,12 @@ export default function Home() {
     trafficInfo,
     (newRoute) => {
       setSelectedRoute(newRoute);
-      // ルート変更の通知を表示
-      toast.custom(
-        (t: { id: string }) => (
-          <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-lg">
-            <div>
-              <p className="font-bold">より良いルートが見つかりました</p>
-              <p>所要時間が短縮される新しいルートを提案します。</p>
-            </div>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="ml-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
-        ),
-        {
-          duration: 5000,
-          position: 'top-right',
-        }
-      );
     }
   );
 
   // ルート選択時の処理
   const handleRouteSelect = (route: Route) => {
     setSelectedRoute(route);
-    // 選択したルートの情報を表示
-    toast.custom(
-      (t: { id: string }) => (
-        <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-lg">
-          <div>
-            <p className="font-bold">ルートを選択しました</p>
-            <p>車での所要時間: {Math.round(route.duration.driving / 60)}分</p>
-            <p>徒歩での所要時間: {Math.round(route.duration.walking / 60)}分</p>
-          </div>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="ml-4 text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
-      ),
-      {
-        duration: 3000,
-        position: 'top-right',
-      }
-    );
   };
 
   const handleLocationSelect = (location: Location) => {
@@ -125,8 +82,6 @@ export default function Home() {
 
   const handleRouteChange = (route: Route) => {
     setSelectedRoute(route);
-    // 通知を閉じる
-    toast.remove();
   };
 
   const handleTrafficUpdate = (info: TrafficInfo) => {
@@ -140,30 +95,6 @@ export default function Home() {
         }]
       };
       setSelectedRoute(updatedRoute);
-
-      // 通知を表示（Xボタンで閉じられるように設定）
-      toast.custom(
-        (t: { id: string }) => (
-          <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-lg">
-            <div>
-              <p className="font-bold">交通情報が更新されました</p>
-              <p>車での所要時間: {Math.round(info.duration.driving / 60)}分</p>
-              <p>徒歩での所要時間: {Math.round(info.duration.walking / 60)}分</p>
-              <p>交通状況: {info.traffic_level}</p>
-            </div>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="ml-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
-        ),
-        {
-          duration: Infinity,
-          position: 'top-right',
-        }
-      );
     }
   };
 
@@ -311,13 +242,8 @@ export default function Home() {
             currentRoute={selectedRoute}
             suggestedRoute={selectedRoute}
             reason="congestion"
-            onAccept={() => {
-              handleRouteSelect(selectedRoute);
-              toast.remove(); // 通知を閉じる
-            }}
-            onDismiss={() => {
-              toast.remove(); // 通知を閉じる
-            }}
+            onAccept={() => handleRouteSelect(selectedRoute)}
+            onDismiss={() => {}}
           />
         )}
       </div>
