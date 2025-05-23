@@ -4,15 +4,15 @@ import { TrafficInfo } from '@/utils/trafficPolling';
 import { api } from '@/utils/api';
 
 export const useRouteChangeDetection = (
-  currentRoute: Route,
-  trafficInfo: TrafficInfo,
+  currentRoute: Route | undefined,
+  trafficInfo: TrafficInfo | null,
   onRouteChange: (newRoute: Route) => void
 ) => {
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     const checkRouteChange = async () => {
-      if (isChecking) return;
+      if (isChecking || !currentRoute || !trafficInfo) return;
       setIsChecking(true);
 
       try {
