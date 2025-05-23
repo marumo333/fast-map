@@ -53,13 +53,26 @@ export default function Home() {
     (newRoute) => {
       setSelectedRoute(newRoute);
       // ルート変更の通知を表示
-      toast({
-        title: 'より良いルートが見つかりました',
-        description: '所要時間が短縮される新しいルートを提案します。',
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
+      toast.custom(
+        (t: { id: string }) => (
+          <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-lg">
+            <div>
+              <p className="font-bold">より良いルートが見つかりました</p>
+              <p>所要時間が短縮される新しいルートを提案します。</p>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="ml-4 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+        ),
+        {
+          duration: 5000,
+          position: 'top-right',
+        }
+      );
     }
   );
 
@@ -67,13 +80,27 @@ export default function Home() {
   const handleRouteSelect = (route: Route) => {
     setSelectedRoute(route);
     // 選択したルートの情報を表示
-    toast({
-      title: 'ルートを選択しました',
-      description: `車での所要時間: ${Math.round(route.duration.driving / 60)}分\n徒歩での所要時間: ${Math.round(route.duration.walking / 60)}分`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+    toast.custom(
+      (t: { id: string }) => (
+        <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-lg">
+          <div>
+            <p className="font-bold">ルートを選択しました</p>
+            <p>車での所要時間: {Math.round(route.duration.driving / 60)}分</p>
+            <p>徒歩での所要時間: {Math.round(route.duration.walking / 60)}分</p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="ml-4 text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+      ),
+      {
+        duration: 3000,
+        position: 'top-right',
+      }
+    );
   };
 
   const handleLocationSelect = (location: Location) => {
