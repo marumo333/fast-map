@@ -157,8 +157,12 @@ export default function Home() {
                     <span className="font-medium">{(selectedRoute.distance / 1000).toFixed(1)}km</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">所要時間:</span>
+                    <span className="text-gray-600">車での所要時間:</span>
                     <span className="font-medium">{Math.round(selectedRoute.duration.driving / 60)}分</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">徒歩での所要時間:</span>
+                    <span className="font-medium">{Math.round(selectedRoute.duration.walking / 60)}分</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">有料道路:</span>
