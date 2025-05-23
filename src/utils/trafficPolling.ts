@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { api } from './api';
 import { Location } from '@/types/location';
+import { api } from '@/utils/api';
 
 export interface TrafficInfo {
   duration_in_traffic: number;
-  traffic_level: '混雑' | '通常';
+  traffic_level: string;
 }
 
 export const useTrafficPolling = (
@@ -44,7 +44,7 @@ export const useTrafficPolling = (
           end
         });
 
-        const info = await api.getTrafficInfo(routeId, start, end);
+        const info = await api.getTrafficInfo(routeId);
         onUpdate(info);
       } catch (error) {
         console.error('交通情報の取得に失敗しました:', {
