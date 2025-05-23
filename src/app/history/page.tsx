@@ -9,7 +9,10 @@ const HistoryPage = () => {
       routeId: 1,
       path: [[35.6812, 139.7671], [35.6812, 139.7671]],
       distance: 5000,
-      duration: 1800,
+      duration: {
+        driving: 1800,
+        walking: 3600
+      },
       duration_in_traffic: 2000,
       isTollRoad: false,
       trafficInfo: [
@@ -66,7 +69,7 @@ const HistoryPage = () => {
                             clipRule="evenodd"
                           />
                         </svg>
-                        {Math.round(route.duration / 60)}分
+                        {Math.round(route.duration.driving / 60)}分
                       </div>
                       {route.isTollRoad && (
                         <div className="ml-6 flex items-center text-sm text-red-500">
