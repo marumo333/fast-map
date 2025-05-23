@@ -142,4 +142,87 @@ export const api = {
       throw error;
     }
   },
-}; 
+};
+
+export async function searchRoute(startLat: number, startLng: number, endLat: number, endLng: number): Promise<Route[]> {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    throw new Error('Google Maps APIキーが設定されていません');
+  }
+
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&alternatives=true&departure_time=now&traffic_model=best_guess&key=${apiKey}`;
+  
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data.status !== 'OK') {
+    throw new Error(`Google Maps Directions APIエラー: ${data.status}`);
+  }
+
+  return data.routes.map((route: any, index: number) => {
+    const path: [number, number][] = [];
+    route.legs.forEach((leg: any) => {
+      leg.steps.forEach((step: any) => {
+        const points = step.polyline.points;
+        let index = 0;
+        let lat = 0;
+        let lng = 0;
+
+        while (index < points.length) {
+          let shift = 0;
+          let result = 0;
+
+          do {
+            let b = points.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+          } while (result >= 0x20);
+
+          let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+          lat += dlat;
+
+          shift = 0;
+          result = 0;
+
+          do {
+            let b = points.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+          } while (result >= 0x20);
+
+          let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+          lng += dlng;
+
+          path.push([lat * 1e-5, lng * 1e-5]);
+        }
+      });
+    });
+
+    const isTollRoad = route.legs.some((leg: any) => leg.toll_road === true);
+    const trafficInfo = route.legs.map((leg: any) => ({
+      duration_in_traffic: leg.duration_in_traffic?.value || leg.duration.value,
+      traffic_level: leg.duration_in_traffic ? '混雑' : '通常'
+    }));
+
+    return {
+      routeId: index + 1,
+      path,
+      distance: route.legs.reduce((sum: number, leg: any) => sum + leg.distance.value, 0),
+      duration: route.legs.reduce((sum: number, leg: any) => sum + leg.duration.value, 0),
+      duration_in_traffic: route.legs.reduce((sum: number, leg: any) => sum + (leg.duration_in_traffic?.value || leg.duration.value), 0),
+      isTollRoad,
+      trafficInfo
+    };
+  });
+}
+
+export async function getTrafficInfo(lat: number, lng: number): Promise<any> {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    throw new Error('Google Maps APIキーが設定されていません');
+  }
+
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${lat},${lng}&destination=${lat},${lng}&departure_time=now&traffic_model=best_guess&key=${apiKey}`;
+  const response = await fetch(url);
+  return response.json();
+} 
