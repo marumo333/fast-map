@@ -14,7 +14,7 @@ export const api = {
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${start[0]},${start[1]}&destination=${end[0]},${end[1]}&key=${API_KEY}&alternatives=true&departure_time=now&traffic_model=best_guess`
+        `/api/directions?origin=${start[0]},${start[1]}&destination=${end[0]},${end[1]}`
       );
 
       if (!response.ok) {
@@ -22,6 +22,10 @@ export const api = {
       }
 
       const data = await response.json();
+      if (data.status !== 'OK') {
+        throw new Error(`Google Maps APIエラー: ${data.status}`);
+      }
+
       return data.routes.map((route: any, index: number) => ({
         routeId: index + 1,
         path: route.overview_polyline.points,
@@ -43,17 +47,18 @@ export const api = {
   // 交通情報の取得
   getTrafficInfo: async (routeId: number): Promise<TrafficInfo> => {
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?route_id=${routeId}&key=${API_KEY}&departure_time=now&traffic_model=best_guess`
-      );
+      const response = await fetch(`/api/directions?route_id=${routeId}`);
 
       if (!response.ok) {
         throw new Error('交通情報の取得に失敗しました');
       }
 
       const data = await response.json();
-      const route = data.routes[0];
+      if (data.status !== 'OK') {
+        throw new Error(`Google Maps APIエラー: ${data.status}`);
+      }
 
+      const route = data.routes[0];
       return {
         duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
         traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
