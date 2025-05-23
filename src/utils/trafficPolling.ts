@@ -2,12 +2,10 @@ import { useEffect, useRef } from 'react';
 import { api } from './api';
 import { Location } from '@/types/location';
 
-export type TrafficInfo = {
-  routeId: number;
-  congestion: string;
-  delay: number;
-  lastUpdated: string;
-};
+export interface TrafficInfo {
+  duration_in_traffic: number;
+  traffic_level: '混雑' | '通常';
+}
 
 export const useTrafficPolling = (
   routeId: number,
