@@ -9,6 +9,7 @@ import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
+import { toast } from '@/components/ui/use-toast';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
@@ -45,20 +46,33 @@ export default function Home() {
   );
 
   // ルート変更の検出
-  const { routeChange, clearRouteChange } = useRouteChangeDetection(
+  useRouteChangeDetection(
     selectedRoute,
-    trafficInfo
+    trafficInfo,
+    (newRoute) => {
+      setSelectedRoute(newRoute);
+      // ルート変更の通知を表示
+      toast({
+        title: 'より良いルートが見つかりました',
+        description: '所要時間が短縮される新しいルートを提案します。',
+        status: 'info',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   );
 
+  // ルート選択時の処理
   const handleRouteSelect = (route: Route) => {
-    console.log('ルート選択:', route);
     setSelectedRoute(route);
-    setIsSearchOpen(false);
-  };
-
-  const handleRouteChange = (newRoute: Route) => {
-    setSelectedRoute(newRoute);
-    clearRouteChange();
+    // 選択したルートの情報を表示
+    toast({
+      title: 'ルートを選択しました',
+      description: `所要時間: ${Math.round(route.duration_in_traffic / 60)}分`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
   };
 
   const handleLocationSelect = (location: Location) => {
@@ -213,13 +227,13 @@ export default function Home() {
       )}
 
       {/* ルート変更通知 */}
-      {routeChange && selectedRoute && (
+      {selectedRoute && (
         <RouteNotification
           currentRoute={selectedRoute}
-          suggestedRoute={routeChange.suggestedRoute}
-          reason={routeChange.reason}
-          onAccept={() => handleRouteChange(routeChange.suggestedRoute)}
-          onDismiss={clearRouteChange}
+          suggestedRoute={selectedRoute}
+          reason="ルート変更の通知"
+          onAccept={() => handleRouteSelect(selectedRoute)}
+          onDismiss={() => {}}
         />
       )}
     </div>
