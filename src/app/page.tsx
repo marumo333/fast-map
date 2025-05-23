@@ -9,7 +9,8 @@ import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
+import { ToastContainer } from '@/components/ui/toast';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
@@ -32,6 +33,7 @@ export default function Home() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentLocation } = useLocation();
+  const { toast } = useToast();
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -97,6 +99,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ToastContainer />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
           最適なルートを探す
