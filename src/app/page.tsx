@@ -5,7 +5,7 @@ import { useTrafficPolling, TrafficInfo } from '../utils/trafficPolling';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
-import RouteNotification from '@/components/RouteNotification';
+import { RouteNotification } from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
@@ -33,6 +33,7 @@ export default function Home() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentLocation } = useLocation();
+  const [showNotification, setShowNotification] = useState(false);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -52,6 +53,7 @@ export default function Home() {
     trafficInfo,
     (newRoute) => {
       setSelectedRoute(newRoute);
+      setShowNotification(true);
     }
   );
 
@@ -82,6 +84,11 @@ export default function Home() {
 
   const handleRouteChange = (route: Route) => {
     setSelectedRoute(route);
+    setShowNotification(false);
+  };
+
+  const handleDismissNotification = () => {
+    setShowNotification(false);
   };
 
   const handleTrafficUpdate = (info: TrafficInfo) => {
@@ -235,14 +242,14 @@ export default function Home() {
         )}
 
         {/* ルート変更通知 */}
-        {selectedRoute && (
+        {selectedRoute && showNotification && (
           <div className="fixed bottom-4 left-4 right-4 z-20">
             <RouteNotification
               currentRoute={selectedRoute}
               suggestedRoute={selectedRoute}
               reason="congestion"
-              onAccept={() => handleRouteSelect(selectedRoute)}
-              onDismiss={() => {}}
+              onAccept={handleRouteChange}
+              onDismiss={handleDismissNotification}
             />
           </div>
         )}

@@ -1,97 +1,99 @@
 import React from 'react';
 import { Route } from '@/types/route';
 
-type RouteNotificationProps = {
+interface RouteNotificationProps {
   currentRoute: Route;
   suggestedRoute: Route;
-  reason: 'congestion' | 'accident' | 'clear';
-  onAccept: () => void;
+  reason: 'congestion' | 'accident' | 'construction';
+  onAccept: (route: Route) => void;
   onDismiss: () => void;
-};
+}
 
-const RouteNotification: React.FC<RouteNotificationProps> = ({
+export const RouteNotification: React.FC<RouteNotificationProps> = ({
   currentRoute,
   suggestedRoute,
   reason,
   onAccept,
-  onDismiss,
+  onDismiss
 }) => {
+  const handleAccept = () => {
+    onAccept(suggestedRoute);
+  };
+
+  const handleDismiss = () => {
+    onDismiss();
+  };
+
   const getReasonText = () => {
     switch (reason) {
       case 'congestion':
         return '渋滞が発生しています';
       case 'accident':
         return '事故が発生しています';
-      case 'clear':
-        return '渋滞が解消されました';
+      case 'construction':
+        return '工事が発生しています';
       default:
         return '';
     }
   };
 
-  const getTimeDifference = () => {
-    if (suggestedRoute.estimatedTime == null || currentRoute.estimatedTime == null) return 0;
-    return Math.abs(suggestedRoute.estimatedTime - currentRoute.estimatedTime);
-  };
+  const timeDifference = Math.round((suggestedRoute.duration.driving - currentRoute.duration.driving) / 60);
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200 z-50">
-      <div className="flex flex-col space-y-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-semibold text-lg">
-              {reason === 'clear' ? '元のルートに戻れます' : '新しいルートを提案'}
-            </h3>
-            <p className="text-gray-600 mt-1">{getReasonText()}</p>
-          </div>
-          <button
-            onClick={onDismiss}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
+    <div className="bg-white rounded-lg shadow-lg p-4 max-w-md mx-auto">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{getReasonText()}</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            より良いルートが見つかりました
+          </p>
+        </div>
+        <button
+          onClick={handleDismiss}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <span className="text-gray-600">有料ルート</span>
+          <span className="font-medium">{suggestedRoute.isTollRoad ? 'あり' : 'なし'}</span>
         </div>
 
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="font-medium">
-                {suggestedRoute.isTollRoad ? '有料ルート' : '無料ルート'}
-              </p>
-              <p className="text-sm text-gray-600">
-                所要時間: {suggestedRoute.estimatedTime}分
-                {reason !== 'clear' && (
-                  <span className="text-green-600 ml-2">
-                    ({getTimeDifference()}分早い)
-                  </span>
-                )}
-              </p>
-            </div>
-            {suggestedRoute.isTollRoad && (
-              <p className="text-red-600 font-medium">
-                ¥{suggestedRoute.tollFee != null ? suggestedRoute.tollFee : '不明'}
-              </p>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-600">所要時間:</span>
+          <span className="font-medium">
+            {Math.round(suggestedRoute.duration.driving / 60)}分
+            {timeDifference !== 0 && (
+              <span className={`ml-2 ${timeDifference < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                ({timeDifference > 0 ? '+' : ''}{timeDifference}分)
+              </span>
             )}
-          </div>
+          </span>
         </div>
 
-        <div className="flex space-x-3">
-          <button
-            onClick={onAccept}
-            className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-          >
-            {reason === 'clear' ? '元のルートに戻る' : 'このルートに変更'}
-          </button>
-          <button
-            onClick={onDismiss}
-            className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-          >
-            現在のルートを維持
-          </button>
+        <div className="flex justify-between items-center">
+          <span className="text-gray-600">料金:</span>
+          <span className="font-medium">¥不明</span>
         </div>
+      </div>
+
+      <div className="mt-4 flex space-x-3">
+        <button
+          onClick={handleAccept}
+          className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+        >
+          このルートに変更
+        </button>
+        <button
+          onClick={handleDismiss}
+          className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
+        >
+          現在のルートを維持
+        </button>
       </div>
     </div>
   );
-};
-
-export default RouteNotification; 
+}; 
