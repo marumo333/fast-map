@@ -2,6 +2,12 @@ import { Route } from '@/types/route';
 import { TrafficInfo } from './trafficPolling';
 import { Feedback } from '@/components/FeedbackForm';
 
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 // Google Maps APIキーの設定
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -12,61 +18,81 @@ if (!API_KEY) {
 export const api = {
   // ルート検索
   searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
-    try {
-      const response = await fetch(
-        `/api/directions?origin=${start[0]},${start[1]}&destination=${end[0]},${end[1]}`
+    return new Promise((resolve, reject) => {
+      const directionsService = new window.google.maps.DirectionsService();
+
+      directionsService.route(
+        {
+          origin: { lat: start[0], lng: start[1] },
+          destination: { lat: end[0], lng: end[1] },
+          travelMode: window.google.maps.TravelMode.DRIVING,
+          drivingOptions: {
+            departureTime: new Date(),
+            trafficModel: 'bestguess'
+          },
+          provideRouteAlternatives: true
+        },
+        (result: any, status: string) => {
+          if (status === 'OK') {
+            const routes = result.routes.map((route: any, index: number) => ({
+              routeId: index + 1,
+              path: route.overview_path.map((point: any) => [point.lat(), point.lng()]),
+              distance: route.legs[0].distance.value,
+              duration: route.legs[0].duration.value,
+              duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+              isTollRoad: route.legs[0].steps.some((step: any) => step.toll_road),
+              trafficInfo: [{
+                duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+                traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
+              }]
+            }));
+            resolve(routes);
+          } else {
+            reject(new Error(`Google Maps APIエラー: ${status}`));
+          }
+        }
       );
-
-      if (!response.ok) {
-        throw new Error('ルート検索に失敗しました');
-      }
-
-      const data = await response.json();
-      if (data.status !== 'OK') {
-        throw new Error(`Google Maps APIエラー: ${data.status}`);
-      }
-
-      return data.routes.map((route: any, index: number) => ({
-        routeId: index + 1,
-        path: route.overview_polyline.points,
-        distance: route.legs[0].distance.value,
-        duration: route.legs[0].duration.value,
-        duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-        isTollRoad: route.legs[0].steps.some((step: any) => step.toll_road),
-        trafficInfo: [{
-          duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-          traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
-        }]
-      }));
-    } catch (error) {
-      console.error('ルート検索エラー:', error);
-      throw error;
-    }
+    });
   },
 
   // 交通情報の取得
   getTrafficInfo: async (routeId: number): Promise<TrafficInfo> => {
-    try {
-      const response = await fetch(`/api/directions?route_id=${routeId}`);
+    return new Promise((resolve, reject) => {
+      const directionsService = new window.google.maps.DirectionsService();
 
-      if (!response.ok) {
-        throw new Error('交通情報の取得に失敗しました');
+      // ルートIDから出発地と目的地を取得する必要があります
+      // この例では、現在のルート情報を保持する必要があります
+      const currentRoute = window.localStorage.getItem(`route_${routeId}`);
+      if (!currentRoute) {
+        reject(new Error('ルート情報が見つかりません'));
+        return;
       }
 
-      const data = await response.json();
-      if (data.status !== 'OK') {
-        throw new Error(`Google Maps APIエラー: ${data.status}`);
-      }
+      const { start, end } = JSON.parse(currentRoute);
 
-      const route = data.routes[0];
-      return {
-        duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
-        traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
-      };
-    } catch (error) {
-      console.error('交通情報取得エラー:', error);
-      throw error;
-    }
+      directionsService.route(
+        {
+          origin: { lat: start[0], lng: start[1] },
+          destination: { lat: end[0], lng: end[1] },
+          travelMode: window.google.maps.TravelMode.DRIVING,
+          drivingOptions: {
+            departureTime: new Date(),
+            trafficModel: 'bestguess'
+          }
+        },
+        (result: any, status: string) => {
+          if (status === 'OK') {
+            const route = result.routes[0];
+            resolve({
+              duration_in_traffic: route.legs[0].duration_in_traffic?.value || route.legs[0].duration.value,
+              traffic_level: route.legs[0].duration_in_traffic ? '混雑' : '通常'
+            });
+          } else {
+            reject(new Error(`Google Maps APIエラー: ${status}`));
+          }
+        }
+      );
+    });
   },
 
   // フィードバック送信
