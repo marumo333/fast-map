@@ -11,9 +11,9 @@ export type RouteInfo = {
   isTollRoad: boolean;
 };
 
-type RouteInfoProps = {
+interface RouteInfoProps {
   routeInfo: RouteInfo;
-};
+}
 
 const RouteInfo: React.FC<RouteInfoProps> = ({ routeInfo }) => {
   return (
