@@ -58,13 +58,13 @@ export const RouteNotification: React.FC<RouteNotificationProps> = ({
 
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-gray-600">有料ルート</span>
-          <span className="font-medium">{suggestedRoute.isTollRoad ? 'あり' : 'なし'}</span>
+          <span className="text-gray-800">有料ルート</span>
+          <span className="font-medium text-gray-900">{suggestedRoute.isTollRoad ? 'あり' : 'なし'}</span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-gray-600">所要時間:</span>
-          <span className="font-medium">
+          <span className="text-gray-800">所要時間:</span>
+          <span className="font-medium text-gray-900">
             {Math.round(suggestedRoute.duration.driving / 60)}分
             {timeDifference !== 0 && (
               <span className={`ml-2 ${timeDifference < 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -75,8 +75,8 @@ export const RouteNotification: React.FC<RouteNotificationProps> = ({
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-gray-600">料金:</span>
-          <span className="font-medium">¥不明</span>
+          <span className="text-gray-800">料金:</span>
+          <span className="font-medium text-gray-900">¥不明</span>
         </div>
       </div>
 
