@@ -132,7 +132,19 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setRouteInfo(data);
+      // 取得したデータをselectedRouteに反映
+      setSelectedRoute({
+        routeId: 1, // デフォルトのルートID
+        path: [], // パス情報は必要に応じて追加
+        distance: data.distance,
+        duration: data.duration,
+        duration_in_traffic: data.duration.driving,
+        isTollRoad: data.isTollRoad,
+        trafficInfo: [{
+          duration_in_traffic: data.duration.driving,
+          traffic_level: '通常'
+        }]
+      });
     } catch (error) {
       setError('ルート情報の取得に失敗しました。もう一度お試しください。');
       console.error('ルート検索エラー:', error);
@@ -302,8 +314,6 @@ export default function Home() {
             {error}
           </div>
         )}
-
-        {routeInfo && <RouteInfo routeInfo={routeInfo} />}
       </div>
     </div>
   );
