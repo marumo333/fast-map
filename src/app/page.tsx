@@ -11,6 +11,8 @@ import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
 import { toast, Toaster } from 'react-hot-toast';
 import { ToastContainer } from '@/components/ui/toast';
+import SearchForm from '@/components/SearchForm';
+import RouteInfo, { RouteInfo as RouteInfoType } from '@/components/RouteInfo';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
@@ -35,6 +37,8 @@ export default function Home() {
   const { currentLocation } = useLocation();
   const [showNotification, setShowNotification] = useState(false);
   const [showTrafficInfo, setShowTrafficInfo] = useState(false);
+  const [routeInfo, setRouteInfo] = useState<RouteInfoType | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -107,6 +111,33 @@ export default function Home() {
         }
       };
       setSelectedRoute(updatedRoute);
+    }
+  };
+
+  const handleSearch = async (start: Location, end: Location) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ start, end }),
+      });
+
+      if (!response.ok) {
+        throw new Error('ルート情報の取得に失敗しました');
+      }
+
+      const data = await response.json();
+      setRouteInfo(data);
+    } catch (error) {
+      setError('ルート情報の取得に失敗しました。もう一度お試しください。');
+      console.error('ルート検索エラー:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -221,11 +252,7 @@ export default function Home() {
           isSearchOpen ? 'translate-y-0' : '-translate-y-full'
         }`}>
           <div className="max-w-4xl mx-auto">
-            <RouteSelector
-              startLocation={startLocation}
-              endLocation={endLocation}
-              onRouteSelect={handleRouteSelect}
-            />
+            <SearchForm onSearch={handleSearch} isLoading={isLoading} />
           </div>
         </div>
 
@@ -269,6 +296,14 @@ export default function Home() {
             />
           </div>
         )}
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
+            {error}
+          </div>
+        )}
+
+        {routeInfo && <RouteInfo routeInfo={routeInfo} />}
       </div>
     </div>
   );
