@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server';
 
+// Google Maps Directions APIのレスポンス型を定義
+interface DirectionsResult {
+  routes: Array<{
+    legs: Array<{
+      distance: { value: number };
+      duration: { value: number };
+      steps: Array<{
+        toll_road?: boolean;
+        highway?: boolean;
+      }>;
+    }>;
+  }>;
+}
+
 export async function POST(request: Request) {
   try {
     const { start, end } = await request.json();
@@ -8,7 +22,7 @@ export async function POST(request: Request) {
     const directionsService = new google.maps.DirectionsService();
     
     // 車でのルートを取得
-    const drivingResult = await new Promise((resolve, reject) => {
+    const drivingResult = await new Promise<DirectionsResult>((resolve, reject) => {
       directionsService.route(
         {
           origin: new google.maps.LatLng(start.lat, start.lng),
@@ -17,7 +31,7 @@ export async function POST(request: Request) {
         },
         (result, status) => {
           if (status === 'OK') {
-            resolve(result);
+            resolve(result as DirectionsResult);
           } else {
             reject(new Error(`Google Maps APIエラー: ${status}`));
           }
@@ -26,7 +40,7 @@ export async function POST(request: Request) {
     });
 
     // 徒歩でのルートを取得
-    const walkingResult = await new Promise((resolve, reject) => {
+    const walkingResult = await new Promise<DirectionsResult>((resolve, reject) => {
       directionsService.route(
         {
           origin: new google.maps.LatLng(start.lat, start.lng),
@@ -35,7 +49,7 @@ export async function POST(request: Request) {
         },
         (result, status) => {
           if (status === 'OK') {
-            resolve(result);
+            resolve(result as DirectionsResult);
           } else {
             reject(new Error(`Google Maps APIエラー: ${status}`));
           }
