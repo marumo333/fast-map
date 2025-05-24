@@ -209,20 +209,20 @@ export default function Home() {
                   </h2>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">距離:</span>
-                      <span className="font-medium">{(selectedRoute.distance / 1000).toFixed(1)}km</span>
+                      <span className="text-gray-800">距離:</span>
+                      <span className="font-medium text-gray-900">{(selectedRoute.distance / 1000).toFixed(1)}km</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">車での所要時間:</span>
-                      <span className="font-medium">{Math.round(selectedRoute.duration.driving / 60)}分</span>
+                      <span className="text-gray-800">車での所要時間:</span>
+                      <span className="font-medium text-gray-900">{Math.round(selectedRoute.duration.driving / 60)}分</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">徒歩での所要時間:</span>
-                      <span className="font-medium">{Math.round(selectedRoute.duration.walking / 60)}分</span>
+                      <span className="text-gray-800">徒歩での所要時間:</span>
+                      <span className="font-medium text-gray-900">{Math.round(selectedRoute.duration.walking / 60)}分</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">有料道路:</span>
-                      <span className="font-medium">{selectedRoute.isTollRoad ? 'あり' : 'なし'}</span>
+                      <span className="text-gray-800">有料道路:</span>
+                      <span className="font-medium text-gray-900">{selectedRoute.isTollRoad ? 'あり' : 'なし'}</span>
                     </div>
                   </div>
                 </div>
