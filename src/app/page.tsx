@@ -13,6 +13,7 @@ import { toast, Toaster } from 'react-hot-toast';
 import { ToastContainer } from '@/components/ui/toast';
 import SearchForm from '@/components/SearchForm';
 import RouteInfo, { RouteInfo as RouteInfoType } from '@/components/RouteInfo';
+import { startTrafficPolling, stopTrafficPolling } from '@/utils/trafficPolling';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
@@ -39,6 +40,11 @@ export default function Home() {
   const [showTrafficInfo, setShowTrafficInfo] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfoType | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'congestion' | 'accident' | 'construction';
+    message: string;
+    alternativeRoute?: Route;
+  } | null>(null);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -151,6 +157,44 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 交通情報のポーリングを開始
+  useEffect(() => {
+    if (selectedRoute) {
+      startTrafficPolling(selectedRoute, (updatedRoute) => {
+        setSelectedRoute(updatedRoute);
+        // 交通状況に基づいて通知を表示
+        if (updatedRoute.trafficInfo) {
+          const { congestionLevel, delay } = updatedRoute.trafficInfo;
+          if (congestionLevel > 0.7) {
+            setNotification({
+              type: 'congestion',
+              message: `現在、このルートは${Math.round(congestionLevel * 100)}%の混雑です。代替ルートを提案しますか？`,
+              alternativeRoute: {
+                ...updatedRoute,
+                path: updatedRoute.path.slice().reverse(), // 簡易的な代替ルート
+                trafficInfo: {
+                  ...updatedRoute.trafficInfo,
+                  congestionLevel: 0.3,
+                  delay: Math.round(delay * 0.5)
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+    return () => {
+      stopTrafficPolling();
+    };
+  }, [selectedRoute]);
+
+  const handleNotificationAction = (accepted: boolean) => {
+    if (accepted && notification?.alternativeRoute) {
+      setSelectedRoute(notification.alternativeRoute);
+    }
+    setNotification(null);
   };
 
   return (
@@ -305,6 +349,17 @@ export default function Home() {
               reason="congestion"
               onAccept={handleRouteChange}
               onDismiss={handleDismissNotification}
+            />
+          </div>
+        )}
+
+        {notification && (
+          <div className="fixed bottom-4 left-4 right-4 z-20">
+            <RouteNotification
+              type={notification.type}
+              message={notification.message}
+              onAccept={() => handleNotificationAction(true)}
+              onDismiss={() => handleNotificationAction(false)}
             />
           </div>
         )}

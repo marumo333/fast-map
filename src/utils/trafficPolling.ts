@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Location } from '@/types/location';
 import { getTrafficInfo } from './api';
+import { Route } from '@/types/route';
 
 export interface TrafficInfo {
   congestion: string;
@@ -61,4 +62,45 @@ export const useTrafficPolling = (
       }
     };
   }, [routeId, interval, onUpdate, startLocation, endLocation]);
+};
+
+let pollingInterval: NodeJS.Timeout | null = null;
+
+export const startTrafficPolling = (
+  route: Route,
+  onUpdate: (updatedRoute: Route) => void
+) => {
+  // 既存のポーリングを停止
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+
+  // 30秒ごとに交通情報を更新
+  pollingInterval = setInterval(async () => {
+    try {
+      const response = await fetch('/api/traffic', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ route }),
+      });
+
+      if (!response.ok) {
+        throw new Error('交通情報の取得に失敗しました');
+      }
+
+      const updatedRoute = await response.json();
+      onUpdate(updatedRoute);
+    } catch (error) {
+      console.error('交通情報の更新エラー:', error);
+    }
+  }, 30000);
+};
+
+export const stopTrafficPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
 }; 

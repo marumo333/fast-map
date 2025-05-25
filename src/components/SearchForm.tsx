@@ -1,52 +1,93 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Location } from '@/types/location';
+import { useLocation } from '@/contexts/LocationContext';
 
-export type SearchFormProps = {
+type SearchFormProps = {
   onSearch: (start: Location, end: Location) => void;
-  isLoading?: boolean;
+  isSearching: boolean;
 };
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = false }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching }) => {
+  const { currentLocation } = useLocation();
   const [startLocation, setStartLocation] = useState<Location | null>(null);
   const [endLocation, setEndLocation] = useState<Location | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchBoxRef = useRef<HTMLInputElement>(null);
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesService = useRef<google.maps.places.PlacesService | null>(null);
 
-  // 現在位置を取得する関数
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      console.error('お使いのブラウザは位置情報をサポートしていません。');
+  useEffect(() => {
+    if (currentLocation) {
+      setStartLocation(currentLocation);
+    }
+  }, [currentLocation]);
+
+  useEffect(() => {
+    // Google Places APIのサービスを初期化
+    if (window.google && window.google.maps) {
+      autocompleteService.current = new google.maps.places.AutocompleteService();
+      const mapDiv = document.createElement('div');
+      placesService.current = new google.maps.places.PlacesService(mapDiv);
+    }
+  }, []);
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowResults(false);
       return;
     }
 
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        setStartLocation(location);
-        setIsLocating(false);
-      },
-      (error) => {
-        console.error('位置情報の取得に失敗しました:', error);
-        setIsLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
+    if (autocompleteService.current) {
+      try {
+        const response = await autocompleteService.current.getPlacePredictions({
+          input: query,
+          types: ['geocode', 'establishment'],
+          componentRestrictions: { country: 'jp' }
+        });
+        setSearchResults(response.predictions);
+        setShowResults(true);
+      } catch (error) {
+        console.error('検索エラー:', error);
+        setSearchResults([]);
       }
-    );
+    }
   };
 
-  // コンポーネントのマウント時に位置情報を取得
-  useEffect(() => {
-    if (!startLocation) {
-      getCurrentLocation();
+  const handlePlaceSelect = async (placeId: string) => {
+    if (placesService.current) {
+      try {
+        const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
+          placesService.current?.getDetails(
+            { placeId, fields: ['geometry', 'name', 'formatted_address'] },
+            (result, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK && result) {
+                resolve(result);
+              } else {
+                reject(new Error('場所の詳細を取得できませんでした'));
+              }
+            }
+          );
+        });
+
+        if (place.geometry?.location) {
+          const location: Location = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng()
+          };
+          setEndLocation(location);
+          setSearchQuery(place.name || '');
+          setShowResults(false);
+        }
+      } catch (error) {
+        console.error('場所の詳細取得エラー:', error);
+      }
     }
-  }, []);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,78 +96,75 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = false }) 
     }
   };
 
+  const handleCurrentLocationClick = () => {
+    if (currentLocation) {
+      setStartLocation(currentLocation);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 rounded-lg shadow-md">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="start-location" className="block text-sm font-medium text-gray-700 mb-1">
-            出発地点
-          </label>
-          <div className="flex items-center space-x-2">
-            <input
-              id="start-location"
-              type="text"
-              placeholder="出発地点を入力"
-              value={startLocation ? `${startLocation.lat}, ${startLocation.lng}` : ''}
-              onChange={(e) => {
-                const [lat, lng] = e.target.value.split(',').map(Number);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                  setStartLocation({ lat, lng });
-                }
-              }}
-              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-              required
-            />
-            <button
-              type="button"
-              onClick={getCurrentLocation}
-              disabled={isLocating}
-              className="p-2 text-primary hover:text-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
-              title="現在地を設定"
-            >
-              {isLocating ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="end-location" className="block text-sm font-medium text-gray-700 mb-1">
-            到着地点
-          </label>
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow-md">
+      <div className="space-y-2">
+        <label htmlFor="start" className="block text-sm font-medium text-gray-700">
+          出発地
+        </label>
+        <div className="flex space-x-2">
           <input
-            id="end-location"
             type="text"
-            placeholder="到着地点を入力"
-            value={endLocation ? `${endLocation.lat}, ${endLocation.lng}` : ''}
-            onChange={(e) => {
-              const [lat, lng] = e.target.value.split(',').map(Number);
-              if (!isNaN(lat) && !isNaN(lng)) {
-                setEndLocation({ lat, lng });
-              }
-            }}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
-            required
+            id="start"
+            value={startLocation ? `${startLocation.lat.toFixed(6)}, ${startLocation.lng.toFixed(6)}` : ''}
+            readOnly
+            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+            placeholder="出発地を選択"
           />
+          <button
+            type="button"
+            onClick={handleCurrentLocationClick}
+            className="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          >
+            現在地
+          </button>
         </div>
-
-        <button
-          type="submit"
-          disabled={isLoading || !startLocation || !endLocation}
-          className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? '検索中...' : 'ルートを検索'}
-        </button>
       </div>
+
+      <div className="space-y-2">
+        <label htmlFor="end" className="block text-sm font-medium text-gray-700">
+          目的地
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            id="end"
+            ref={searchBoxRef}
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+            placeholder="目的地を検索"
+          />
+          {showResults && searchResults.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              {searchResults.map((result) => (
+                <div
+                  key={result.place_id}
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handlePlaceSelect(result.place_id)}
+                >
+                  <div className="text-sm font-medium text-gray-900">{result.structured_formatting.main_text}</div>
+                  <div className="text-xs text-gray-500">{result.structured_formatting.secondary_text}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={!startLocation || !endLocation || isSearching}
+        className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isSearching ? '検索中...' : 'ルート検索'}
+      </button>
     </form>
   );
 };
