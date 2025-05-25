@@ -73,7 +73,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ routeId, onSubmit }) => {
         <textarea
           id="feedback-comment"
           name="comment"
-          className="w-full border rounded p-2 text-base resize-none"
+          className="w-full border rounded p-2 text-base resize-none text-black"
           rows={3}
           value={comment}
           onChange={e => setComment(e.target.value)}
