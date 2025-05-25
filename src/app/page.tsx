@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import RouteSelector from '@/components/RouteSelector';
-import { useTrafficPolling, TrafficInfo } from '../utils/trafficPolling';
+import { useTrafficPolling } from '../utils/trafficPolling';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
@@ -9,11 +9,7 @@ import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
-import { toast, Toaster } from 'react-hot-toast';
-import { ToastContainer } from '@/components/ui/toast';
 import SearchForm from '@/components/SearchForm';
-import RouteInfo, { RouteInfo as RouteInfoType } from '@/components/RouteInfo';
-import { startTrafficPolling, stopTrafficPolling } from '@/utils/trafficPolling';
 
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
@@ -38,8 +34,6 @@ export default function Home() {
   const { currentLocation } = useLocation();
   const [showNotification, setShowNotification] = useState(false);
   const [showTrafficInfo, setShowTrafficInfo] = useState(false);
-  const [routeInfo, setRouteInfo] = useState<RouteInfoType | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
     type: 'congestion' | 'accident' | 'construction';
     message: string;
@@ -109,22 +103,8 @@ export default function Home() {
     setShowNotification(false);
   };
 
-  const handleTrafficUpdate = (info: TrafficInfo) => {
-    if (selectedRoute) {
-      const updatedRoute = {
-        ...selectedRoute,
-        duration: {
-          driving: info.duration.driving,
-          walking: info.duration.walking
-        }
-      };
-      setSelectedRoute(updatedRoute);
-    }
-  };
-
   const handleSearch = async (start: Location, end: Location) => {
     setIsLoading(true);
-    setError(null);
 
     try {
       const response = await fetch('/api/route', {
@@ -154,47 +134,11 @@ export default function Home() {
         }]
       });
     } catch (error) {
-      setError('ルート情報の取得に失敗しました。もう一度お試しください。');
       console.error('ルート検索エラー:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // 交通情報のポーリングを開始
-  useEffect(() => {
-    if (selectedRoute) {
-      startTrafficPolling(selectedRoute, (updatedRoute) => {
-        setSelectedRoute(updatedRoute);
-        // 交通状況に基づいて通知を表示
-        if (updatedRoute.trafficInfo && updatedRoute.trafficInfo[0]) {
-          const trafficInfo = updatedRoute.trafficInfo[0];
-          const congestionLevel = trafficInfo.traffic_level === '混雑' ? 0.8 : 
-                                trafficInfo.traffic_level === 'やや混雑' ? 0.5 : 0.2;
-          const delay = trafficInfo.duration_in_traffic - updatedRoute.duration.driving;
-
-          if (congestionLevel > 0.7) {
-            setNotification({
-              type: 'congestion',
-              message: `現在、このルートは${Math.round(congestionLevel * 100)}%の混雑です。代替ルートを提案しますか？`,
-              alternativeRoute: {
-                ...updatedRoute,
-                path: updatedRoute.path.slice().reverse(), // 簡易的な代替ルート
-                trafficInfo: [{
-                  ...trafficInfo,
-                  traffic_level: '通常',
-                  duration_in_traffic: Math.round(trafficInfo.duration_in_traffic * 0.7)
-                }]
-              }
-            });
-          }
-        }
-      });
-    }
-    return () => {
-      stopTrafficPolling();
-    };
-  }, [selectedRoute]);
 
   const handleNotificationAction = (action: 'accept' | 'dismiss') => {
     if (action === 'accept' && notification?.alternativeRoute) {
@@ -370,12 +314,6 @@ export default function Home() {
               currentRoute={selectedRoute || undefined}
               suggestedRoute={notification.alternativeRoute || undefined}
             />
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
-            {error}
           </div>
         )}
       </div>
