@@ -38,23 +38,25 @@ const defaultCenter = {
 // カスタムマーカーのスタイル
 const createCustomMarker = (isCurrentLocation: boolean) => {
   const div = document.createElement('div');
-  div.style.width = '32px';
-  div.style.height = '32px';
+  div.style.width = '40px';  // サイズを大きく
+  div.style.height = '40px';
   div.style.backgroundColor = isCurrentLocation ? '#3B82F6' : '#EF4444';
-  div.style.border = '3px solid #FFFFFF';
+  div.style.border = '4px solid #FFFFFF';  // ボーダーを太く
   div.style.borderRadius = '50%';
-  div.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+  div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';  // シャドウを強調
   div.style.display = 'flex';
   div.style.alignItems = 'center';
   div.style.justifyContent = 'center';
   div.style.position = 'relative';
+  div.style.transition = 'all 0.3s ease';  // アニメーションを追加
 
   // 内側の円を追加
   const innerCircle = document.createElement('div');
-  innerCircle.style.width = '12px';
-  innerCircle.style.height = '12px';
+  innerCircle.style.width = '16px';  // サイズを大きく
+  innerCircle.style.height = '16px';
   innerCircle.style.backgroundColor = '#FFFFFF';
   innerCircle.style.borderRadius = '50%';
+  innerCircle.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';  // 内側の円にもシャドウ
   div.appendChild(innerCircle);
 
   // 現在地の場合、パルスアニメーションを追加
@@ -74,7 +76,11 @@ const createCustomMarker = (isCurrentLocation: boolean) => {
       @keyframes pulse {
         0% {
           transform: scale(1);
-          opacity: 1;
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.5);
+          opacity: 0.4;
         }
         100% {
           transform: scale(2);
@@ -83,6 +89,17 @@ const createCustomMarker = (isCurrentLocation: boolean) => {
       }
     `;
     document.head.appendChild(style);
+
+    // ホバーエフェクトを追加
+    div.addEventListener('mouseenter', () => {
+      div.style.transform = 'scale(1.1)';
+      div.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
+    });
+
+    div.addEventListener('mouseleave', () => {
+      div.style.transform = 'scale(1)';
+      div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+    });
   }
 
   return div;
