@@ -1,4 +1,5 @@
 import React from 'react';
+import { Route } from '@/types/route';
 
 export type NotificationType = 'congestion' | 'accident' | 'construction';
 
@@ -7,13 +8,17 @@ export interface RouteNotificationProps {
   message: string;
   onAccept: () => void;
   onDismiss: () => void;
+  currentRoute?: Route;
+  suggestedRoute?: Route;
 }
 
 const RouteNotification: React.FC<RouteNotificationProps> = ({
   type,
   message,
   onAccept,
-  onDismiss
+  onDismiss,
+  currentRoute,
+  suggestedRoute
 }) => {
   const getIcon = () => {
     switch (type) {
@@ -48,6 +53,22 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
           <p className="text-sm font-medium text-gray-900">
             {message}
           </p>
+          {currentRoute && suggestedRoute && (
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">現在の所要時間:</span>
+                <span className="font-medium text-gray-900">
+                  {Math.round(currentRoute.duration.driving / 60)}分
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">代替ルートの所要時間:</span>
+                <span className="font-medium text-gray-900">
+                  {Math.round(suggestedRoute.duration.driving / 60)}分
+                </span>
+              </div>
+            </div>
+          )}
           <div className="mt-4 flex space-x-3">
             <button
               type="button"

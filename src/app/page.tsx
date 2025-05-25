@@ -5,7 +5,7 @@ import { useTrafficPolling, TrafficInfo } from '../utils/trafficPolling';
 import { Location } from '@/types/location';
 import { Route } from '@/types/route';
 import { useRouteChangeDetection } from '@/hooks/useRouteChangeDetection';
-import { RouteNotification } from '@/components/RouteNotification';
+import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
@@ -165,8 +165,12 @@ export default function Home() {
       startTrafficPolling(selectedRoute, (updatedRoute) => {
         setSelectedRoute(updatedRoute);
         // 交通状況に基づいて通知を表示
-        if (updatedRoute.trafficInfo) {
-          const { congestionLevel, delay } = updatedRoute.trafficInfo;
+        if (updatedRoute.trafficInfo && updatedRoute.trafficInfo[0]) {
+          const trafficInfo = updatedRoute.trafficInfo[0];
+          const congestionLevel = trafficInfo.traffic_level === '混雑' ? 0.8 : 
+                                trafficInfo.traffic_level === 'やや混雑' ? 0.5 : 0.2;
+          const delay = trafficInfo.duration_in_traffic - updatedRoute.duration.driving;
+
           if (congestionLevel > 0.7) {
             setNotification({
               type: 'congestion',
@@ -174,11 +178,11 @@ export default function Home() {
               alternativeRoute: {
                 ...updatedRoute,
                 path: updatedRoute.path.slice().reverse(), // 簡易的な代替ルート
-                trafficInfo: {
-                  ...updatedRoute.trafficInfo,
-                  congestionLevel: 0.3,
-                  delay: Math.round(delay * 0.5)
-                }
+                trafficInfo: [{
+                  ...trafficInfo,
+                  traffic_level: '通常',
+                  duration_in_traffic: Math.round(trafficInfo.duration_in_traffic * 0.7)
+                }]
               }
             });
           }
@@ -190,8 +194,8 @@ export default function Home() {
     };
   }, [selectedRoute]);
 
-  const handleNotificationAction = (accepted: boolean) => {
-    if (accepted && notification?.alternativeRoute) {
+  const handleNotificationAction = (action: 'accept' | 'dismiss') => {
+    if (action === 'accept' && notification?.alternativeRoute) {
       setSelectedRoute(notification.alternativeRoute);
     }
     setNotification(null);
@@ -308,7 +312,7 @@ export default function Home() {
           isSearchOpen ? 'translate-y-0' : '-translate-y-full'
         }`}>
           <div className="max-w-4xl mx-auto">
-            <SearchForm onSearch={handleSearch} isLoading={isLoading} />
+            <SearchForm onSearch={handleSearch} isSearching={isLoading} />
           </div>
         </div>
 
@@ -358,8 +362,10 @@ export default function Home() {
             <RouteNotification
               type={notification.type}
               message={notification.message}
-              onAccept={() => handleNotificationAction(true)}
-              onDismiss={() => handleNotificationAction(false)}
+              onAccept={() => handleNotificationAction('accept')}
+              onDismiss={() => handleNotificationAction('dismiss')}
+              currentRoute={selectedRoute || undefined}
+              suggestedRoute={notification.alternativeRoute || undefined}
             />
           </div>
         )}
