@@ -159,9 +159,17 @@ export default function Home() {
             {/* 左サイドバー */}
             <div className="lg:col-span-1 space-y-6">
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                  出発地と目的地を選択
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    出発地と目的地を選択
+                  </h2>
+                  <button
+                    onClick={() => setIsSearchOpen(!isSearchOpen)}
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                  >
+                    {isSearchOpen ? '閉じる' : '検索'}
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
