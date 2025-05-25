@@ -50,29 +50,6 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
 
   return (
     <div className="space-y-4 mt-4">
-      <div className="flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <input
-            type="text"
-            placeholder="出発地"
-            className="flex-1 p-3 border rounded-lg text-base bg-white"
-            readOnly
-            value={startLocation ? `${startLocation.lat}, ${startLocation.lng}` : ''}
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-          <input
-            type="text"
-            placeholder="目的地"
-            className="flex-1 p-3 border rounded-lg text-base bg-white"
-            readOnly
-            value={endLocation ? `${endLocation.lat}, ${endLocation.lng}` : ''}
-          />
-        </div>
-      </div>
-
       {error && (
         <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
           {error}
