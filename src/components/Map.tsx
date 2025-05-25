@@ -38,76 +38,29 @@ const defaultCenter = {
 // カスタムマーカーのスタイル
 const createCustomMarker = (isCurrentLocation: boolean) => {
   const div = document.createElement('div');
-  div.style.width = '48px';  // サイズを調整
-  div.style.height = '48px';
+  div.style.width = '40px';  // サイズを大きく
+  div.style.height = '40px';
   div.style.backgroundColor = isCurrentLocation ? '#3B82F6' : '#EF4444';
-  div.style.border = '4px solid #FFFFFF';
+  div.style.border = '4px solid #FFFFFF';  // ボーダーを太く
   div.style.borderRadius = '50%';
-  div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+  div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';  // シャドウを強調
   div.style.display = 'flex';
   div.style.alignItems = 'center';
   div.style.justifyContent = 'center';
   div.style.position = 'relative';
-  div.style.transition = 'all 0.3s ease';
+  div.style.transition = 'all 0.3s ease';  // アニメーションを追加
 
+  // 内側の円を追加
+  const innerCircle = document.createElement('div');
+  innerCircle.style.width = '16px';  // サイズを大きく
+  innerCircle.style.height = '16px';
+  innerCircle.style.backgroundColor = '#FFFFFF';
+  innerCircle.style.borderRadius = '50%';
+  innerCircle.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';  // 内側の円にもシャドウ
+  div.appendChild(innerCircle);
+
+  // 現在地の場合、パルスアニメーションを追加
   if (isCurrentLocation) {
-    // 方向キーのコンテナ
-    const directionContainer = document.createElement('div');
-    directionContainer.style.width = '24px';
-    directionContainer.style.height = '24px';
-    directionContainer.style.position = 'relative';
-    directionContainer.style.display = 'flex';
-    directionContainer.style.flexDirection = 'column';
-    directionContainer.style.alignItems = 'center';
-    directionContainer.style.justifyContent = 'center';
-    directionContainer.style.gap = '2px';
-
-    // 上向き矢印
-    const upArrow = document.createElement('div');
-    upArrow.style.width = '0';
-    upArrow.style.height = '0';
-    upArrow.style.borderLeft = '6px solid transparent';
-    upArrow.style.borderRight = '6px solid transparent';
-    upArrow.style.borderBottom = '8px solid #FFFFFF';
-    upArrow.style.transform = 'rotate(0deg)';
-
-    // 下向き矢印
-    const downArrow = document.createElement('div');
-    downArrow.style.width = '0';
-    downArrow.style.height = '0';
-    downArrow.style.borderLeft = '6px solid transparent';
-    downArrow.style.borderRight = '6px solid transparent';
-    downArrow.style.borderTop = '8px solid #FFFFFF';
-    downArrow.style.transform = 'rotate(0deg)';
-
-    // 左向き矢印
-    const leftArrow = document.createElement('div');
-    leftArrow.style.width = '0';
-    leftArrow.style.height = '0';
-    leftArrow.style.borderTop = '6px solid transparent';
-    leftArrow.style.borderBottom = '6px solid transparent';
-    leftArrow.style.borderRight = '8px solid #FFFFFF';
-    leftArrow.style.transform = 'rotate(0deg)';
-
-    // 右向き矢印
-    const rightArrow = document.createElement('div');
-    rightArrow.style.width = '0';
-    rightArrow.style.height = '0';
-    rightArrow.style.borderTop = '6px solid transparent';
-    rightArrow.style.borderBottom = '6px solid transparent';
-    rightArrow.style.borderLeft = '8px solid #FFFFFF';
-    rightArrow.style.transform = 'rotate(0deg)';
-
-    // 矢印をコンテナに追加
-    directionContainer.appendChild(upArrow);
-    directionContainer.appendChild(downArrow);
-    directionContainer.appendChild(leftArrow);
-    directionContainer.appendChild(rightArrow);
-
-    // コンテナをマーカーに追加
-    div.appendChild(directionContainer);
-
-    // パルスアニメーションを追加
     const pulse = document.createElement('div');
     pulse.style.position = 'absolute';
     pulse.style.width = '100%';
@@ -147,15 +100,6 @@ const createCustomMarker = (isCurrentLocation: boolean) => {
       div.style.transform = 'scale(1)';
       div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
     });
-  } else {
-    // 目的地の場合は通常の円形マーカー
-    const innerCircle = document.createElement('div');
-    innerCircle.style.width = '16px';
-    innerCircle.style.height = '16px';
-    innerCircle.style.backgroundColor = '#FFFFFF';
-    innerCircle.style.borderRadius = '50%';
-    innerCircle.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-    div.appendChild(innerCircle);
   }
 
   return div;
