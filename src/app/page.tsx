@@ -323,23 +323,23 @@ export default function Home() {
           <div className="fixed bottom-24 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg z-10 transition-opacity duration-300">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-base font-semibold text-black-900">交通情報</h2>
+                <h2 className="text-base font-semibold text-black">交通情報</h2>
                 <div className="space-y-1 mt-1">
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-black">
                     混雑度: {trafficInfo.congestion}
                   </p>
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-black">
                     遅延: {trafficInfo.delay}分
                   </p>
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-black">
                     車での所要時間: {Math.round(trafficInfo.duration.driving / 60)}分
                   </p>
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-black">
                     徒歩での所要時間: {Math.round(trafficInfo.duration.walking / 60)}分
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-900">
+              <p className="text-xs text-black">
                 {new Date(trafficInfo.lastUpdated).toLocaleString()}
               </p>
             </div>
