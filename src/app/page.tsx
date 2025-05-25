@@ -218,26 +218,26 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                   出発地と目的地を選択
                 </h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      出発地
-                    </label>
-                    <div className="text-sm text-gray-600">
-                      {startLocation ? 
-                        `緯度: ${startLocation.lat.toFixed(6)}, 経度: ${startLocation.lng.toFixed(6)}` : 
-                        '地図上でクリックして選択'}
-                    </div>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <input
+                      placeholder="出発地"
+                      className="flex-1 p-3 border rounded-lg text-base bg-white text-black"
+                      readOnly
+                      type="text"
+                      value={startLocation ? `${startLocation.lat}, ${startLocation.lng}` : ''}
+                    />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      目的地
-                    </label>
-                    <div className="text-sm text-gray-600">
-                      {endLocation ? 
-                        `緯度: ${endLocation.lat.toFixed(6)}, 経度: ${endLocation.lng.toFixed(6)}` : 
-                        '地図上でクリックして選択'}
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <input
+                      placeholder="目的地"
+                      className="flex-1 p-3 border rounded-lg text-base bg-white text-black"
+                      readOnly
+                      type="text"
+                      value={endLocation ? `${endLocation.lat}, ${endLocation.lng}` : ''}
+                    />
                   </div>
                 </div>
               </div>
