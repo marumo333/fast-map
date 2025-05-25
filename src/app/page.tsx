@@ -98,9 +98,11 @@ export default function Home() {
     console.log('フィードバック送信:', feedback);
   };
 
-  const handleRouteChange = (route: Route) => {
-    setSelectedRoute(route);
-    setShowNotification(false);
+  const handleRouteChange = () => {
+    if (selectedRoute) {
+      setSelectedRoute(selectedRoute);
+      setShowNotification(false);
+    }
   };
 
   const handleDismissNotification = () => {
@@ -348,11 +350,12 @@ export default function Home() {
         {selectedRoute && showNotification && (
           <div className="fixed bottom-4 left-4 right-4 z-20">
             <RouteNotification
-              currentRoute={selectedRoute}
-              suggestedRoute={selectedRoute}
-              reason="congestion"
+              type="congestion"
+              message="現在のルートに混雑が発生しています。代替ルートを表示しますか？"
               onAccept={handleRouteChange}
               onDismiss={handleDismissNotification}
+              currentRoute={selectedRoute}
+              suggestedRoute={selectedRoute}
             />
           </div>
         )}
