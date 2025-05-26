@@ -6,9 +6,10 @@ import { useLocation } from '@/contexts/LocationContext';
 type SearchFormProps = {
   onSearch: (start: Location, end: Location) => void;
   isSearching: boolean;
+  onClose?: () => void;
 };
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose }) => {
   const { currentLocation } = useLocation();
   const [startLocation, setStartLocation] = useState<Location | null>(null);
   const [endLocation, setEndLocation] = useState<Location | null>(null);
@@ -104,6 +105,22 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow-md">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">ルート検索</h2>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            aria-label="検索を閉じる"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
       <div className="space-y-2">
         <label htmlFor="start" className="block text-sm font-medium text-gray-700">
           出発地

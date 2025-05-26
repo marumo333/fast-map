@@ -266,7 +266,11 @@ export default function Home() {
           isSearchOpen ? 'translate-y-0' : '-translate-y-full'
         }`}>
           <div className="max-w-4xl mx-auto">
-            <SearchForm onSearch={handleSearch} isSearching={isLoading} />
+            <SearchForm 
+              onSearch={handleSearch} 
+              isSearching={isLoading} 
+              onClose={() => setIsSearchOpen(false)}
+            />
           </div>
         </div>
 
