@@ -48,7 +48,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         const response = await autocompleteService.current.getPlacePredictions({
           input: query,
           types: ['geocode', 'establishment'],
-          componentRestrictions: { country: 'jp' }
+          componentRestrictions: { country: 'jp' },
+          language: 'ja'
         });
         setSearchResults(response.predictions);
         setShowResults(true);
@@ -64,7 +65,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
       try {
         const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
           placesService.current?.getDetails(
-            { placeId, fields: ['geometry', 'name', 'formatted_address'] },
+            { 
+              placeId, 
+              fields: ['geometry', 'name', 'formatted_address', 'address_components'],
+              language: 'ja'
+            },
             (result, status) => {
               if (status === google.maps.places.PlacesServiceStatus.OK && result) {
                 resolve(result);
@@ -81,7 +86,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             lng: place.geometry.location.lng()
           };
           setEndLocation(location);
-          setSearchQuery(place.name || '');
+          setSearchQuery(place.name || place.formatted_address || '');
           setShowResults(false);
         }
       } catch (error) {
@@ -156,7 +161,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-black"
-            placeholder="目的地を検索"
+            placeholder="目的地を検索（例：東京スカイツリー、渋谷駅など）"
           />
           {showResults && searchResults.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
