@@ -114,7 +114,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching }) => {
             id="start"
             value={startLocation ? `${startLocation.lat.toFixed(6)}, ${startLocation.lng.toFixed(6)}` : ''}
             readOnly
-            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-black"
             placeholder="出発地を選択"
           />
           <button
@@ -138,7 +138,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching }) => {
             ref={searchBoxRef}
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-black"
             placeholder="目的地を検索"
           />
           {showResults && searchResults.length > 0 && (
