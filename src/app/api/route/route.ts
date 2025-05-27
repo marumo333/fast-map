@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     }
 
     // APIキーの確認
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
       console.error('Google Maps APIキーが設定されていません');
       return NextResponse.json(
