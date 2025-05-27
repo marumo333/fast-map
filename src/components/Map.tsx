@@ -119,7 +119,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     id: 'google-map-script',
     googleMapsApiKey: API_KEY || '',
     libraries: GOOGLE_MAPS_LIBRARIES,
-    version: 'weekly'
+    version: 'weekly',
+    mapIds: [MAP_ID]
   });
 
   // 現在位置を取得する関数

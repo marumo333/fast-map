@@ -37,16 +37,17 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
     };
 
     // Google Maps APIが読み込まれるのを待つ
-    if (window.google && window.google.maps) {
-      initializePlacesService();
-    } else {
-      const checkGoogleMaps = setInterval(() => {
-        if (window.google && window.google.maps) {
-          initializePlacesService();
-          clearInterval(checkGoogleMaps);
-        }
-      }, 100);
-    }
+    const checkGoogleMaps = setInterval(() => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        initializePlacesService();
+        clearInterval(checkGoogleMaps);
+      }
+    }, 100);
+
+    // クリーンアップ関数
+    return () => {
+      clearInterval(checkGoogleMaps);
+    };
   }, []);
 
   const handleSearch = async (query: string) => {
