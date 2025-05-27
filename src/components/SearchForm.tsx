@@ -37,17 +37,19 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             language: 'ja'
           });
 
-          startAutocomplete.current.addListener('place_changed', () => {
-            const place = startAutocomplete.current?.getPlace();
-            if (place?.geometry?.location) {
-              const location: Location = {
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng()
-              };
-              setSelectedStart(location);
-              setStartQuery(place.formatted_address || place.name || '');
-            }
-          });
+          if (startAutocomplete.current) {
+            startAutocomplete.current.addListener('place_changed', () => {
+              const place = startAutocomplete.current?.getPlace();
+              if (place?.geometry?.location) {
+                const location: Location = {
+                  lat: place.geometry.location.lat(),
+                  lng: place.geometry.location.lng()
+                };
+                setSelectedStart(location);
+                setStartQuery(place.formatted_address || place.name || '');
+              }
+            });
+          }
         }
 
         if (endInputRef.current) {
@@ -57,17 +59,19 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             language: 'ja'
           });
 
-          endAutocomplete.current.addListener('place_changed', () => {
-            const place = endAutocomplete.current?.getPlace();
-            if (place?.geometry?.location) {
-              const location: Location = {
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng()
-              };
-              setSelectedEnd(location);
-              setEndQuery(place.formatted_address || place.name || '');
-            }
-          });
+          if (endAutocomplete.current) {
+            endAutocomplete.current.addListener('place_changed', () => {
+              const place = endAutocomplete.current?.getPlace();
+              if (place?.geometry?.location) {
+                const location: Location = {
+                  lat: place.geometry.location.lat(),
+                  lng: place.geometry.location.lng()
+                };
+                setSelectedEnd(location);
+                setEndQuery(place.formatted_address || place.name || '');
+              }
+            });
+          }
         }
       }
     };
@@ -115,11 +119,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             ref={startInputRef}
             type="text"
             id="start"
+            name="start"
             value={startQuery}
             onChange={(e) => setStartQuery(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black"
             placeholder="出発地を入力"
             required
+            aria-label="出発地"
           />
         </div>
 
@@ -131,11 +137,13 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             ref={endInputRef}
             type="text"
             id="end"
+            name="end"
             value={endQuery}
             onChange={(e) => setEndQuery(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black"
             placeholder="目的地を入力"
             required
+            aria-label="目的地"
           />
         </div>
 
