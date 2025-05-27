@@ -263,6 +263,75 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     };
   }, [map, selectedRoute, endLocation, isMapReady]);
 
+  // ルートのパスを描画
+  const renderRoute = () => {
+    if (!selectedRoute || !map) return null;
+
+    // ルートのパスを取得
+    const path = selectedRoute.path.map(point => ({
+      lat: point[0],
+      lng: point[1]
+    }));
+
+    // ルートの色を設定（有料道路の場合は赤、それ以外は青）
+    const strokeColor = selectedRoute.isTollRoad ? '#FF0000' : '#3B82F6';
+
+    return (
+      <Polyline
+        path={path}
+        options={{
+          strokeColor,
+          strokeWeight: 6,
+          strokeOpacity: 0.8,
+          icons: [
+            {
+              icon: {
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 3,
+                strokeColor: strokeColor,
+              },
+              offset: '50%',
+            },
+          ],
+        }}
+      />
+    );
+  };
+
+  // 地図の表示範囲を調整
+  useEffect(() => {
+    if (!map || !selectedRoute) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    
+    // 出発地と目的地を境界に追加
+    if (currentLocation) {
+      bounds.extend({ lat: currentLocation.lat, lng: currentLocation.lng });
+    }
+    if (endLocation) {
+      bounds.extend({ lat: endLocation.lat, lng: endLocation.lng });
+    }
+
+    // ルートのパスを境界に追加
+    selectedRoute.path.forEach(point => {
+      bounds.extend({ lat: point[0], lng: point[1] });
+    });
+
+    // 地図の表示範囲を調整
+    map.fitBounds(bounds);
+
+    // 必要に応じてズームレベルを調整
+    const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+      if (map.getZoom() > 15) {
+        map.setZoom(15);
+      }
+    });
+
+    return () => {
+      google.maps.event.removeListener(listener);
+    };
+  }, [map, selectedRoute, currentLocation, endLocation]);
+
   if (mapError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -305,19 +374,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           gestureHandling: 'greedy'
         }}
       >
-        {selectedRoute && (
-          <Polyline
-            path={selectedRoute.path.map(point => ({
-              lat: point[0],
-              lng: point[1]
-            }))}
-            options={{
-              strokeColor: selectedRoute.isTollRoad ? '#FF0000' : '#00FF00',
-              strokeWeight: 6,
-              strokeOpacity: 0.8
-            }}
-          />
-        )}
+        {renderRoute()}
       </GoogleMap>
       {showLocationButton && !hasRequestedLocation && (
         <button
