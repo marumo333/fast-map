@@ -15,6 +15,7 @@ const HistoryPage = () => {
       },
       duration_in_traffic: 2000,
       isTollRoad: false,
+      mode: 'driving',
       trafficInfo: [
         {
           duration_in_traffic: 2000,
@@ -69,7 +70,9 @@ const HistoryPage = () => {
                             clipRule="evenodd"
                           />
                         </svg>
-                        {Math.round(route.duration.driving / 60)}分
+                        {route.duration.driving ? 
+                          `${Math.round(route.duration.driving / 60)}分` : 
+                          '利用不可'}
                       </div>
                       {route.isTollRoad && (
                         <div className="ml-6 flex items-center text-sm text-red-500">
