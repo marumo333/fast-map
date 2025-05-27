@@ -36,9 +36,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // リクエストヘッダーを設定
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Origin': 'https://fast-map-five.vercel.app'
+    };
+
     // 車でのルートを取得
     const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${apiKey}&language=ja`;
-    const drivingResponse = await fetch(drivingUrl);
+    const drivingResponse = await fetch(drivingUrl, { headers });
     const drivingData = await drivingResponse.json();
 
     if (drivingData.status !== 'OK') {
@@ -51,7 +58,7 @@ export async function POST(request: Request) {
 
     // 徒歩でのルートを取得
     const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
-    const walkingResponse = await fetch(walkingUrl);
+    const walkingResponse = await fetch(walkingUrl, { headers });
     const walkingData = await walkingResponse.json();
 
     if (walkingData.status !== 'OK') {
