@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Location } from '@/types/location';
-import * as google from 'google-maps-services-js';
+import { Client, TravelMode, TrafficModel } from '@googlemaps/google-maps-services-js';
 
 // ポリラインをデコードする関数
 function decodePolyline(encoded: string): [number, number][] {
@@ -50,7 +50,7 @@ interface DirectionsResult {
         polyline: {
           points: string;
         };
-        toll_road: boolean;
+        toll_road?: boolean;
       }[];
       distance: {
         value: number;
@@ -83,23 +83,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const directionsService = new google.Client({
-      key: apiKey,
-      Promise: Promise
-    });
+    const directionsService = new Client({});
 
-    const drivingData = await directionsService.route({
-      origin: start,
-      destination: end,
-      travelMode: google.maps.TravelMode.DRIVING,
-      alternatives: true,
-      drivingOptions: {
-        departureTime: new Date(),
-        trafficModel: google.maps.TrafficModel.BEST_GUESS
+    const drivingData = await directionsService.directions({
+      params: {
+        origin: start,
+        destination: end,
+        mode: 'driving' as TravelMode,
+        alternatives: true,
+        departure_time: new Date(),
+        traffic_model: 'best_guess' as TrafficModel,
+        key: apiKey
       }
     });
 
-    if (drivingData.status === 'ZERO_RESULTS') {
+    if (drivingData.data.status === 'ZERO_RESULTS') {
       console.error('車でのルートが見つかりませんでした:', drivingData);
       return NextResponse.json(
         { error: '指定された地点間の車でのルートが見つかりませんでした。' },
@@ -107,22 +105,25 @@ export async function POST(request: Request) {
       );
     }
 
-    if (drivingData.status !== 'OK') {
+    if (drivingData.data.status !== 'OK') {
       console.error('車でのルート検索エラー:', drivingData);
       return NextResponse.json(
-        { error: `車でのルート検索に失敗しました: ${drivingData.status}` },
+        { error: `車でのルート検索に失敗しました: ${drivingData.data.status}` },
         { status: 500 }
       );
     }
 
-    const walkingData = await directionsService.route({
-      origin: start,
-      destination: end,
-      travelMode: google.maps.TravelMode.WALKING,
-      alternatives: true
+    const walkingData = await directionsService.directions({
+      params: {
+        origin: start,
+        destination: end,
+        mode: 'walking' as TravelMode,
+        alternatives: true,
+        key: apiKey
+      }
     });
 
-    if (walkingData.status === 'ZERO_RESULTS') {
+    if (walkingData.data.status === 'ZERO_RESULTS') {
       console.error('徒歩でのルートが見つかりませんでした:', walkingData);
       return NextResponse.json(
         { error: '指定された地点間の徒歩でのルートが見つかりませんでした。' },
@@ -130,18 +131,18 @@ export async function POST(request: Request) {
       );
     }
 
-    if (walkingData.status !== 'OK') {
+    if (walkingData.data.status !== 'OK') {
       console.error('徒歩でのルート検索エラー:', walkingData);
       return NextResponse.json(
-        { error: `徒歩でのルート検索に失敗しました: ${walkingData.status}` },
+        { error: `徒歩でのルート検索に失敗しました: ${walkingData.data.status}` },
         { status: 500 }
       );
     }
 
-    const drivingResult = drivingData as DirectionsResult;
+    const drivingResult = drivingData.data as unknown as DirectionsResult;
     const drivingRoute = drivingResult.routes[0].legs[0];
 
-    const walkingResult = walkingData as DirectionsResult;
+    const walkingResult = walkingData.data as unknown as DirectionsResult;
     const walkingRoute = walkingResult.routes[0].legs[0];
 
     // ポリラインをデコードしてパスを構築
