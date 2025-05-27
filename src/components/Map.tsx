@@ -287,6 +287,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           strokeColor,
           strokeWeight: 6,
           strokeOpacity: 0.8,
+          geodesic: true,
           icons: [
             {
               icon: {
@@ -295,6 +296,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
                 strokeColor: strokeColor,
               },
               offset: '50%',
+              repeat: '100px'
             },
           ],
         }}

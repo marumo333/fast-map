@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { Location } from '@/types/location';
 
-// ポリラインのデコード関数
+// ポリラインをデコードする関数
 function decodePolyline(encoded: string): [number, number][] {
   const poly: [number, number][] = [];
   let index = 0;
@@ -40,95 +41,86 @@ function decodePolyline(encoded: string): [number, number][] {
 
 // Google Maps Directions APIのレスポンス型を定義
 interface DirectionsResult {
-  routes: Array<{
-    legs: Array<{
-      distance: { value: number };
-      duration: { value: number };
-      steps: Array<{
-        polyline: { points: string };
-        toll_road?: boolean;
-        highway?: boolean;
-      }>;
-    }>;
-  }>;
+  routes: {
+    legs: {
+      steps: {
+        polyline: {
+          points: string;
+        };
+        toll_road: boolean;
+      }[];
+      distance: {
+        value: number;
+      };
+      duration: {
+        value: number;
+      };
+    }[];
+  }[];
 }
 
 export async function POST(request: Request) {
   try {
     const { start, end } = await request.json();
 
-    if (!start || !end || typeof start.lat !== 'number' || typeof start.lng !== 'number' || 
-        typeof end.lat !== 'number' || typeof end.lng !== 'number') {
+    if (!start || !end) {
       return NextResponse.json(
-        { error: '無効な座標が指定されました' },
+        { error: '出発地と目的地の座標が必要です' },
         { status: 400 }
       );
     }
 
-    // Google Maps Directions APIのエンドポイントを直接呼び出す
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      console.error('APIキーが設定されていません');
-      return NextResponse.json(
-        { error: 'Google Maps APIキーが設定されていません' },
-        { status: 500 }
-      );
-    }
-
     // 車でのルートを取得
-    const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${apiKey}&language=ja`;
-    const drivingResponse = await fetch(drivingUrl);
+    const drivingResponse = await fetch(
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+    );
+
     const drivingData = await drivingResponse.json();
 
     if (drivingData.status !== 'OK') {
-      console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
-      return NextResponse.json(
-        { error: `Google Maps APIエラー: ${drivingData.status} - ${drivingData.error_message || '不明なエラー'}` },
-        { status: 500 }
-      );
+      throw new Error('車でのルート情報の取得に失敗しました');
     }
 
+    const drivingResult = drivingData as DirectionsResult;
+    const drivingRoute = drivingResult.routes[0].legs[0];
+
     // 徒歩でのルートを取得
-    const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
-    const walkingResponse = await fetch(walkingUrl);
+    const walkingResponse = await fetch(
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+    );
+
     const walkingData = await walkingResponse.json();
 
     if (walkingData.status !== 'OK') {
-      console.error('Google Maps APIエラー:', walkingData.status, walkingData.error_message);
-      return NextResponse.json(
-        { error: `Google Maps APIエラー: ${walkingData.status} - ${walkingData.error_message || '不明なエラー'}` },
-        { status: 500 }
-      );
+      throw new Error('徒歩でのルート情報の取得に失敗しました');
     }
 
-    // ルートの詳細なパス情報を取得
-    const route = drivingData.routes[0];
-    const path: [number, number][] = [];
+    const walkingResult = walkingData as DirectionsResult;
+    const walkingRoute = walkingResult.routes[0].legs[0];
 
-    // 各ステップのパスを結合
-    route.legs[0].steps.forEach((step: any) => {
-      // ポリラインをデコード
-      const decodedPath = decodePolyline(step.polyline.points);
-      // パスを追加
-      path.push(...decodedPath);
+    // ポリラインをデコードしてパスを構築
+    const path: [number, number][] = [];
+    let isTollRoad = false;
+
+    drivingRoute.steps.forEach(step => {
+      const decodedPoints = decodePolyline(step.polyline.points);
+      path.push(...decodedPoints);
+      if (step.toll_road) {
+        isTollRoad = true;
+      }
     });
 
-    // ルート情報を整形
-    const routeInfo = {
-      distance: route.legs[0].distance.value,
+    return NextResponse.json({
+      path,
+      distance: drivingRoute.distance.value,
       duration: {
-        driving: route.legs[0].duration.value,
-        walking: walkingData.routes[0].legs[0].duration.value,
+        driving: drivingRoute.duration.value,
+        walking: walkingRoute.duration.value
       },
-      isTollRoad: route.legs[0].steps.some((step: any) => 
-        step.toll_road || step.highway
-      ),
-      path: path
-    };
-
-    return NextResponse.json(routeInfo);
+      isTollRoad
+    });
   } catch (error) {
-    console.error('ルート情報取得エラー:', error);
+    console.error('ルート情報の取得エラー:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました' },
       { status: 500 }
