@@ -17,6 +17,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const [selectedEnd, setSelectedEnd] = useState<Location | null>(null);
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
+  // TODO: 2025年3月1日以降、PlaceAutocompleteElementに移行予定
   const startAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
   const endAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
 
