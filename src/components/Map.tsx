@@ -276,6 +276,9 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     // ルートの色を設定（有料道路の場合は赤、それ以外は青）
     const strokeColor = selectedRoute.isTollRoad ? '#FF0000' : '#3B82F6';
 
+    // パスが2点以上ある場合のみ描画
+    if (path.length < 2) return null;
+
     return (
       <Polyline
         path={path}

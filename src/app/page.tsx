@@ -124,7 +124,10 @@ export default function Home() {
       // 取得したデータをselectedRouteに反映
       setSelectedRoute({
         routeId: 1, // デフォルトのルートID
-        path: [], // パス情報は必要に応じて追加
+        path: [
+          [start.lat, start.lng],
+          [end.lat, end.lng]
+        ], // 出発地と目的地の座標を設定
         distance: data.distance,
         duration: data.duration,
         duration_in_traffic: data.duration.driving,
