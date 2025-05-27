@@ -173,7 +173,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               setShowStartSuggestions(true);
             }}
             onFocus={() => setShowStartSuggestions(true)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black"
             placeholder="出発地を入力"
             required
           />
@@ -206,7 +206,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               setShowEndSuggestions(true);
             }}
             onFocus={() => setShowEndSuggestions(true)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black"
             placeholder="目的地を入力"
             required
           />
