@@ -121,6 +121,9 @@ export default function Home() {
 
       if (!response.ok) {
         console.error('APIエラーレスポンス:', data);
+        if (response.status === 404) {
+          throw new Error(data.error || 'ルートが見つかりませんでした');
+        }
         throw new Error(data.error || 'ルート情報の取得に失敗しました');
       }
 

@@ -91,6 +91,12 @@ export async function POST(request: Request) {
 
     if (drivingData.status !== 'OK') {
       console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
+      if (drivingData.status === 'ZERO_RESULTS') {
+        return NextResponse.json(
+          { error: '指定された出発地と目的地の間のルートが見つかりませんでした。別の地点を指定してください。' },
+          { status: 404 }
+        );
+      }
       return NextResponse.json(
         { error: `Google Maps APIエラー: ${drivingData.status} - ${drivingData.error_message || '不明なエラー'}` },
         { status: 500 }
@@ -109,6 +115,12 @@ export async function POST(request: Request) {
 
     if (walkingData.status !== 'OK') {
       console.error('Google Maps APIエラー:', walkingData.status, walkingData.error_message);
+      if (walkingData.status === 'ZERO_RESULTS') {
+        return NextResponse.json(
+          { error: '指定された出発地と目的地の間の徒歩ルートが見つかりませんでした。' },
+          { status: 404 }
+        );
+      }
       return NextResponse.json(
         { error: `Google Maps APIエラー: ${walkingData.status} - ${walkingData.error_message || '不明なエラー'}` },
         { status: 500 }
