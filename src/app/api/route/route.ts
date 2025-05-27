@@ -93,8 +93,20 @@ export async function POST(request: Request) {
       console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
       if (drivingData.status === 'ZERO_RESULTS') {
         return NextResponse.json(
-          { error: '指定された出発地と目的地の間のルートが見つかりませんでした。別の地点を指定してください。' },
+          { error: '指定された出発地と目的地の間のルートが見つかりませんでした。別の地点を指定するか、移動手段を変更してください。' },
           { status: 404 }
+        );
+      }
+      if (drivingData.status === 'OVER_QUERY_LIMIT') {
+        return NextResponse.json(
+          { error: 'APIの利用制限に達しました。しばらく時間をおいて再度お試しください。' },
+          { status: 429 }
+        );
+      }
+      if (drivingData.status === 'REQUEST_DENIED') {
+        return NextResponse.json(
+          { error: 'APIリクエストが拒否されました。APIキーの設定を確認してください。' },
+          { status: 403 }
         );
       }
       return NextResponse.json(

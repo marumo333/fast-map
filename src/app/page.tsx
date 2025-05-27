@@ -122,7 +122,13 @@ export default function Home() {
       if (!response.ok) {
         console.error('APIエラーレスポンス:', data);
         if (response.status === 404) {
-          throw new Error(data.error || 'ルートが見つかりませんでした');
+          throw new Error(data.error || 'ルートが見つかりませんでした。別の地点を指定するか、移動手段を変更してください。');
+        }
+        if (response.status === 429) {
+          throw new Error(data.error || 'APIの利用制限に達しました。しばらく時間をおいて再度お試しください。');
+        }
+        if (response.status === 403) {
+          throw new Error(data.error || 'APIリクエストが拒否されました。APIキーの設定を確認してください。');
         }
         throw new Error(data.error || 'ルート情報の取得に失敗しました');
       }
