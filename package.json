@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@googlemaps/google-maps-services-js": "^3.9.28",
+    "@googlemaps/google-maps-services-js": "^3.3.41",
     "@react-google-maps/api": "^2.19.3",
     "@types/google.maps": "^3.55.3",
     "@types/node": "^20.11.24",
