@@ -135,7 +135,19 @@ export default function Home() {
       }
 
       const routeData = await response.json();
-      setSelectedRoute(routeData);
+      // ルートデータに必要なプロパティを追加
+      const selectedRoute = {
+        ...routeData,
+        routeId: 1, // デフォルトのルートID
+        path: routeData.path || [],
+        distance: routeData.distance || 0,
+        duration: {
+          driving: routeData.duration?.driving || 0,
+          walking: routeData.duration?.walking || 0
+        },
+        isTollRoad: routeData.isTollRoad || false
+      };
+      setSelectedRoute(selectedRoute);
       setIsLoading(false);
       setShowNotification(true);
     } catch (error) {

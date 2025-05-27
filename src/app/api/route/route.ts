@@ -58,6 +58,9 @@ interface DirectionsResult {
       duration: {
         value: number;
       };
+      duration_in_traffic?: {
+        value: number;
+      };
     }[];
   }[];
 }
@@ -164,7 +167,12 @@ export async function POST(request: Request) {
         driving: drivingRoute.duration.value,
         walking: walkingRoute.duration.value
       },
-      isTollRoad
+      isTollRoad,
+      routeId: 1, // デフォルトのルートID
+      trafficInfo: [{
+        duration_in_traffic: drivingRoute.duration_in_traffic?.value || drivingRoute.duration.value,
+        traffic_level: drivingRoute.duration_in_traffic ? '混雑' : '通常'
+      }]
     });
   } catch (error) {
     console.error('ルート情報の取得エラー:', error);
