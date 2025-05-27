@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Location } from '@/types/location';
+import * as google from 'google-maps-services-js';
 
 // ポリラインをデコードする関数
 function decodePolyline(encoded: string): [number, number][] {
@@ -82,92 +83,63 @@ export async function POST(request: Request) {
       );
     }
 
-    // 車でのルートを取得
-    const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&alternatives=true&key=${apiKey}&language=ja`;
-    console.log('車でのルート取得URL:', drivingUrl);
+    const directionsService = new google.Client({
+      key: apiKey,
+      Promise: Promise
+    });
 
-    const drivingResponse = await fetch(drivingUrl);
-    const drivingData = await drivingResponse.json();
+    const drivingData = await directionsService.route({
+      origin: start,
+      destination: end,
+      travelMode: google.maps.TravelMode.DRIVING,
+      alternatives: true,
+      drivingOptions: {
+        departureTime: new Date(),
+        trafficModel: google.maps.TrafficModel.BEST_GUESS
+      }
+    });
+
+    if (drivingData.status === 'ZERO_RESULTS') {
+      console.error('車でのルートが見つかりませんでした:', drivingData);
+      return NextResponse.json(
+        { error: '指定された地点間の車でのルートが見つかりませんでした。' },
+        { status: 404 }
+      );
+    }
 
     if (drivingData.status !== 'OK') {
-      console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
-      if (drivingData.status === 'ZERO_RESULTS') {
-        // 徒歩でのルートを試す
-        const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
-        console.log('徒歩でのルート取得URL:', walkingUrl);
-
-        const walkingResponse = await fetch(walkingUrl);
-        const walkingData = await walkingResponse.json();
-
-        if (walkingData.status === 'OK') {
-          // 徒歩ルートが見つかった場合
-          const walkingResult = walkingData as DirectionsResult;
-          const walkingRoute = walkingResult.routes[0].legs[0];
-          const path: [number, number][] = [];
-
-          walkingRoute.steps.forEach(step => {
-            const decodedPoints = decodePolyline(step.polyline.points);
-            path.push(...decodedPoints);
-          });
-
-          return NextResponse.json({
-            path,
-            distance: walkingRoute.distance.value,
-            duration: {
-              driving: null,
-              walking: walkingRoute.duration.value
-            },
-            isTollRoad: false,
-            mode: 'walking'
-          });
-        }
-
-        return NextResponse.json(
-          { error: '指定された出発地と目的地の間のルートが見つかりませんでした。別の地点を指定するか、移動手段を変更してください。' },
-          { status: 404 }
-        );
-      }
-      if (drivingData.status === 'OVER_QUERY_LIMIT') {
-        return NextResponse.json(
-          { error: 'APIの利用制限に達しました。しばらく時間をおいて再度お試しください。' },
-          { status: 429 }
-        );
-      }
-      if (drivingData.status === 'REQUEST_DENIED') {
-        return NextResponse.json(
-          { error: 'APIリクエストが拒否されました。APIキーの設定を確認してください。' },
-          { status: 403 }
-        );
-      }
+      console.error('車でのルート検索エラー:', drivingData);
       return NextResponse.json(
-        { error: `Google Maps APIエラー: ${drivingData.status} - ${drivingData.error_message || '不明なエラー'}` },
+        { error: `車でのルート検索に失敗しました: ${drivingData.status}` },
+        { status: 500 }
+      );
+    }
+
+    const walkingData = await directionsService.route({
+      origin: start,
+      destination: end,
+      travelMode: google.maps.TravelMode.WALKING,
+      alternatives: true
+    });
+
+    if (walkingData.status === 'ZERO_RESULTS') {
+      console.error('徒歩でのルートが見つかりませんでした:', walkingData);
+      return NextResponse.json(
+        { error: '指定された地点間の徒歩でのルートが見つかりませんでした。' },
+        { status: 404 }
+      );
+    }
+
+    if (walkingData.status !== 'OK') {
+      console.error('徒歩でのルート検索エラー:', walkingData);
+      return NextResponse.json(
+        { error: `徒歩でのルート検索に失敗しました: ${walkingData.status}` },
         { status: 500 }
       );
     }
 
     const drivingResult = drivingData as DirectionsResult;
     const drivingRoute = drivingResult.routes[0].legs[0];
-
-    // 徒歩でのルートを取得
-    const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
-    console.log('徒歩でのルート取得URL:', walkingUrl);
-
-    const walkingResponse = await fetch(walkingUrl);
-    const walkingData = await walkingResponse.json();
-
-    if (walkingData.status !== 'OK') {
-      console.error('Google Maps APIエラー:', walkingData.status, walkingData.error_message);
-      if (walkingData.status === 'ZERO_RESULTS') {
-        return NextResponse.json(
-          { error: '指定された出発地と目的地の間の徒歩ルートが見つかりませんでした。' },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json(
-        { error: `Google Maps APIエラー: ${walkingData.status} - ${walkingData.error_message || '不明なエラー'}` },
-        { status: 500 }
-      );
-    }
 
     const walkingResult = walkingData as DirectionsResult;
     const walkingRoute = walkingResult.routes[0].legs[0];

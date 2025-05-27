@@ -24,21 +24,21 @@ const Map = dynamic(() => import('@/components/Map'), {
 export default function Home() {
   const [startLocation, setStartLocation] = useState<Location | null>(null);
   const [endLocation, setEndLocation] = useState<Location | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Location[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSearchPanel, setShowSearchPanel] = useState(true);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [trafficInfo, setTrafficInfo] = useState<any>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLocationRequested, setIsLocationRequested] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentLocation } = useLocation();
   const [showNotification, setShowNotification] = useState(false);
   const [showTrafficInfo, setShowTrafficInfo] = useState(false);
-  const [notification, setNotification] = useState<{
-    type: 'congestion' | 'accident' | 'construction';
-    message: string;
-    alternativeRoute?: Route;
-  } | null>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -104,11 +104,12 @@ export default function Home() {
   };
 
   const handleSearch = async (start: Location, end: Location) => {
-    setIsLoading(true);
-    setStartLocation(start);
-    setEndLocation(end);
-
     try {
+      setStartLocation(start);
+      setEndLocation(end);
+      setIsLoading(true);
+      setError(null);
+
       const response = await fetch('/api/route', {
         method: 'POST',
         headers: {
@@ -117,48 +118,21 @@ export default function Home() {
         body: JSON.stringify({ start, end }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        console.error('APIエラーレスポンス:', data);
+        const errorData = await response.json();
         if (response.status === 404) {
-          throw new Error(data.error || 'ルートが見つかりませんでした。別の地点を指定するか、移動手段を変更してください。');
+          throw new Error('指定された地点間のルートが見つかりませんでした。別の地点を指定するか、移動手段を変更してください。');
         }
-        if (response.status === 429) {
-          throw new Error(data.error || 'APIの利用制限に達しました。しばらく時間をおいて再度お試しください。');
-        }
-        if (response.status === 403) {
-          throw new Error(data.error || 'APIリクエストが拒否されました。APIキーの設定を確認してください。');
-        }
-        throw new Error(data.error || 'ルート情報の取得に失敗しました');
+        throw new Error(errorData.error || 'ルート情報の取得に失敗しました');
       }
 
-      // 取得したデータをselectedRouteに反映
-      setSelectedRoute({
-        routeId: 1, // デフォルトのルートID
-        path: data.path,
-        distance: data.distance,
-        duration: data.duration,
-        duration_in_traffic: data.duration.driving || data.duration.walking,
-        isTollRoad: data.isTollRoad,
-        mode: data.mode || 'driving',
-        trafficInfo: [{
-          duration_in_traffic: data.duration.driving || data.duration.walking,
-          traffic_level: '通常'
-        }]
-      });
-
-      // 検索パネルを閉じる
-      setIsSearchOpen(false);
+      const routeData = await response.json();
+      setSelectedRoute(routeData);
+      setIsLoading(false);
+      setShowNotification(true);
     } catch (error) {
       console.error('ルート検索エラー:', error);
-      // エラーメッセージをユーザーに表示
-      setNotification({
-        type: 'congestion',
-        message: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました'
-      });
-      setShowNotification(true);
-    } finally {
+      setError(error instanceof Error ? error.message : 'ルート検索中にエラーが発生しました');
       setIsLoading(false);
     }
   };
