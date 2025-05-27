@@ -322,13 +322,16 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
     // 必要に応じてズームレベルを調整
     const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
-      if (map.getZoom() > 15) {
+      const currentZoom = map.getZoom();
+      if (currentZoom && currentZoom > 15) {
         map.setZoom(15);
       }
     });
 
     return () => {
-      google.maps.event.removeListener(listener);
+      if (listener) {
+        google.maps.event.removeListener(listener);
+      }
     };
   }, [map, selectedRoute, currentLocation, endLocation]);
 
