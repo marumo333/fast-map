@@ -1,5 +1,43 @@
 import { NextResponse } from 'next/server';
 
+// ポリラインのデコード関数
+function decodePolyline(encoded: string): [number, number][] {
+  const poly: [number, number][] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+
+  while (index < encoded.length) {
+    let shift = 0;
+    let result = 0;
+
+    do {
+      let b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (result >= 0x20);
+
+    const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+
+    do {
+      let b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (result >= 0x20);
+
+    const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+    lng += dlng;
+
+    poly.push([lat * 1e-5, lng * 1e-5]);
+  }
+
+  return poly;
+}
+
 // Google Maps Directions APIのレスポンス型を定義
 interface DirectionsResult {
   routes: Array<{
@@ -7,6 +45,7 @@ interface DirectionsResult {
       distance: { value: number };
       duration: { value: number };
       steps: Array<{
+        polyline: { points: string };
         toll_road?: boolean;
         highway?: boolean;
       }>;
@@ -68,12 +107,10 @@ export async function POST(request: Request) {
 
     // 各ステップのパスを結合
     route.legs[0].steps.forEach((step: any) => {
-      // デコードされたパスを取得
-      const decodedPath = google.maps.geometry.encoding.decodePath(step.polyline.points);
+      // ポリラインをデコード
+      const decodedPath = decodePolyline(step.polyline.points);
       // パスを追加
-      decodedPath.forEach(point => {
-        path.push([point.lat(), point.lng()]);
-      });
+      path.push(...decodedPath);
     });
 
     // ルート情報を整形
