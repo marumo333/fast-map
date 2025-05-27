@@ -95,7 +95,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         placesService.current?.getDetails(
           { 
             placeId, 
-            fields: ['geometry', 'name', 'formatted_address', 'address_components'],
+            fields: ['geometry', 'name', 'formatted_address'],
             language: 'ja'
           },
           (result, status) => {
