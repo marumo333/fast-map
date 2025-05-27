@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     }
 
     // 車でのルートを取得
-    const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${apiKey}&language=ja`;
+    const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&alternatives=true&key=${apiKey}&language=ja`;
     console.log('車でのルート取得URL:', drivingUrl);
 
     const drivingResponse = await fetch(drivingUrl);
@@ -92,6 +92,36 @@ export async function POST(request: Request) {
     if (drivingData.status !== 'OK') {
       console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
       if (drivingData.status === 'ZERO_RESULTS') {
+        // 徒歩でのルートを試す
+        const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
+        console.log('徒歩でのルート取得URL:', walkingUrl);
+
+        const walkingResponse = await fetch(walkingUrl);
+        const walkingData = await walkingResponse.json();
+
+        if (walkingData.status === 'OK') {
+          // 徒歩ルートが見つかった場合
+          const walkingResult = walkingData as DirectionsResult;
+          const walkingRoute = walkingResult.routes[0].legs[0];
+          const path: [number, number][] = [];
+
+          walkingRoute.steps.forEach(step => {
+            const decodedPoints = decodePolyline(step.polyline.points);
+            path.push(...decodedPoints);
+          });
+
+          return NextResponse.json({
+            path,
+            distance: walkingRoute.distance.value,
+            duration: {
+              driving: null,
+              walking: walkingRoute.duration.value
+            },
+            isTollRoad: false,
+            mode: 'walking'
+          });
+        }
+
         return NextResponse.json(
           { error: '指定された出発地と目的地の間のルートが見つかりませんでした。別の地点を指定するか、移動手段を変更してください。' },
           { status: 404 }

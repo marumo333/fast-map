@@ -139,10 +139,11 @@ export default function Home() {
         path: data.path,
         distance: data.distance,
         duration: data.duration,
-        duration_in_traffic: data.duration.driving,
+        duration_in_traffic: data.duration.driving || data.duration.walking,
         isTollRoad: data.isTollRoad,
+        mode: data.mode || 'driving',
         trafficInfo: [{
-          duration_in_traffic: data.duration.driving,
+          duration_in_traffic: data.duration.driving || data.duration.walking,
           traffic_level: '通常'
         }]
       });
@@ -238,7 +239,11 @@ export default function Home() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-800">車での所要時間:</span>
-                      <span className="font-medium text-gray-900">{Math.round(selectedRoute.duration.driving / 60)}分</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedRoute.duration.driving ? 
+                          `${Math.round(selectedRoute.duration.driving / 60)}分` : 
+                          '利用不可'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-800">徒歩での所要時間:</span>

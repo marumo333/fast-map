@@ -8,11 +8,12 @@ export interface Route {
   path: [number, number][];
   distance: number;
   duration: {
-    driving: number;
+    driving: number | null;
     walking: number;
   };
   duration_in_traffic: number;
   isTollRoad: boolean;
+  mode: 'driving' | 'walking';
   trafficInfo: {
     duration_in_traffic: number;
     traffic_level: string;
