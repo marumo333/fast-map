@@ -18,11 +18,22 @@ export async function POST(request: Request) {
   try {
     const { start, end } = await request.json();
 
+    if (!start || !end || typeof start.lat !== 'number' || typeof start.lng !== 'number' || 
+        typeof end.lat !== 'number' || typeof end.lng !== 'number') {
+      return NextResponse.json(
+        { error: '無効な座標が指定されました' },
+        { status: 400 }
+      );
+    }
+
     // Google Maps Directions APIのエンドポイントを直接呼び出す
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
       console.error('APIキーが設定されていません');
-      throw new Error('Google Maps APIキーが設定されていません');
+      return NextResponse.json(
+        { error: 'Google Maps APIキーが設定されていません' },
+        { status: 500 }
+      );
     }
 
     // 車でのルートを取得
@@ -32,7 +43,10 @@ export async function POST(request: Request) {
 
     if (drivingData.status !== 'OK') {
       console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
-      throw new Error(`Google Maps APIエラー: ${drivingData.status} - ${drivingData.error_message || '不明なエラー'}`);
+      return NextResponse.json(
+        { error: `Google Maps APIエラー: ${drivingData.status} - ${drivingData.error_message || '不明なエラー'}` },
+        { status: 500 }
+      );
     }
 
     // 徒歩でのルートを取得
@@ -42,7 +56,10 @@ export async function POST(request: Request) {
 
     if (walkingData.status !== 'OK') {
       console.error('Google Maps APIエラー:', walkingData.status, walkingData.error_message);
-      throw new Error(`Google Maps APIエラー: ${walkingData.status} - ${walkingData.error_message || '不明なエラー'}`);
+      return NextResponse.json(
+        { error: `Google Maps APIエラー: ${walkingData.status} - ${walkingData.error_message || '不明なエラー'}` },
+        { status: 500 }
+      );
     }
 
     // ルート情報を整形

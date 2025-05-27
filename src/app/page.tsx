@@ -115,11 +115,12 @@ export default function Home() {
         body: JSON.stringify({ start, end }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('ルート情報の取得に失敗しました');
+        throw new Error(data.error || 'ルート情報の取得に失敗しました');
       }
 
-      const data = await response.json();
       // 取得したデータをselectedRouteに反映
       setSelectedRoute({
         routeId: 1, // デフォルトのルートID
@@ -135,6 +136,12 @@ export default function Home() {
       });
     } catch (error) {
       console.error('ルート検索エラー:', error);
+      // エラーメッセージをユーザーに表示
+      setNotification({
+        type: 'congestion',
+        message: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました'
+      });
+      setShowNotification(true);
     } finally {
       setIsLoading(false);
     }
