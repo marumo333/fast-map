@@ -13,8 +13,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const { currentLocation } = useLocation();
   const [startQuery, setStartQuery] = useState('');
   const [endQuery, setEndQuery] = useState('');
-  const [startSuggestions, setStartSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
-  const [endSuggestions, setEndSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [startSuggestions, setStartSuggestions] = useState<google.maps.places.PlaceResult[]>([]);
+  const [endSuggestions, setEndSuggestions] = useState<google.maps.places.PlaceResult[]>([]);
   const [selectedStart, setSelectedStart] = useState<Location | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<Location | null>(null);
   const [showStartSuggestions, setShowStartSuggestions] = useState(false);
@@ -22,7 +22,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
 
   useEffect(() => {
     if (currentLocation) {
@@ -34,7 +33,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
     // Google Places APIのサービスを初期化
     const initializePlacesService = () => {
       if (window.google && window.google.maps && window.google.maps.places) {
-        autocompleteService.current = new window.google.maps.places.AutocompleteService();
         const mapDiv = document.createElement('div');
         placesService.current = new window.google.maps.places.PlacesService(mapDiv);
       }
@@ -55,22 +53,38 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
 
   const fetchSuggestions = async (
     query: string,
-    setSuggestions: React.Dispatch<React.SetStateAction<google.maps.places.AutocompletePrediction[]>>
+    setSuggestions: React.Dispatch<React.SetStateAction<google.maps.places.PlaceResult[]>>
   ) => {
-    if (!query.trim() || !autocompleteService.current) {
+    if (!query.trim() || !placesService.current) {
       setSuggestions([]);
       return;
     }
 
     try {
-      const response = await autocompleteService.current.getPlacePredictions({
-        input: query,
-        componentRestrictions: { country: 'jp' },
-        types: ['address', 'establishment', 'geocode']
+      const request: google.maps.places.FindPlaceFromQueryRequest = {
+        query,
+        fields: ['name', 'geometry', 'formatted_address'],
+        locationBias: {
+          center: { lat: 35.6762, lng: 139.6503 }, // 東京の座標
+          radius: 50000 // 50km
+        }
+      };
+
+      const response = await new Promise<{ results: google.maps.places.PlaceResult[] }>((resolve, reject) => {
+        placesService.current?.findPlaceFromQuery(
+          request,
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+              resolve({ results });
+            } else {
+              reject(new Error('場所の検索に失敗しました'));
+            }
+          }
+        );
       });
 
-      if (response && response.predictions) {
-        setSuggestions(response.predictions);
+      if (response.results) {
+        setSuggestions(response.results);
       }
     } catch (error) {
       console.error('予測検索エラー:', error);
@@ -93,73 +107,27 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
     };
   }, [startQuery, endQuery]);
 
-  const handleStartSelect = async (placeId: string) => {
-    if (!placesService.current) return;
-
-    try {
-      const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
-        placesService.current?.getDetails(
-          { 
-            placeId, 
-            fields: ['geometry', 'formatted_address'],
-            language: 'ja'
-          },
-          (result, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-              resolve(result);
-            } else {
-              reject(new Error('場所の詳細を取得できませんでした'));
-            }
-          }
-        );
-      });
-
-      if (place.geometry?.location) {
-        const location: Location = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
-        };
-        setSelectedStart(location);
-        setStartQuery(place.formatted_address || '');
-        setShowStartSuggestions(false);
-      }
-    } catch (error) {
-      console.error('位置情報の取得エラー:', error);
+  const handleStartSelect = (place: google.maps.places.PlaceResult) => {
+    if (place.geometry?.location) {
+      const location: Location = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
+      };
+      setSelectedStart(location);
+      setStartQuery(place.formatted_address || place.name || '');
+      setShowStartSuggestions(false);
     }
   };
 
-  const handleEndSelect = async (placeId: string) => {
-    if (!placesService.current) return;
-
-    try {
-      const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
-        placesService.current?.getDetails(
-          { 
-            placeId, 
-            fields: ['geometry', 'formatted_address'],
-            language: 'ja'
-          },
-          (result, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-              resolve(result);
-            } else {
-              reject(new Error('場所の詳細を取得できませんでした'));
-            }
-          }
-        );
-      });
-
-      if (place.geometry?.location) {
-        const location: Location = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
-        };
-        setSelectedEnd(location);
-        setEndQuery(place.formatted_address || '');
-        setShowEndSuggestions(false);
-      }
-    } catch (error) {
-      console.error('位置情報の取得エラー:', error);
+  const handleEndSelect = (place: google.maps.places.PlaceResult) => {
+    if (place.geometry?.location) {
+      const location: Location = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
+      };
+      setSelectedEnd(location);
+      setEndQuery(place.formatted_address || place.name || '');
+      setShowEndSuggestions(false);
     }
   };
 
@@ -215,9 +183,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
                 <div
                   key={suggestion.place_id}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleStartSelect(suggestion.place_id)}
+                  onClick={() => handleStartSelect(suggestion)}
                 >
-                  {suggestion.description}
+                  {suggestion.formatted_address || suggestion.name}
                 </div>
               ))}
             </div>
@@ -248,9 +216,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
                 <div
                   key={suggestion.place_id}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleEndSelect(suggestion.place_id)}
+                  onClick={() => handleEndSelect(suggestion)}
                 >
-                  {suggestion.description}
+                  {suggestion.formatted_address || suggestion.name}
                 </div>
               ))}
             </div>
