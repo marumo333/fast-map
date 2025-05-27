@@ -28,10 +28,24 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
 
   useEffect(() => {
     // Google Places APIのサービスを初期化
+    const initializePlacesService = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        autocompleteService.current = new window.google.maps.places.AutocompleteService();
+        const mapDiv = document.createElement('div');
+        placesService.current = new window.google.maps.places.PlacesService(mapDiv);
+      }
+    };
+
+    // Google Maps APIが読み込まれるのを待つ
     if (window.google && window.google.maps) {
-      autocompleteService.current = new google.maps.places.AutocompleteService();
-      const mapDiv = document.createElement('div');
-      placesService.current = new google.maps.places.PlacesService(mapDiv);
+      initializePlacesService();
+    } else {
+      const checkGoogleMaps = setInterval(() => {
+        if (window.google && window.google.maps) {
+          initializePlacesService();
+          clearInterval(checkGoogleMaps);
+        }
+      }, 100);
     }
   }, []);
 
@@ -43,55 +57,68 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
       return;
     }
 
-    if (autocompleteService.current) {
-      try {
-        const response = await autocompleteService.current.getPlacePredictions({
-          input: query,
-          types: ['geocode', 'establishment'],
-          componentRestrictions: { country: 'jp' },
-          language: 'ja'
-        });
+    if (!autocompleteService.current) {
+      console.error('AutocompleteServiceが初期化されていません');
+      return;
+    }
+
+    try {
+      const response = await autocompleteService.current.getPlacePredictions({
+        input: query,
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'jp' },
+        language: 'ja'
+      });
+
+      if (response && response.predictions) {
         setSearchResults(response.predictions);
         setShowResults(true);
-      } catch (error) {
-        console.error('検索エラー:', error);
+      } else {
         setSearchResults([]);
+        setShowResults(false);
       }
+    } catch (error) {
+      console.error('検索エラー:', error);
+      setSearchResults([]);
+      setShowResults(false);
     }
   };
 
   const handlePlaceSelect = async (placeId: string) => {
-    if (placesService.current) {
-      try {
-        const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
-          placesService.current?.getDetails(
-            { 
-              placeId, 
-              fields: ['geometry', 'name', 'formatted_address', 'address_components'],
-              language: 'ja'
-            },
-            (result, status) => {
-              if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-                resolve(result);
-              } else {
-                reject(new Error('場所の詳細を取得できませんでした'));
-              }
-            }
-          );
-        });
+    if (!placesService.current) {
+      console.error('PlacesServiceが初期化されていません');
+      return;
+    }
 
-        if (place.geometry?.location) {
-          const location: Location = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-          };
-          setEndLocation(location);
-          setSearchQuery(place.name || place.formatted_address || '');
-          setShowResults(false);
-        }
-      } catch (error) {
-        console.error('場所の詳細取得エラー:', error);
+    try {
+      const place = await new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
+        placesService.current?.getDetails(
+          { 
+            placeId, 
+            fields: ['geometry', 'name', 'formatted_address', 'address_components'],
+            language: 'ja'
+          },
+          (result, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && result) {
+              resolve(result);
+            } else {
+              reject(new Error('場所の詳細を取得できませんでした'));
+            }
+          }
+        );
+      });
+
+      if (place.geometry?.location) {
+        const location: Location = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        };
+        setEndLocation(location);
+        setSearchQuery(place.name || place.formatted_address || '');
+        setShowResults(false);
       }
+    } catch (error) {
+      console.error('場所の詳細取得エラー:', error);
     }
   };
 
