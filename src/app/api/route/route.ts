@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Location } from '@/types/location';
-import { Client, TravelMode, TrafficModel } from '@googlemaps/google-maps-services-js';
+import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@googlemaps/google-maps-services-js';
 
 // ポリラインをデコードする関数
 function decodePolyline(encoded: string): [number, number][] {
@@ -96,16 +96,59 @@ export async function POST(request: Request) {
         alternatives: true,
         departure_time: new Date(),
         traffic_model: 'best_guess' as TrafficModel,
-        key: apiKey
+        key: apiKey,
+        region: 'jp',
+        language: 'ja' as Language,
+        avoid: ['ferries'] as TravelRestriction[],
+        optimize: true
       }
     });
 
     if (drivingData.data.status === 'ZERO_RESULTS') {
       console.error('車でのルートが見つかりませんでした:', drivingData);
-      return NextResponse.json(
-        { error: '指定された地点間の車でのルートが見つかりませんでした。' },
-        { status: 404 }
-      );
+      // 徒歩でのルートを試す
+      const walkingData = await directionsService.directions({
+        params: {
+          origin: start,
+          destination: end,
+          mode: 'walking' as TravelMode,
+          alternatives: true,
+          key: apiKey,
+          region: 'jp',
+          language: 'ja' as Language
+        }
+      });
+
+      if (walkingData.data.status === 'ZERO_RESULTS') {
+        return NextResponse.json(
+          { error: '指定された地点間のルートが見つかりませんでした。別の地点を指定してください。' },
+          { status: 404 }
+        );
+      }
+
+      // 徒歩ルートが見つかった場合は、その情報を返す
+      const walkingResult = walkingData.data as unknown as DirectionsResult;
+      const walkingRoute = walkingResult.routes[0].legs[0];
+      const path: [number, number][] = [];
+      walkingRoute.steps.forEach(step => {
+        const decodedPoints = decodePolyline(step.polyline.points);
+        path.push(...decodedPoints);
+      });
+
+      return NextResponse.json({
+        path,
+        distance: walkingRoute.distance.value,
+        duration: {
+          driving: null,
+          walking: walkingRoute.duration.value
+        },
+        isTollRoad: false,
+        routeId: 1,
+        trafficInfo: [{
+          duration_in_traffic: walkingRoute.duration.value,
+          traffic_level: '通常'
+        }]
+      });
     }
 
     if (drivingData.data.status !== 'OK') {
@@ -115,6 +158,9 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    const drivingResult = drivingData.data as unknown as DirectionsResult;
+    const drivingRoute = drivingResult.routes[0].legs[0];
 
     const walkingData = await directionsService.directions({
       params: {
@@ -141,9 +187,6 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    const drivingResult = drivingData.data as unknown as DirectionsResult;
-    const drivingRoute = drivingResult.routes[0].legs[0];
 
     const walkingResult = walkingData.data as unknown as DirectionsResult;
     const walkingRoute = walkingResult.routes[0].legs[0];
