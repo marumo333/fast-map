@@ -18,53 +18,38 @@ export async function POST(request: Request) {
   try {
     const { start, end } = await request.json();
 
-    // Google Maps Directions APIを使用してルート情報を取得
-    const directionsService = new google.maps.DirectionsService();
-    
+    // Google Maps Directions APIのエンドポイントを直接呼び出す
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      throw new Error('Google Maps APIキーが設定されていません');
+    }
+
     // 車でのルートを取得
-    const drivingResult = await new Promise<DirectionsResult>((resolve, reject) => {
-      directionsService.route(
-        {
-          origin: new google.maps.LatLng(start.lat, start.lng),
-          destination: new google.maps.LatLng(end.lat, end.lng),
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === 'OK') {
-            resolve(result as DirectionsResult);
-          } else {
-            reject(new Error(`Google Maps APIエラー: ${status}`));
-          }
-        }
-      );
-    });
+    const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${apiKey}`;
+    const drivingResponse = await fetch(drivingUrl);
+    const drivingData = await drivingResponse.json();
+
+    if (drivingData.status !== 'OK') {
+      throw new Error(`Google Maps APIエラー: ${drivingData.status}`);
+    }
 
     // 徒歩でのルートを取得
-    const walkingResult = await new Promise<DirectionsResult>((resolve, reject) => {
-      directionsService.route(
-        {
-          origin: new google.maps.LatLng(start.lat, start.lng),
-          destination: new google.maps.LatLng(end.lat, end.lng),
-          travelMode: google.maps.TravelMode.WALKING,
-        },
-        (result, status) => {
-          if (status === 'OK') {
-            resolve(result as DirectionsResult);
-          } else {
-            reject(new Error(`Google Maps APIエラー: ${status}`));
-          }
-        }
-      );
-    });
+    const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}`;
+    const walkingResponse = await fetch(walkingUrl);
+    const walkingData = await walkingResponse.json();
+
+    if (walkingData.status !== 'OK') {
+      throw new Error(`Google Maps APIエラー: ${walkingData.status}`);
+    }
 
     // ルート情報を整形
     const routeInfo = {
-      distance: drivingResult.routes[0].legs[0].distance.value,
+      distance: drivingData.routes[0].legs[0].distance.value,
       duration: {
-        driving: drivingResult.routes[0].legs[0].duration.value,
-        walking: walkingResult.routes[0].legs[0].duration.value,
+        driving: drivingData.routes[0].legs[0].duration.value,
+        walking: walkingData.routes[0].legs[0].duration.value,
       },
-      isTollRoad: drivingResult.routes[0].legs[0].steps.some(step => 
+      isTollRoad: drivingData.routes[0].legs[0].steps.some((step: any) => 
         step.toll_road || step.highway
       ),
     };
