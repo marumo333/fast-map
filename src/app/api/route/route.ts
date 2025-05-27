@@ -36,16 +36,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // リクエストヘッダーを設定
-    const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Origin': 'https://fast-map-five.vercel.app'
-    };
-
     // 車でのルートを取得
     const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${apiKey}&language=ja`;
-    const drivingResponse = await fetch(drivingUrl, { headers });
+    const drivingResponse = await fetch(drivingUrl);
     const drivingData = await drivingResponse.json();
 
     if (drivingData.status !== 'OK') {
@@ -58,7 +51,7 @@ export async function POST(request: Request) {
 
     // 徒歩でのルートを取得
     const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
-    const walkingResponse = await fetch(walkingUrl, { headers });
+    const walkingResponse = await fetch(walkingUrl);
     const walkingData = await walkingResponse.json();
 
     if (walkingData.status !== 'OK') {
@@ -69,16 +62,31 @@ export async function POST(request: Request) {
       );
     }
 
+    // ルートの詳細なパス情報を取得
+    const route = drivingData.routes[0];
+    const path: [number, number][] = [];
+
+    // 各ステップのパスを結合
+    route.legs[0].steps.forEach((step: any) => {
+      // デコードされたパスを取得
+      const decodedPath = google.maps.geometry.encoding.decodePath(step.polyline.points);
+      // パスを追加
+      decodedPath.forEach(point => {
+        path.push([point.lat(), point.lng()]);
+      });
+    });
+
     // ルート情報を整形
     const routeInfo = {
-      distance: drivingData.routes[0].legs[0].distance.value,
+      distance: route.legs[0].distance.value,
       duration: {
-        driving: drivingData.routes[0].legs[0].duration.value,
+        driving: route.legs[0].duration.value,
         walking: walkingData.routes[0].legs[0].duration.value,
       },
-      isTollRoad: drivingData.routes[0].legs[0].steps.some((step: any) => 
+      isTollRoad: route.legs[0].steps.some((step: any) => 
         step.toll_road || step.highway
       ),
+      path: path
     };
 
     return NextResponse.json(routeInfo);
