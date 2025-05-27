@@ -11,6 +11,13 @@ import FeedbackForm from '@/components/FeedbackForm';
 import { useLocation } from '@/contexts/LocationContext';
 import SearchForm from '@/components/SearchForm';
 
+// Notification型を定義
+type Notification = {
+  type: 'congestion' | 'accident' | 'construction';
+  message: string;
+  alternativeRoute?: Route;
+};
+
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -39,6 +46,7 @@ export default function Home() {
   const [showNotification, setShowNotification] = useState(false);
   const [showTrafficInfo, setShowTrafficInfo] = useState(false);
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 交通情報のポーリング
   useTrafficPolling(
