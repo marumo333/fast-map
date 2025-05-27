@@ -100,7 +100,8 @@ export async function POST(request: Request) {
         region: 'jp',
         language: 'ja' as Language,
         avoid: ['ferries'] as TravelRestriction[],
-        optimize: true
+        optimize: true,
+        waypoints: []
       }
     });
 
@@ -115,7 +116,8 @@ export async function POST(request: Request) {
           alternatives: true,
           key: apiKey,
           region: 'jp',
-          language: 'ja' as Language
+          language: 'ja' as Language,
+          waypoints: []
         }
       });
 
@@ -168,7 +170,10 @@ export async function POST(request: Request) {
         destination: end,
         mode: 'walking' as TravelMode,
         alternatives: true,
-        key: apiKey
+        key: apiKey,
+        region: 'jp',
+        language: 'ja' as Language,
+        waypoints: []
       }
     });
 
