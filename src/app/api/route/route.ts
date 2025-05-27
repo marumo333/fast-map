@@ -41,6 +41,8 @@ function decodePolyline(encoded: string): [number, number][] {
 
 // Google Maps Directions APIのレスポンス型を定義
 interface DirectionsResult {
+  status: string;
+  error_message?: string;
   routes: {
     legs: {
       steps: {
@@ -70,29 +72,47 @@ export async function POST(request: Request) {
       );
     }
 
-    // 車でのルートを取得
-    const drivingResponse = await fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-    );
+    // APIキーの確認
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.error('Google Maps APIキーが設定されていません');
+      return NextResponse.json(
+        { error: 'Google Maps APIキーが設定されていません' },
+        { status: 500 }
+      );
+    }
 
+    // 車でのルートを取得
+    const drivingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=driving&key=${apiKey}&language=ja`;
+    console.log('車でのルート取得URL:', drivingUrl);
+
+    const drivingResponse = await fetch(drivingUrl);
     const drivingData = await drivingResponse.json();
 
     if (drivingData.status !== 'OK') {
-      throw new Error('車でのルート情報の取得に失敗しました');
+      console.error('Google Maps APIエラー:', drivingData.status, drivingData.error_message);
+      return NextResponse.json(
+        { error: `Google Maps APIエラー: ${drivingData.status} - ${drivingData.error_message || '不明なエラー'}` },
+        { status: 500 }
+      );
     }
 
     const drivingResult = drivingData as DirectionsResult;
     const drivingRoute = drivingResult.routes[0].legs[0];
 
     // 徒歩でのルートを取得
-    const walkingResponse = await fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-    );
+    const walkingUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${start.lat},${start.lng}&destination=${end.lat},${end.lng}&mode=walking&key=${apiKey}&language=ja`;
+    console.log('徒歩でのルート取得URL:', walkingUrl);
 
+    const walkingResponse = await fetch(walkingUrl);
     const walkingData = await walkingResponse.json();
 
     if (walkingData.status !== 'OK') {
-      throw new Error('徒歩でのルート情報の取得に失敗しました');
+      console.error('Google Maps APIエラー:', walkingData.status, walkingData.error_message);
+      return NextResponse.json(
+        { error: `Google Maps APIエラー: ${walkingData.status} - ${walkingData.error_message || '不明なエラー'}` },
+        { status: 500 }
+      );
     }
 
     const walkingResult = walkingData as DirectionsResult;

@@ -105,6 +105,8 @@ export default function Home() {
 
   const handleSearch = async (start: Location, end: Location) => {
     setIsLoading(true);
+    setStartLocation(start);
+    setEndLocation(end);
 
     try {
       const response = await fetch('/api/route', {
@@ -118,13 +120,14 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
+        console.error('APIエラーレスポンス:', data);
         throw new Error(data.error || 'ルート情報の取得に失敗しました');
       }
 
       // 取得したデータをselectedRouteに反映
       setSelectedRoute({
         routeId: 1, // デフォルトのルートID
-        path: data.path, // APIから取得した詳細なパス情報を使用
+        path: data.path,
         distance: data.distance,
         duration: data.duration,
         duration_in_traffic: data.duration.driving,
@@ -134,6 +137,9 @@ export default function Home() {
           traffic_level: '通常'
         }]
       });
+
+      // 検索パネルを閉じる
+      setIsSearchOpen(false);
     } catch (error) {
       console.error('ルート検索エラー:', error);
       // エラーメッセージをユーザーに表示
