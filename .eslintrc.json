@@ -25,6 +25,7 @@
   "globals": {
     "google": "readonly",
     "NodeJS": "readonly",
-    "React": "readonly"
+    "React": "readonly",
+    "RequestInit": "readonly"
   }
 } 
