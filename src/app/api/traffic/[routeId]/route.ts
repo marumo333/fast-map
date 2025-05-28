@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { RequestInit } from 'node-fetch';
 
 type TrafficInfo = {
   routeId: number;
