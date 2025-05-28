@@ -43,7 +43,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
-  const { currentLocation } = useLocation();
+  const { currentLocation } = useLocation() as { currentLocation: LocationWithAddress | null };
 
   // 緯度・経度から住所を取得する関数
   const getAddressFromLocation = async (location: Location): Promise<string> => {
