@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RequestInit } from 'node-fetch';
 
 type TrafficInfo = {
   routeId: number;
@@ -27,7 +26,7 @@ const getCongestionLevel = (severity: number): string => {
 };
 
 // リトライ付きのfetch関数
-async function fetchWithRetry(url: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<Response> {
+async function fetchWithRetry(url: string, options: globalThis.RequestInit = {}, retries = MAX_RETRIES): Promise<Response> {
   try {
     const response = await fetch(url, options);
     if (response.ok) return response;
