@@ -9,6 +9,7 @@ import RouteNotification from '@/components/RouteNotification';
 import dynamic from 'next/dynamic';
 import { useLocation } from '@/contexts/LocationContext';
 import SearchForm from '@/components/SearchForm';
+import Navbar from '@/components/Navbar';
 
 // Notification型を定義
 type Notification = {
@@ -43,7 +44,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
-  const { currentLocation } = useLocation() as { currentLocation: LocationWithAddress | null };
+  const { currentLocation, getCurrentLocation } = useLocation() as { 
+    currentLocation: LocationWithAddress | null;
+    getCurrentLocation: () => Promise<void>;
+  };
 
   // 緯度・経度から住所を取得する関数
   const getAddressFromLocation = async (location: Location): Promise<string> => {
@@ -183,7 +187,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="flex-grow bg-gray-50 pb-32">
+      <Navbar onGetCurrentLocation={getCurrentLocation} />
+      <div className="flex-grow bg-gray-50 pb-32 pt-16">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             最適なルートを探す

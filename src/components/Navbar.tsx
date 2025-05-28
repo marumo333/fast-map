@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 type NavbarProps = {
-  onGetCurrentLocation: () => void;
+  onGetCurrentLocation: () => Promise<void>;
 };
 
 const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
@@ -50,6 +50,14 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
               }`}
             >
               設定
+            </Link>
+            <Link
+              href="/contact"
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                pathname === '/contact' ? 'text-primary' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              お問い合わせ
             </Link>
           </div>
         </div>
