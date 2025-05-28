@@ -1,15 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
-
-type Location = {
-  lat: number;
-  lng: number;
-};
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { Location } from '@/types/location';
 
 type LocationContextType = {
   currentLocation: Location | null;
-  getCurrentLocation: () => void;
+  getCurrentLocation: () => Promise<void>;
 };
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -17,31 +13,21 @@ const LocationContext = createContext<LocationContextType | undefined>(undefined
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
 
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      console.error('お使いのブラウザは位置情報をサポートしていません。');
-      return;
-    }
+  const getCurrentLocation = useCallback(async () => {
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        console.log('位置情報取得成功:', newLocation);
-        setCurrentLocation(newLocation);
-      },
-      (error) => {
-        console.error('位置情報取得エラー:', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
-    );
-  };
+      setCurrentLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      });
+    } catch (error) {
+      console.error('位置情報の取得に失敗しました:', error);
+      throw error;
+    }
+  }, []);
 
   return (
     <LocationContext.Provider value={{ currentLocation, getCurrentLocation }}>

@@ -10,9 +10,7 @@ type ClientLayoutProps = {
 };
 
 const LayoutContent: React.FC<ClientLayoutProps> = ({ children }) => {
-  const { getCurrentLocation } = useLocation() as { 
-    getCurrentLocation: () => Promise<void>;
-  };
+  const { getCurrentLocation } = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col">
