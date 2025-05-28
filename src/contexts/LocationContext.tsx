@@ -3,6 +3,20 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Location } from '@/types/location';
 
+// GeolocationPositionの型定義
+interface GeolocationPosition {
+  coords: {
+    latitude: number;
+    longitude: number;
+    altitude: number | null;
+    accuracy: number;
+    altitudeAccuracy: number | null;
+    heading: number | null;
+    speed: number | null;
+  };
+  timestamp: number;
+}
+
 type LocationContextType = {
   currentLocation: Location | null;
   getCurrentLocation: () => Promise<void>;
