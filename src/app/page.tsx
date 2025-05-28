@@ -126,6 +126,17 @@ export default function Home() {
     setNotification(null);
   };
 
+  // 位置情報を表示するコンポーネント
+  const LocationInfo = ({ location, label }: { location: Location | null, label: string }) => {
+    if (!location) return null;
+    return (
+      <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <span className="font-medium">{label}:</span>
+        <span>{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-grow bg-gray-50 pb-32">
@@ -143,6 +154,16 @@ export default function Home() {
                   isSearching={isLoading}
                   onClose={() => {}}
                 />
+              </div>
+
+              {/* 位置情報の表示 */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">位置情報</h2>
+                <div className="space-y-2">
+                  <LocationInfo location={startLocation} label="出発地" />
+                  <LocationInfo location={endLocation} label="目的地" />
+                  <LocationInfo location={currentLocation} label="現在地" />
+                </div>
               </div>
 
               {startLocation && endLocation && (
