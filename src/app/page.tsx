@@ -37,6 +37,7 @@ export default function Home() {
   const [notification, setNotification] = useState<Notification | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSearchForm, setShowSearchForm] = useState(true);
   const { currentLocation } = useLocation();
 
   // 交通情報のポーリング
@@ -112,6 +113,7 @@ export default function Home() {
       setSelectedRoute(selectedRoute);
       setIsLoading(false);
       setShowNotification(true);
+      setShowSearchForm(false); // 検索完了後にフォームを閉じる
     } catch (error) {
       console.error('ルート検索エラー:', error);
       setError(error instanceof Error ? error.message : 'ルート検索中にエラーが発生しました');
@@ -148,13 +150,15 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* 左サイドバー */}
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <SearchForm
-                  onSearch={handleSearch}
-                  isSearching={isLoading}
-                  onClose={() => {}}
-                />
-              </div>
+              {showSearchForm && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <SearchForm
+                    onSearch={handleSearch}
+                    isSearching={isLoading}
+                    onClose={() => setShowSearchForm(false)}
+                  />
+                </div>
+              )}
 
               {/* 位置情報の表示 */}
               <div className="bg-white rounded-lg shadow-md p-6">
