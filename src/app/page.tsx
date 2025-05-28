@@ -17,6 +17,11 @@ type Notification = {
   alternativeRoute?: Route;
 };
 
+// 位置情報の型を拡張
+type LocationWithAddress = Location & {
+  address?: string;
+};
+
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -28,8 +33,8 @@ const Map = dynamic(() => import('@/components/Map'), {
 });
 
 export default function Home() {
-  const [startLocation, setStartLocation] = useState<Location | null>(null);
-  const [endLocation, setEndLocation] = useState<Location | null>(null);
+  const [startLocation, setStartLocation] = useState<LocationWithAddress | null>(null);
+  const [endLocation, setEndLocation] = useState<LocationWithAddress | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [trafficInfo, setTrafficInfo] = useState<any>(null);
   const [showNotification, setShowNotification] = useState(false);
@@ -39,6 +44,41 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
   const { currentLocation } = useLocation();
+
+  // 緯度・経度から住所を取得する関数
+  const getAddressFromLocation = async (location: Location): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&language=ja`
+      );
+      const data = await response.json();
+      if (data.results && data.results[0]) {
+        return data.results[0].formatted_address;
+      }
+      return '住所を取得できませんでした';
+    } catch (error) {
+      console.error('住所取得エラー:', error);
+      return '住所を取得できませんでした';
+    }
+  };
+
+  // 位置情報が更新されたときに住所を取得
+  useEffect(() => {
+    const updateLocationAddress = async (location: LocationWithAddress | null, setLocation: (location: LocationWithAddress | null) => void) => {
+      if (location && !location.address) {
+        const address = await getAddressFromLocation(location);
+        setLocation({ ...location, address });
+      }
+    };
+
+    updateLocationAddress(startLocation, setStartLocation);
+    updateLocationAddress(endLocation, setEndLocation);
+    if (currentLocation && !currentLocation.address) {
+      updateLocationAddress(currentLocation as LocationWithAddress, (loc) => {
+        if (loc) setStartLocation(loc);
+      });
+    }
+  }, [startLocation, endLocation, currentLocation]);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -70,14 +110,14 @@ export default function Home() {
   // 現在地が取得されたら出発地として設定
   useEffect(() => {
     if (currentLocation && !startLocation) {
-      setStartLocation(currentLocation);
+      setStartLocation(currentLocation as LocationWithAddress);
     }
   }, [currentLocation, startLocation]);
 
   const handleSearch = async (start: Location, end: Location) => {
     try {
-      setStartLocation(start);
-      setEndLocation(end);
+      setStartLocation(start as LocationWithAddress);
+      setEndLocation(end as LocationWithAddress);
       setIsLoading(true);
       setError(null);
 
@@ -129,12 +169,14 @@ export default function Home() {
   };
 
   // 位置情報を表示するコンポーネント
-  const LocationInfo = ({ location, label }: { location: Location | null, label: string }) => {
+  const LocationInfo = ({ location, label }: { location: LocationWithAddress | null, label: string }) => {
     if (!location) return null;
     return (
-      <div className="flex items-center space-x-2 text-sm text-gray-600">
-        <span className="font-medium">{label}:</span>
-        <span>{location.lat.toFixed(6)}, {location.lng.toFixed(6)}</span>
+      <div className="flex flex-col space-y-1 text-sm text-gray-600">
+        <div className="font-medium">{label}:</div>
+        <div className="pl-2">
+          {location.address || '住所を取得中...'}
+        </div>
       </div>
     );
   };
@@ -163,10 +205,10 @@ export default function Home() {
               {/* 位置情報の表示 */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">位置情報</h2>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <LocationInfo location={startLocation} label="出発地" />
                   <LocationInfo location={endLocation} label="目的地" />
-                  <LocationInfo location={currentLocation} label="現在地" />
+                  <LocationInfo location={currentLocation as LocationWithAddress} label="現在地" />
                 </div>
               </div>
 
@@ -219,9 +261,9 @@ export default function Home() {
                   currentLocation={currentLocation}
                   onLocationSelect={(location) => {
                     if (!startLocation) {
-                      setStartLocation(location);
+                      setStartLocation(location as LocationWithAddress);
                     } else {
-                      setEndLocation(location);
+                      setEndLocation(location as LocationWithAddress);
                     }
                   }}
                   endLocation={endLocation}
