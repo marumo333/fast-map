@@ -108,8 +108,8 @@ const createCustomMarker = (isCurrentLocation: boolean) => {
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect, endLocation }) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [currentMarker, setCurrentMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
-  const [destinationMarker, setDestinationMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const [currentMarker, setCurrentMarker] = useState<google.maps.Marker | null>(null);
+  const [destinationMarker, setDestinationMarker] = useState<google.maps.Marker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [showLocationButton, setShowLocationButton] = useState(false);
@@ -194,75 +194,47 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
   // 現在位置のマーカーを更新
   useEffect(() => {
-    if (!map || !isMapReady || !currentLocation) return;
-
-    try {
-      // 既存のマーカーを削除
+    if (map && currentLocation) {
       if (currentMarker) {
-        currentMarker.map = null;
+        currentMarker.setMap(null);
       }
-
-      // 新しいマーカーを作成
-      const newCurrentMarker = new google.maps.marker.AdvancedMarkerElement({
+      const marker = new google.maps.Marker({
+        position: currentLocation,
         map,
-        position: { lat: currentLocation.lat, lng: currentLocation.lng },
-        content: createCustomMarker(true),
-        title: '現在地'
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#4285F4',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
       });
-
-      setCurrentMarker(newCurrentMarker);
-
-      // 地図の中心位置を現在地に更新
-      map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
-      map.setZoom(15);
-    } catch (error) {
-      console.error('現在位置のマーカーの作成に失敗しました:', error);
-      setMapError('現在位置のマーカーの表示に失敗しました。');
+      setCurrentMarker(marker);
     }
-
-    return () => {
-      if (currentMarker) {
-        currentMarker.map = null;
-      }
-    };
-  }, [map, currentLocation, isMapReady]);
+  }, [map, currentLocation, currentMarker]);
 
   // 目的地のマーカーを更新
   useEffect(() => {
-    if (!map || !isMapReady) return;
-
-    try {
-      // 目的地の位置を取得（selectedRouteがある場合はその最後のポイント、ない場合はendLocation）
-      const destination = selectedRoute?.path[selectedRoute.path.length - 1] || 
-        (endLocation ? [endLocation.lat, endLocation.lng] : null);
-
-      if (!destination) return;
-      
-      // 既存のマーカーを削除
+    if (map && endLocation) {
       if (destinationMarker) {
-        destinationMarker.map = null;
+        destinationMarker.setMap(null);
       }
-
-      // 新しいマーカーを作成
-      const newDestinationMarker = new google.maps.marker.AdvancedMarkerElement({
+      const marker = new google.maps.Marker({
+        position: endLocation,
         map,
-        position: { lat: destination[0], lng: destination[1] },
-        content: createCustomMarker(false),
-        title: '目的地'
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#EA4335',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
       });
-
-      setDestinationMarker(newDestinationMarker);
-    } catch (error) {
-      console.error('目的地のマーカーの作成に失敗しました:', error);
-      setMapError('目的地のマーカーの表示に失敗しました。');
+      setDestinationMarker(marker);
     }
-
-    return () => {
-      if (destinationMarker) {
-        destinationMarker.map = null;
-      }
-    };
-  }, [map, selectedRoute, endLocation, isMapReady]);
+  }, [map, endLocation, destinationMarker]);
 
   // ルートのパスを描画
   const renderRoute = () => {
