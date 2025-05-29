@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLocation } from '@/contexts/LocationContext';
 
 type NavbarProps = {
   onGetCurrentLocation: () => Promise<void>;
@@ -10,6 +11,7 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
   const pathname = usePathname();
+  const { isGettingLocation, locationError } = useLocation();
 
   return (
     <nav className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
@@ -23,10 +25,16 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
           <div className="flex items-center space-x-4">
             <button
               onClick={onGetCurrentLocation}
-              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+              disabled={isGettingLocation}
+              className={`bg-primary text-white px-4 py-2 rounded-lg transition-colors ${
+                isGettingLocation ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-dark'
+              }`}
             >
-              現在地を取得
+              {isGettingLocation ? '取得中...' : '現在地を取得'}
             </button>
+            {locationError && (
+              <span className="text-red-500 text-sm">{locationError}</span>
+            )}
             <Link
               href="/"
               className={`px-3 py-2 rounded-md text-sm font-medium ${

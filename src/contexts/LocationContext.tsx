@@ -20,17 +20,37 @@ interface GeolocationPosition {
 type LocationContextType = {
   currentLocation: Location | null;
   getCurrentLocation: () => Promise<void>;
+  isGettingLocation: boolean;
+  locationError: string | null;
 };
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const getCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setLocationError('お使いのブラウザは位置情報をサポートしていません。');
+      return;
+    }
+
+    setIsGettingLocation(true);
+    setLocationError(null);
+
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
       });
 
       setCurrentLocation({
@@ -39,12 +59,19 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
-      throw error;
+      setLocationError('位置情報の取得に失敗しました。');
+    } finally {
+      setIsGettingLocation(false);
     }
   }, []);
 
   return (
-    <LocationContext.Provider value={{ currentLocation, getCurrentLocation }}>
+    <LocationContext.Provider value={{ 
+      currentLocation, 
+      getCurrentLocation,
+      isGettingLocation,
+      locationError
+    }}>
       {children}
     </LocationContext.Provider>
   );
