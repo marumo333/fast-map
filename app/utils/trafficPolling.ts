@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Location } from '@/types/location';
+import { Location } from '../app/types/location';
 import { getTrafficInfo } from './api';
-import { Route } from '@/types/route';
+import { Route } from '../app/types/route';
 
 export interface TrafficInfo {
   congestion: string;

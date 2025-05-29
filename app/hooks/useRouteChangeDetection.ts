@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Route } from '@/types/route';
-import { TrafficInfo } from '@/utils/trafficPolling';
-import { api } from '@/utils/api';
+import { Route } from '../types/route';
+import { TrafficInfo } from '../utils/trafficPolling';
+import { api } from '../utils/api';
 
 export const useRouteChangeDetection = (
   currentRoute: Route | undefined,

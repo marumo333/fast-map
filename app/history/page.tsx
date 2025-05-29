@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Route } from '@/types/route';
+import { Route } from '../types/route';
 
 const HistoryPage = () => {
   // 仮の履歴データ

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { LocationProvider } from '@/contexts/LocationContext';
-import { ThemeProvider } from '@/app/settings/ThemeContext';
+import { LocationProvider } from './contexts/LocationContext';
+import { ThemeProvider } from './settings/ThemeContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,4 +27,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+} 

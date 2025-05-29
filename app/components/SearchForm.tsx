@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Location } from '@/types/location';
+import { Location } from '../types/location';
 import { useLocation } from '@/contexts/LocationContext';
 
 interface SearchFormProps {

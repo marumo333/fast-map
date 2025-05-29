@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route } from '@/types/route';
+import { Route } from '../types/route';
 
 export type NotificationType = 'congestion' | 'accident' | 'construction';
 

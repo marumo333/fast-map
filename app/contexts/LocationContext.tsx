@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Location } from '@/types/location';
+import { Location } from '../types/location';
 
 // GeolocationPositionの型定義
 interface GeolocationPosition {

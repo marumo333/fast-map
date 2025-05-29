@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocation } from '@/contexts/LocationContext';
-import { useTheme } from '@/app/settings/ThemeContext';
+import { useLocation } from '../contexts/LocationContext';
+import { useTheme } from './ThemeContext';
 
 export default function SettingsPage() {
   const router = useRouter();

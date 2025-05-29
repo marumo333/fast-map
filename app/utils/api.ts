@@ -1,7 +1,7 @@
-import { Route } from '@/types/route';
+import { Route } from '../app/types/route';
 import { TrafficInfo } from './trafficPolling';
 import { Feedback } from '@/components/FeedbackForm';
-import { Location } from '@/types/location';
+import { Location } from '../app/types/location';
 
 declare global {
   interface Window {

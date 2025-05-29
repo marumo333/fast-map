@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Location } from '@/types/location';
-import { Route } from '@/types/route';
-import { api } from '@/utils/api';
+import { Location } from '../types/location';
+import { Route } from '../types/route';
+import { api } from '../utils/api';
 
 type RouteSelectorProps = {
   startLocation: Location | null;

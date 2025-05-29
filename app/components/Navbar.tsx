@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLocation } from '@/contexts/LocationContext';
+import { useLocation } from '../contexts/LocationContext';
 
 type NavbarProps = {
   onGetCurrentLocation: () => Promise<void>;

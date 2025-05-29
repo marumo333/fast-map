@@ -1,8 +1,8 @@
 'use client';
 import React, { useCallback, useState, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, Polyline, Marker } from '@react-google-maps/api';
-import { Location } from '@/types/location';
-import { Route } from '@/types/route';
+import { Location } from '../types/location';
+import { Route } from '../types/route';
 
 // 静的なライブラリ配列を定義
 const GOOGLE_MAPS_LIBRARIES: ("marker" | "places" | "geometry")[] = ["marker", "places", "geometry"];
