@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import ClientLayout from '../components/ClientLayout';
+import { LocationProvider } from '@/contexts/LocationContext';
+import { ThemeProvider } from '@/app/settings/ThemeContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Fast-Map - 最適なルートを探す',
+  title: 'Fast-Map',
   description: 'リアルタイムの交通情報を活用した最適なルート検索サービス',
 };
 
@@ -18,7 +19,11 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={inter.className}>
-        <ClientLayout>{children}</ClientLayout>
+        <ThemeProvider>
+          <LocationProvider>
+            {children}
+          </LocationProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
