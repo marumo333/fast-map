@@ -22,6 +22,7 @@ type LocationContextType = {
   getCurrentLocation: () => Promise<void>;
   isGettingLocation: boolean;
   locationError: string | null;
+  clearLocationError: () => void;
 };
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -30,6 +31,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+
+  const clearLocationError = useCallback(() => {
+    setLocationError(null);
+  }, []);
 
   const getCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) {
@@ -70,7 +75,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       currentLocation, 
       getCurrentLocation,
       isGettingLocation,
-      locationError
+      locationError,
+      clearLocationError
     }}>
       {children}
     </LocationContext.Provider>

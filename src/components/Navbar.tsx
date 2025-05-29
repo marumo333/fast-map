@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLocation } from '@/contexts/LocationContext';
@@ -11,7 +11,11 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
   const pathname = usePathname();
-  const { isGettingLocation, locationError } = useLocation();
+  const { isGettingLocation, locationError, clearLocationError } = useLocation();
+
+  useEffect(() => {
+    clearLocationError();
+  }, [pathname, clearLocationError]);
 
   return (
     <nav className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
