@@ -4,18 +4,26 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
   --primary-color: 96, 165, 250; /* 薄い青色 */
   --secondary-color: 191, 219, 254; /* より薄い青色 */
   --accent-color: 59, 130, 246; /* アクセント用の青色 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
+/* ダークモード切り替え時のトランジション */
+.theme-transition,
+.theme-transition *,
+.theme-transition *:before,
+.theme-transition *:after {
+  transition: all 0.3s ease-in-out !important;
+  transition-delay: 0 !important;
 }
 
 body {
