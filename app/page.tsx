@@ -188,13 +188,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300" data-theme={isDarkMode ? 'dark' : 'light'}>
-      <div className="w-full h-full bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
+      <div className="w-full h-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Navbar onGetCurrentLocation={getCurrentLocation} />
           <div className="flex-grow pb-32 pt-16">
             <div className="container mx-auto px-4 py-8">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">
+              <h1 className={`text-3xl font-bold mb-8 text-center transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 最適なルートを探す
               </h1>
               
@@ -202,7 +202,7 @@ export default function Home() {
                 {/* 左サイドバー */}
                 <div className="lg:col-span-1 space-y-6">
                   {showSearchForm && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
+                    <div className={`rounded-lg shadow-md p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                       <SearchForm
                         onSearch={handleSearch}
                         isSearching={isLoading}
@@ -212,17 +212,17 @@ export default function Home() {
                   )}
 
                   {/* 位置情報表示 */}
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">位置情報</h2>
+                  <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                    <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>位置情報</h2>
                     <LocationInfo location={startLocation} label="出発地" />
                     <LocationInfo location={endLocation} label="目的地" />
                   </div>
 
                   {/* ルート情報 */}
                   {selectedRoute && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300">
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">ルート情報</h2>
-                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
+                    <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
+                      <div className={`space-y-2 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         <p>距離: {selectedRoute.distance}km</p>
                         <p>所要時間: {selectedRoute.duration.driving}分</p>
                         {selectedRoute.isTollRoad && (
@@ -235,7 +235,7 @@ export default function Home() {
 
                 {/* 地図表示エリア */}
                 <div className="lg:col-span-2">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
+                  <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="h-[600px] relative">
                       <Map
                         selectedRoute={selectedRoute}
@@ -270,7 +270,7 @@ export default function Home() {
 
           {/* 交通情報通知 */}
           {showTrafficInfo && trafficInfo && (
-            <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-lg shadow-lg transition-colors duration-300">
+            <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
               <p className="text-sm">交通情報が更新されました</p>
             </div>
           )}
