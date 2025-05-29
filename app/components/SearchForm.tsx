@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { Location } from '../types/location';
-import { useLocation } from '@/contexts/LocationContext';
+import { useLocation } from '../contexts/LocationContext';
 
 interface SearchFormProps {
   onSearch: (start: Location, end: Location) => void;
