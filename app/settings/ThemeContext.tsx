@@ -18,6 +18,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
     
+    console.log('Initial Theme State:', {
+      savedTheme,
+      prefersDark,
+      shouldBeDark,
+      hasDarkClass: document.documentElement.classList.contains('dark')
+    });
+    
     // 即座にクラスを設定
     if (shouldBeDark) {
       document.documentElement.classList.add('dark');
@@ -51,6 +58,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const newValue = !isDarkMode;
     setIsDarkMode(newValue);
     
+    // デバッグ用のログを追加
+    console.log('Toggle Dark Mode:', {
+      newValue,
+      hasDarkClass: document.documentElement.classList.contains('dark'),
+      currentTheme: localStorage.getItem('theme')
+    });
+    
     // 即座にクラスを更新
     if (newValue) {
       document.documentElement.classList.add('dark');
@@ -59,6 +73,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+
+    // 更新後の状態を確認
+    console.log('After Toggle:', {
+      hasDarkClass: document.documentElement.classList.contains('dark'),
+      currentTheme: localStorage.getItem('theme')
+    });
   };
 
   return (
