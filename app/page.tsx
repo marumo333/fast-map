@@ -1,15 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import RouteSelector from '@/components/RouteSelector';
-import { useTrafficPolling } from '../utils/trafficPolling';
+import RouteSelector from './components/RouteSelector';
+import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
 import { Route } from './types/route';
 import { useRouteChangeDetection } from './hooks/useRouteChangeDetection';
-import RouteNotification from '@/components/RouteNotification';
+import RouteNotification from './components/RouteNotification';
 import dynamic from 'next/dynamic';
-import { useLocation } from '@/contexts/LocationContext';
-import SearchForm from '@/components/SearchForm';
-import Navbar from '@/components/Navbar';
+import { useLocation } from './contexts/LocationContext';
+import SearchForm from './components/SearchForm';
+import Navbar from './components/Navbar';
 
 // Notification型を定義
 type Notification = {
@@ -24,7 +24,7 @@ type LocationWithAddress = Location & {
 };
 
 // Leafletのマップコンポーネントを動的にインポート
-const Map = dynamic(() => import('@/components/Map'), {
+const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100">
