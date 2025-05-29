@@ -188,9 +188,9 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar onGetCurrentLocation={getCurrentLocation} />
-      <div className="flex-grow bg-gray-50 pb-32 pt-16">
+      <div className="flex-grow bg-gray-50 dark:bg-gray-900 pb-32 pt-16 transition-colors duration-300">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">
             最適なルートを探す
           </h1>
           
@@ -198,7 +198,7 @@ export default function Home() {
             {/* 左サイドバー */}
             <div className="lg:col-span-1 space-y-6">
               {showSearchForm && (
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
                   <SearchForm
                     onSearch={handleSearch}
                     isSearching={isLoading}
@@ -207,52 +207,23 @@ export default function Home() {
                 </div>
               )}
 
-              {/* 位置情報の表示 */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">位置情報</h2>
-                <div className="space-y-4">
-                  <LocationInfo location={startLocation} label="出発地" />
-                  <LocationInfo location={endLocation} label="目的地" />
-                  <LocationInfo location={currentLocation as LocationWithAddress} label="現在地" />
-                </div>
+              {/* 位置情報表示 */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">位置情報</h2>
+                <LocationInfo location={startLocation} label="出発地" />
+                <LocationInfo location={endLocation} label="目的地" />
               </div>
 
-              {startLocation && endLocation && (
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <RouteSelector
-                    startLocation={startLocation}
-                    endLocation={endLocation}
-                    onRouteSelect={setSelectedRoute}
-                  />
-                </div>
-              )}
-
+              {/* ルート情報 */}
               {selectedRoute && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                    ルート情報
-                  </h2>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-800">距離:</span>
-                      <span className="font-medium text-gray-900">{(selectedRoute.distance / 1000).toFixed(1)}km</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-800">車での所要時間:</span>
-                      <span className="font-medium text-gray-900">
-                        {selectedRoute.duration.driving ? 
-                          `${Math.round(selectedRoute.duration.driving / 60)}分` : 
-                          '利用不可'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-800">徒歩での所要時間:</span>
-                      <span className="font-medium text-gray-900">{Math.round(selectedRoute.duration.walking / 60)}分</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-800">有料道路:</span>
-                      <span className="font-medium text-gray-900">{selectedRoute.isTollRoad ? 'あり' : 'なし'}</span>
-                    </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">ルート情報</h2>
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
+                    <p>距離: {selectedRoute.distance}km</p>
+                    <p>所要時間: {selectedRoute.duration.driving}分</p>
+                    {selectedRoute.isTollRoad && (
+                      <p className="text-yellow-600 dark:text-yellow-400">有料道路を含む</p>
+                    )}
                   </div>
                 </div>
               )}
@@ -260,19 +231,21 @@ export default function Home() {
 
             {/* 地図表示エリア */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '600px' }}>
-                <Map
-                  selectedRoute={selectedRoute}
-                  currentLocation={currentLocation}
-                  onLocationSelect={(location) => {
-                    if (!startLocation) {
-                      setStartLocation(location as LocationWithAddress);
-                    } else {
-                      setEndLocation(location as LocationWithAddress);
-                    }
-                  }}
-                  endLocation={endLocation}
-                />
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
+                <div className="h-[600px] relative">
+                  <Map
+                    selectedRoute={selectedRoute}
+                    currentLocation={currentLocation}
+                    onLocationSelect={(location) => {
+                      if (!startLocation) {
+                        setStartLocation(location as LocationWithAddress);
+                      } else {
+                        setEndLocation(location as LocationWithAddress);
+                      }
+                    }}
+                    endLocation={endLocation}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -289,6 +262,13 @@ export default function Home() {
           currentRoute={selectedRoute || undefined}
           suggestedRoute={notification.alternativeRoute || undefined}
         />
+      )}
+
+      {/* 交通情報通知 */}
+      {showTrafficInfo && trafficInfo && (
+        <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-lg shadow-lg transition-colors duration-300">
+          <p className="text-sm">交通情報が更新されました</p>
+        </div>
       )}
     </div>
   );
