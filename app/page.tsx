@@ -27,8 +27,8 @@ type LocationWithAddress = Location & {
 const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-      <div className="text-gray-600">地図を読み込み中...</div>
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 transition-colors duration-300">
+      <div className="text-gray-600 dark:text-gray-300 transition-colors duration-300">地図を読み込み中...</div>
     </div>
   )
 });
@@ -176,7 +176,7 @@ export default function Home() {
   const LocationInfo = ({ location, label }: { location: LocationWithAddress | null, label: string }) => {
     if (!location) return null;
     return (
-      <div className="flex flex-col space-y-1 text-sm text-gray-600">
+      <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
         <div className="font-medium">{label}:</div>
         <div className="pl-2">
           {location.address || '住所を取得中...'}
@@ -186,9 +186,9 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Navbar onGetCurrentLocation={getCurrentLocation} />
-      <div className="flex-grow bg-gray-50 dark:bg-gray-900 pb-32 pt-16 transition-colors duration-300">
+      <div className="flex-grow pb-32 pt-16">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">
             最適なルートを探す
