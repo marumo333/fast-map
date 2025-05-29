@@ -61,17 +61,17 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pt-16 transition-colors duration-300">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 transition-colors duration-300">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 transition-colors duration-300">設定</h1>
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 transition-colors duration-300`}>
+          <h1 className={`text-2xl font-bold mb-8 transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>設定</h1>
           
           <div className="space-y-6">
             {/* 通知設定 */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">通知設定</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                <h2 className={`text-lg font-medium transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>通知設定</h2>
+                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   重要な更新やアラートを受け取ります
                 </p>
               </div>
@@ -79,7 +79,7 @@ export default function SettingsPage() {
                 onClick={() => handleSettingChange('notifications')}
                 disabled={isTransitioning}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  settings.notifications ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
+                  settings.notifications ? 'bg-primary' : isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
                 } ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span
@@ -93,8 +93,8 @@ export default function SettingsPage() {
             {/* 交通情報の更新 */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">交通情報の更新</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                <h2 className={`text-lg font-medium transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>交通情報の更新</h2>
+                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   リアルタイムの交通情報の更新を受け取ります
                 </p>
               </div>
@@ -102,7 +102,7 @@ export default function SettingsPage() {
                 onClick={() => handleSettingChange('trafficUpdates')}
                 disabled={isTransitioning}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  settings.trafficUpdates ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
+                  settings.trafficUpdates ? 'bg-primary' : isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
                 } ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span
@@ -116,8 +116,8 @@ export default function SettingsPage() {
             {/* ダークモード */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white transition-colors duration-300">ダークモード</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                <h2 className={`text-lg font-medium transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ダークモード</h2>
+                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   ダークテーマに切り替えます
                 </p>
               </div>
@@ -125,7 +125,7 @@ export default function SettingsPage() {
                 onClick={() => handleSettingChange('darkMode')}
                 disabled={isTransitioning}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  settings.darkMode ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
+                  settings.darkMode ? 'bg-primary' : isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
                 } ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span
