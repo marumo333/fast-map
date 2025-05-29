@@ -6,7 +6,7 @@
   ],
   "plugins": ["import"],
   "rules": {
-    "import/no-unresolved": "error",
+    "import/no-unresolved": ["error", { "ignore": ["^@/", "^../", "^./"] }],
     "no-undef": "error",
     "react-hooks/exhaustive-deps": "warn"
   },
