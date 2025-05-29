@@ -48,14 +48,6 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
               ホーム
             </Link>
             <Link
-              href="/history"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                pathname === '/history' ? 'text-primary' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              履歴
-            </Link>
-            <Link
               href="/settings"
               className={`px-3 py-2 rounded-md text-sm font-medium ${
                 pathname === '/settings' ? 'text-primary' : 'text-gray-500 hover:text-gray-900'

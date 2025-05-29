@@ -22,11 +22,6 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/history" className="text-gray-400 hover:text-primary transition-colors duration-200">
-                  履歴
-                </Link>
-              </li>
-              <li>
                 <Link href="/settings" className="text-gray-400 hover:text-primary transition-colors duration-200">
                   設定
                 </Link>
