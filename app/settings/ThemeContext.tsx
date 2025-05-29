@@ -12,29 +12,30 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // 初期化時にダークモードの状態を設定
   useEffect(() => {
-    // システムの設定を確認
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // ローカルストレージからテーマ設定を読み込む
     const savedTheme = localStorage.getItem('theme');
-    
-    // 保存された設定がある場合はそれを使用し、ない場合はシステム設定を使用
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
     
-    setIsDarkMode(shouldBeDark);
+    // 即座にクラスを設定
     if (shouldBeDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
+    setIsDarkMode(shouldBeDark);
+  }, []);
 
-    // システムの設定変更を監視
+  // システムの設定変更を監視
+  useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       if (!localStorage.getItem('theme')) {
-        setIsDarkMode(e.matches);
-        if (e.matches) {
+        const newValue = e.matches;
+        setIsDarkMode(newValue);
+        if (newValue) {
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');
@@ -47,17 +48,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleDarkMode = () => {
-    setIsDarkMode(prev => {
-      const newValue = !prev;
-      if (newValue) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-      }
-      return newValue;
-    });
+    const newValue = !isDarkMode;
+    setIsDarkMode(newValue);
+    
+    // 即座にクラスを更新
+    if (newValue) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
   };
 
   return (
