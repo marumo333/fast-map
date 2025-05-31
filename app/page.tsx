@@ -187,6 +187,20 @@ export default function Home() {
   // 位置情報を表示するコンポーネント
   const LocationInfo = ({ location, label }: { location: LocationWithAddress | null, label: string }) => {
     if (!location) return null;
+
+    // 住所が未取得の場合は取得を試みる
+    useEffect(() => {
+      if (location && !location.address) {
+        getAddressFromLocation(location).then(address => {
+          if (label === '出発地') {
+            setStartLocation(prev => prev ? { ...prev, address } : null);
+          } else {
+            setEndLocation(prev => prev ? { ...prev, address } : null);
+          }
+        });
+      }
+    }, [location, label]);
+
     return (
       <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
         <div className="font-medium">{label}:</div>
