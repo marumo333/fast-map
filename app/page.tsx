@@ -117,12 +117,22 @@ export default function Home() {
   useEffect(() => {
     if (currentLocation && !startLocation) {
       setStartLocation(currentLocation as LocationWithAddress);
+      // 現在地の住所を取得
+      getAddressFromLocation(currentLocation).then(address => {
+        setStartLocation(prev => prev ? { ...prev, address } : null);
+      });
     }
   }, [currentLocation, startLocation]);
 
   const handleSearch = async (start: Location, end: Location) => {
     try {
-      setStartLocation(start as LocationWithAddress);
+      // 出発地が指定されていない場合は現在地を使用
+      const startLocation = start || currentLocation;
+      if (!startLocation) {
+        throw new Error('出発地が設定されていません。現在地の取得を許可してください。');
+      }
+
+      setStartLocation(startLocation as LocationWithAddress);
       setEndLocation(end as LocationWithAddress);
       setIsLoading(true);
       setError(null);
@@ -132,7 +142,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ start, end }),
+        body: JSON.stringify({ start: startLocation, end }),
       });
 
       if (!response.ok) {
