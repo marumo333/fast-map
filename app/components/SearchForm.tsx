@@ -24,6 +24,16 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   useEffect(() => {
     if (currentLocation) {
       setSelectedStart(currentLocation);
+      // 現在地の住所を取得して表示
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode(
+        { location: { lat: currentLocation.lat, lng: currentLocation.lng } },
+        (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            setStartQuery(results[0].formatted_address);
+          }
+        }
+      );
     }
   }, [currentLocation]);
 
