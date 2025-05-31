@@ -9,6 +9,16 @@ interface SearchFormProps {
   onClose: () => void;
 }
 
+interface GeocoderResult {
+  formatted_address: string;
+  geometry: {
+    location: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+}
+
 const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose }) => {
   const { currentLocation } = useLocation();
   const [startQuery, setStartQuery] = useState('');
@@ -28,7 +38,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
       const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode(
         { location: { lat: currentLocation.lat, lng: currentLocation.lng } },
-        (results, status) => {
+        (results: GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
           if (status === 'OK' && results && results[0]) {
             setStartQuery(results[0].formatted_address);
           }

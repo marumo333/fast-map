@@ -26,7 +26,7 @@ export default function SettingsPage() {
         toggleDarkMode();
       }
     }
-  }, []);
+  }, [isDarkMode, toggleDarkMode]);
 
   // ダークモードの状態が変更されたときに設定を更新
   useEffect(() => {
