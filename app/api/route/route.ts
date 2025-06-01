@@ -88,7 +88,8 @@ export async function POST(request: Request) {
       console.log('車ルート検索結果:', {
         status: drivingRes.data.status,
         error_message: drivingRes.data.error_message,
-        routes: drivingRes.data.routes?.length || 0
+        routes: drivingRes.data.routes?.length || 0,
+        raw_response: drivingRes.data
       });
 
       const drivingStatus = drivingRes.data.status;
@@ -127,14 +128,28 @@ export async function POST(request: Request) {
         }
       });
 
-      console.log('徒歩ルート検索結果:', walkingRes.data);
+      console.log('徒歩ルート検索結果:', {
+        status: walkingRes.data.status,
+        error_message: walkingRes.data.error_message,
+        routes: walkingRes.data.routes?.length || 0,
+        raw_response: walkingRes.data
+      });
 
       const walkingStatus = walkingRes.data.status;
       if (walkingStatus !== 'OK') {
         if (statusMap[walkingStatus]) {
-          console.warn('徒歩ルートエラー:', walkingRes.data);
+          console.warn('徒歩ルートエラー:', {
+            status: walkingStatus,
+            error_message: walkingRes.data.error_message,
+            raw_response: walkingRes.data
+          });
           return NextResponse.json(
-            { error: `徒歩ルート取得失敗: ${walkingStatus} - ${walkingRes.data.error_message || ''}` },
+            { 
+              error: `徒歩ルート取得失敗: ${walkingStatus}`,
+              details: walkingRes.data.error_message || '不明なエラー',
+              status: statusMap[walkingStatus],
+              raw_response: walkingRes.data
+            },
             { status: statusMap[walkingStatus] }
           );
         } else {
