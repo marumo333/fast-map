@@ -1,5 +1,12 @@
+// app/api/routes/route.ts
 import { NextResponse } from 'next/server';
 import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@googlemaps/google-maps-services-js';
+
+// 許可するオリジンを列挙（ローカルや本番フロントの URL を追加）
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://fast-map-five.vercel.app',
+];
 
 function decodePolyline(encoded: string): [number, number][] {
   const poly: [number, number][] = [];
@@ -31,8 +38,43 @@ function decodePolyline(encoded: string): [number, number][] {
   return poly;
 }
 
+// ────────────────────────────────────────────────────────────────────────────────
+// 1) プリフライト (OPTIONS) リクエストへの対応
+// ────────────────────────────────────────────────────────────────────────────────
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin') ?? '';
+  // リクエスト元オリジンが許可リストにあれば、そのまま返却する
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    return NextResponse.json(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+  // 許可されていないオリジンの場合も 204 を返すが、CORS ヘッダーは付与しない
+  return NextResponse.json(null, {
+    status: 204,
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// 2) 実際の POST ハンドラ
+// ────────────────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
+    const origin = request.headers.get('origin') ?? '';
+    // オリジンチェック（許可されていなければ 403 を返す）
+    if (!ALLOWED_ORIGINS.includes(origin)) {
+      return NextResponse.json(
+        { error: 'CORS 許可されていないオリジンからのリクエストです' },
+        { status: 403 }
+      );
+    }
+
+    // リクエストボディの解析
     const { start, end } = await request.json();
 
     if (
@@ -40,25 +82,26 @@ export async function POST(request: Request) {
       typeof start.lat !== 'number' || typeof start.lng !== 'number' ||
       typeof end.lat !== 'number' || typeof end.lng !== 'number'
     ) {
-      return NextResponse.json({ error: '出発地と目的地の座標が不正です。' }, { status: 400 });
+      return NextResponse.json(
+        { error: '出発地と目的地の座標が不正です。' },
+        { status: 400, headers: { 'Access-Control-Allow-Origin': origin } }
+      );
     }
 
-    // ← ここを「NEXT_PUBLIC_」ではなくサーバー用キー名に
+    // サーバー用キーを取得
     const apiKey = process.env.GOOGLE_MAPS_SERVER_KEY;
     if (!apiKey) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
-        { status: 500 }
+        { status: 500, headers: { 'Access-Control-Allow-Origin': origin } }
       );
     }
-
-    // APIキーの形式を簡易チェック
     if (!apiKey.startsWith('AIza')) {
       console.error('Invalid API key format');
       return NextResponse.json(
         { error: 'Invalid API key format' },
-        { status: 500 }
+        { status: 500, headers: { 'Access-Control-Allow-Origin': origin } }
       );
     }
 
@@ -84,7 +127,7 @@ export async function POST(request: Request) {
           traffic_model: 'best_guess' as TrafficModel,
           region: 'jp',
           language: 'ja' as Language,
-          key: apiKey,                // ← サーバー用キー
+          key: apiKey,
           avoid: ['ferries'] as TravelRestriction[],
           alternatives: true,
           waypoints: [],
@@ -109,7 +152,10 @@ export async function POST(request: Request) {
               error: `車ルート取得失敗: ${drivingStatus}`,
               details: drivingRes.data.error_message || '不明なエラー'
             },
-            { status: statusMap[drivingStatus] }
+            {
+              status: statusMap[drivingStatus],
+              headers: { 'Access-Control-Allow-Origin': origin }
+            }
           );
         } else {
           throw new Error(`不明なエラー: ${drivingStatus}`);
@@ -122,7 +168,7 @@ export async function POST(request: Request) {
           origin: start,
           destination: end,
           mode: 'walking' as TravelMode,
-          key: apiKey,          // ← サーバー用キー
+          key: apiKey,
           region: 'jp',
           language: 'ja' as Language,
           alternatives: true,
@@ -148,7 +194,10 @@ export async function POST(request: Request) {
               error: `徒歩ルート取得失敗: ${walkingStatus}`,
               details: walkingRes.data.error_message || '不明なエラー'
             },
-            { status: statusMap[walkingStatus] }
+            {
+              status: statusMap[walkingStatus],
+              headers: { 'Access-Control-Allow-Origin': origin }
+            }
           );
         } else {
           throw new Error(`不明な徒歩ルートエラー: ${walkingStatus}`);
@@ -158,8 +207,8 @@ export async function POST(request: Request) {
       // レスポンス整形
       const drivingLeg = drivingRes.data.routes[0].legs[0];
       const walkingLeg = walkingRes.data.routes[0].legs[0];
-
       const path: [number, number][] = [];
+
       drivingLeg.steps.forEach(step => {
         const points = decodePolyline(step.polyline.points);
         path.push(...points);
@@ -179,43 +228,48 @@ export async function POST(request: Request) {
       };
 
       console.log('ルート検索成功:', response);
-      return NextResponse.json(response);
+      return NextResponse.json(response, {
+        headers: { 'Access-Control-Allow-Origin': origin }
+      });
 
     } catch (error) {
       console.error('ルート取得エラー:', error);
       if (error instanceof Error) {
         return NextResponse.json(
+          { error: 'ルート取得に失敗しました', details: error.message },
           {
-            error: 'ルート取得に失敗しました',
-            details: error.message
-          },
-          { status: 500 }
+            status: 500,
+            headers: { 'Access-Control-Allow-Origin': origin }
+          }
         );
       }
       return NextResponse.json(
+        { error: 'ルート取得に失敗しました', details: '不明なエラーが発生しました' },
         {
-          error: 'ルート取得に失敗しました',
-          details: '不明なエラーが発生しました'
-        },
-        { status: 500 }
+          status: 500,
+          headers: { 'Access-Control-Allow-Origin': origin }
+        }
       );
     }
 
   } catch (error) {
-    console.error('ルート取得エラー:', error);
+    console.error('ルート取得エラー（Catch）:', error);
+    const origin = request.headers.get('origin') ?? '';
     if (error instanceof Error) {
       return NextResponse.json(
+        { error: error.message, stack: error.stack, name: error.name },
         {
-          error: error.message,
-          stack: error.stack,
-          name: error.name
-        },
-        { status: 500 }
+          status: 500,
+          headers: { 'Access-Control-Allow-Origin': origin }
+        }
       );
     }
     return NextResponse.json(
       { error: 'ルート情報の取得に失敗しました' },
-      { status: 500 }
+      {
+        status: 500,
+        headers: { 'Access-Control-Allow-Origin': origin }
+      }
     );
   }
 }
