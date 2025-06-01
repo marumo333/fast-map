@@ -1,4 +1,4 @@
-import { DirectionsResult } from '@react-google-maps/api';
+import type { DirectionsResult } from '@types/google.maps';
 
 export interface TrafficInfo {
   duration_in_traffic: number;
