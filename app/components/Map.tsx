@@ -234,17 +234,20 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
             end_address: '',
             start_location: new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
             end_location: new google.maps.LatLng(destination?.lat || 0, destination?.lng || 0),
-            steps: []
+            steps: [],
+            traffic_speed_entry: [],
+            via_waypoints: []
           }],
           overview_path: route.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
-          overview_polyline: { points: '' },
+          overview_polyline: '',
           bounds: new google.maps.LatLngBounds(
             new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
             new google.maps.LatLng(destination?.lat || 0, destination?.lng || 0)
           ),
           copyrights: '',
           warnings: [],
-          waypoint_order: []
+          waypoint_order: [],
+          summary: ''
         }]
       };
       directionsRendererRef.current.setDirections(directionsResult);
