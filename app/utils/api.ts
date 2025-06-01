@@ -42,40 +42,36 @@ export const getTrafficInfo = async (
   }
 };
 
-export const searchRoute = async (start: [number, number], end: [number, number]): Promise<Route[]> => {
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+
+export const searchRoute = async (
+  start: [number, number],
+  end: [number, number]
+): Promise<Route[]> => {
   try {
-    console.log('ルート検索開始:', { start, end });
-    
-    const response = await fetch('/api/route', {
+    const response = await fetch(`${API_BASE_URL}/api/routes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        start: {
-          lat: start[0],
-          lng: start[1]
-        },
-        end: {
-          lat: end[0],
-          lng: end[1]
-        }
+        start,
+        end,
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('ルート検索APIエラー:', {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('ルート検索エラーの詳細:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData
       });
-      throw new Error(`Request failed with status code ${response.status}`);
+      throw new Error(`ルート検索に失敗しました: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('ルート検索結果:', data);
-    return [data];
+    return data;
   } catch (error) {
     console.error('ルート検索エラー:', error);
     throw error;
