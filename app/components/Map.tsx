@@ -181,7 +181,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       }
 
       // 目的地のマーカーを追加
-      if (destination) {
+      if (endLocation) {
         const markerView = new google.maps.marker.PinElement({
           background: '#EF4444',
           borderColor: '#FFFFFF',
@@ -190,7 +190,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         });
         const destinationMarker = new AdvancedMarkerElement({
           map: mapInstanceRef.current,
-          position: destination,
+          position: endLocation,
           title: '目的地',
           content: markerView.element
         });
@@ -199,18 +199,16 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     };
 
     updateMarkers();
-  }, [currentLocation, destination]);
+  }, [currentLocation, endLocation]);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || !currentLocation || !destination) return;
+    if (!mapInstanceRef.current || !currentLocation || !endLocation) return;
 
     const calculateRoute = async () => {
-      if (!currentLocation || !destination) return;
-
       try {
         const routes = await searchRoute(
           [currentLocation.lat, currentLocation.lng],
-          [destination.lat, destination.lng]
+          [endLocation.lat, endLocation.lng]
         );
         if (routes && routes.length > 0) {
           setRoute(routes[0]);
@@ -221,34 +219,34 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     };
 
     calculateRoute();
-  }, [currentLocation, destination, setRoute]);
+  }, [currentLocation, endLocation, setRoute]);
 
   useEffect(() => {
-    if (route && directionsRendererRef.current) {
+    if (selectedRoute && directionsRendererRef.current) {
       const directionsResult: google.maps.DirectionsResult = {
         request: {
           origin: { lat: currentLocation?.lat || 0, lng: currentLocation?.lng || 0 },
-          destination: { lat: destination?.lat || 0, lng: destination?.lng || 0 },
+          destination: { lat: endLocation?.lat || 0, lng: endLocation?.lng || 0 },
           travelMode: google.maps.TravelMode.DRIVING
         },
         routes: [{
           legs: [{
-            distance: { text: `${route.distance}km`, value: route.distance * 1000 },
-            duration: { text: `${route.duration.driving}分`, value: (route.duration.driving || 0) * 60 },
-            duration_in_traffic: { text: `${route.duration_in_traffic}分`, value: route.duration_in_traffic * 60 },
+            distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
+            duration: { text: `${selectedRoute.duration.driving}分`, value: (selectedRoute.duration.driving || 0) * 60 },
+            duration_in_traffic: { text: `${selectedRoute.duration_in_traffic}分`, value: selectedRoute.duration_in_traffic * 60 },
             start_address: '',
             end_address: '',
             start_location: new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
-            end_location: new google.maps.LatLng(destination?.lat || 0, destination?.lng || 0),
+            end_location: new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0),
             steps: [],
             traffic_speed_entry: [],
             via_waypoints: []
           }],
-          overview_path: route.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
+          overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
           overview_polyline: '',
           bounds: new google.maps.LatLngBounds(
             new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
-            new google.maps.LatLng(destination?.lat || 0, destination?.lng || 0)
+            new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0)
           ),
           copyrights: '',
           warnings: [],
@@ -258,7 +256,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       };
       directionsRendererRef.current.setDirections(directionsResult);
     }
-  }, [route, currentLocation, destination]);
+  }, [selectedRoute, currentLocation, endLocation]);
 
   if (loadError) {
     return (
