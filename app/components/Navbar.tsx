@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLocation } from '../contexts/LocationContext';
 
 type NavbarProps = {
@@ -11,11 +11,17 @@ type NavbarProps = {
 
 const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { isGettingLocation, locationError, clearLocationError } = useLocation();
 
   useEffect(() => {
     clearLocationError();
   }, [pathname, clearLocationError]);
+
+  const handleGetLocation = async () => {
+    await onGetCurrentLocation();
+    router.push('/');
+  };
 
   return (
     <nav className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
@@ -28,7 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
           </div>
           <div className="flex items-center space-x-4">
             <button
-              onClick={onGetCurrentLocation}
+              onClick={handleGetLocation}
               disabled={isGettingLocation}
               className={`bg-primary text-white px-4 py-2 rounded-lg transition-colors ${
                 isGettingLocation ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-dark'
