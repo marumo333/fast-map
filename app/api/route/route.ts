@@ -10,13 +10,15 @@ const ALLOWED_ORIGINS = [
 ];
 
 // CORSヘッダーを設定する関数
-function getCorsHeaders(origin: string) {
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400'
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin'
   };
 }
 
@@ -54,7 +56,7 @@ function decodePolyline(encoded: string): [number, number][] {
 // 1) プリフライト (OPTIONS) リクエストへの対応
 // ────────────────────────────────────────────────────────────────────────────────
 export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin') || '';
+  const origin = request.headers.get('origin');
   return new NextResponse(null, { 
     status: 204,
     headers: getCorsHeaders(origin)
@@ -65,7 +67,7 @@ export async function OPTIONS(request: Request) {
 // 2) 実際の POST ハンドラ
 // ────────────────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
-  const origin = request.headers.get('origin') || '';
+  const origin = request.headers.get('origin');
   
   try {
     // リクエストボディの解析
