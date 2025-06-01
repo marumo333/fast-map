@@ -91,7 +91,7 @@ export default function LocationForm() {
           }
         });
 
-        currentLocationAutocompleteRef.current = placeAutocomplete;
+        currentLocationAutocompleteRef.current = placeAutocomplete as google.maps.places.PlaceAutocompleteElement;
       }
 
       if (destinationInputRef.current && !destinationAutocompleteRef.current) {
@@ -116,7 +116,7 @@ export default function LocationForm() {
           }
         });
 
-        destinationAutocompleteRef.current = placeAutocomplete;
+        destinationAutocompleteRef.current = placeAutocomplete as google.maps.places.PlaceAutocompleteElement;
       }
     };
 
