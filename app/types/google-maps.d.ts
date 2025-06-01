@@ -18,5 +18,12 @@ declare namespace google.maps {
     setAttribute(name: string, value: string): void;
     addEventListener(type: string, listener: EventListener): void;
     getPlace(): google.maps.places.PlaceResult;
+    componentRestrictions?: { country: string };
+    locationBias?: LatLngBounds | LatLng | LatLngLiteral;
+    locationRestriction?: LatLngBounds | LatLng | LatLngLiteral;
+    name?: string;
+    requestedLanguage?: string;
+    requestedRegion?: string;
+    types?: string[];
   }
 } 
