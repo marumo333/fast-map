@@ -203,16 +203,22 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         map,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
+          scale: 12,
           fillColor: '#4285F4',
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 2,
+          strokeWeight: 3,
         },
+        title: '現在地',
+        animation: google.maps.Animation.DROP
       });
       setCurrentMarker(marker);
+      
+      // 現在地に地図を移動
+      map.panTo(currentLocation);
+      map.setZoom(15);
     }
-  }, [map, currentLocation, currentMarker]);
+  }, [map, currentLocation]);
 
   // 目的地のマーカーを更新
   useEffect(() => {

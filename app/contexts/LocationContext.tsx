@@ -49,22 +49,40 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           resolve,
-          reject,
+          (error) => {
+            console.error('位置情報の取得エラー:', error);
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                reject(new Error('位置情報の使用が許可されていません。ブラウザの設定を確認してください。'));
+                break;
+              case error.POSITION_UNAVAILABLE:
+                reject(new Error('位置情報を取得できませんでした。'));
+                break;
+              case error.TIMEOUT:
+                reject(new Error('位置情報の取得がタイムアウトしました。'));
+                break;
+              default:
+                reject(new Error('位置情報の取得に失敗しました。'));
+            }
+          },
           {
             enableHighAccuracy: true,
-            timeout: 5000,
+            timeout: 10000,
             maximumAge: 0
           }
         );
       });
 
-      setCurrentLocation({
+      const newLocation = {
         lat: position.coords.latitude,
         lng: position.coords.longitude
-      });
+      };
+
+      console.log('現在地を取得しました:', newLocation);
+      setCurrentLocation(newLocation);
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
-      setLocationError('位置情報の取得に失敗しました。');
+      setLocationError(error instanceof Error ? error.message : '位置情報の取得に失敗しました。');
     } finally {
       setIsGettingLocation(false);
     }
