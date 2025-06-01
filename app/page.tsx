@@ -246,6 +246,18 @@ export default function Home() {
                     <LocationInfo location={endLocation} label="目的地" />
                   </div>
 
+                  {/* ルート選択 */}
+                  {startLocation && endLocation && (
+                    <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート選択</h2>
+                      <RouteSelector
+                        startLocation={startLocation}
+                        endLocation={endLocation}
+                        onRouteSelect={setSelectedRoute}
+                      />
+                    </div>
+                  )}
+
                   {/* ルート情報 */}
                   {selectedRoute && (
                     <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>

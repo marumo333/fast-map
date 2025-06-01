@@ -27,11 +27,18 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
     setError(null);
 
     try {
+      console.log('ルート検索開始:', {
+        start: [startLocation.lat, startLocation.lng],
+        end: [endLocation.lat, endLocation.lng]
+      });
+
       // 実際のAPIからルート情報を取得
       const routes = await api.searchRoute(
         [startLocation.lat, startLocation.lng],
         [endLocation.lat, endLocation.lng]
       );
+
+      console.log('取得したルート:', routes);
 
       // 選択されたルートを探す
       const selectedRoute = routes.find(route => route.routeId === routeId);
@@ -42,14 +49,14 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
       onRouteSelect(selectedRoute);
     } catch (error) {
       console.error('ルート検索エラー:', error);
-      setError('ルートの検索に失敗しました。もう一度お試しください。');
+      setError(error instanceof Error ? error.message : 'ルートの検索に失敗しました。もう一度お試しください。');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
           {error}
@@ -60,14 +67,14 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
         <button
           onClick={() => handleRouteSelect(1)}
           disabled={isLoading}
-          className="w-full p-4 bg-blue-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full p-4 bg-blue-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? '読み込み中...' : '最短ルート'}
         </button>
         <button
           onClick={() => handleRouteSelect(2)}
           disabled={isLoading}
-          className="w-full p-4 bg-green-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-green-600 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full p-4 bg-green-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-green-600 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? '読み込み中...' : '混雑回避ルート'}
         </button>
