@@ -13,6 +13,14 @@ export function middleware(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Credentials', 'true')
     response.headers.set('Access-Control-Max-Age', '86400')
 
+    // プリフライトリクエストの場合は即座にレスポンスを返す
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 204,
+        headers: response.headers
+      })
+    }
+
     return response
   }
 
@@ -21,5 +29,8 @@ export function middleware(request: NextRequest) {
 
 // ミドルウェアを適用するパスを指定
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 } 
