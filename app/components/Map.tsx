@@ -231,16 +231,24 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         map,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
+          scale: 12,
           fillColor: '#EA4335',
           fillOpacity: 1,
           strokeColor: '#ffffff',
-          strokeWeight: 2,
+          strokeWeight: 3,
         },
+        title: '目的地',
+        animation: google.maps.Animation.DROP
       });
       setDestinationMarker(marker);
+      
+      // 目的地が設定されたら地図を移動
+      if (!currentLocation) {
+        map.panTo(endLocation);
+        map.setZoom(15);
+      }
     }
-  }, [map, endLocation, destinationMarker]);
+  }, [map, endLocation]);
 
   // ルートのパスを描画
   const renderRoute = () => {
