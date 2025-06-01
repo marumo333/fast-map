@@ -97,8 +97,7 @@ export async function POST(request: Request) {
       console.log('車ルート検索結果:', {
         status: drivingRes.data.status,
         error_message: drivingRes.data.error_message,
-        routes: drivingRes.data.routes?.length || 0,
-        raw_response: drivingRes.data
+        routes: drivingRes.data.routes?.length || 0
       });
 
       const drivingStatus = drivingRes.data.status;
@@ -106,15 +105,12 @@ export async function POST(request: Request) {
         if (statusMap[drivingStatus]) {
           console.warn('車ルートエラー:', {
             status: drivingStatus,
-            error_message: drivingRes.data.error_message,
-            raw_response: drivingRes.data
+            error_message: drivingRes.data.error_message
           });
           return NextResponse.json(
             { 
               error: `車ルート取得失敗: ${drivingStatus}`,
-              details: drivingRes.data.error_message || '不明なエラー',
-              status: statusMap[drivingStatus],
-              raw_response: drivingRes.data
+              details: drivingRes.data.error_message || '不明なエラー'
             },
             { status: statusMap[drivingStatus] }
           );
@@ -140,8 +136,7 @@ export async function POST(request: Request) {
       console.log('徒歩ルート検索結果:', {
         status: walkingRes.data.status,
         error_message: walkingRes.data.error_message,
-        routes: walkingRes.data.routes?.length || 0,
-        raw_response: walkingRes.data
+        routes: walkingRes.data.routes?.length || 0
       });
 
       const walkingStatus = walkingRes.data.status;
@@ -149,15 +144,12 @@ export async function POST(request: Request) {
         if (statusMap[walkingStatus]) {
           console.warn('徒歩ルートエラー:', {
             status: walkingStatus,
-            error_message: walkingRes.data.error_message,
-            raw_response: walkingRes.data
+            error_message: walkingRes.data.error_message
           });
           return NextResponse.json(
             { 
               error: `徒歩ルート取得失敗: ${walkingStatus}`,
-              details: walkingRes.data.error_message || '不明なエラー',
-              status: statusMap[walkingStatus],
-              raw_response: walkingRes.data
+              details: walkingRes.data.error_message || '不明なエラー'
             },
             { status: statusMap[walkingStatus] }
           );
@@ -178,16 +170,13 @@ export async function POST(request: Request) {
 
       const response = {
         path,
-        distance: drivingLeg.distance.value,
+        distance: drivingLeg.distance.value / 1000, // メートルからキロメートルに変換
         duration: {
-          driving: drivingLeg.duration.value,
-          walking: walkingLeg.duration.value,
+          driving: Math.ceil(drivingLeg.duration.value / 60), // 秒から分に変換
+          walking: Math.ceil(walkingLeg.duration.value / 60) // 秒から分に変換
         },
         routeId: 1,
-        trafficInfo: [{
-          duration_in_traffic: drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value,
-          traffic_level: drivingLeg.duration_in_traffic ? '混雑' : '通常'
-        }]
+        duration_in_traffic: Math.ceil((drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value) / 60) // 秒から分に変換
       };
 
       console.log('ルート検索成功:', response);
@@ -198,15 +187,17 @@ export async function POST(request: Request) {
       if (error instanceof Error) {
         return NextResponse.json(
           { 
-            error: error.message,
-            stack: error.stack,
-            name: error.name
+            error: 'ルート取得に失敗しました',
+            details: error.message
           },
           { status: 500 }
         );
       }
       return NextResponse.json(
-        { error: 'ルート情報の取得に失敗しました' },
+        { 
+          error: 'ルート取得に失敗しました',
+          details: '不明なエラーが発生しました'
+        },
         { status: 500 }
       );
     }
