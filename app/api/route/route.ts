@@ -52,6 +52,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // APIキーの形式を検証
+    if (!apiKey.startsWith('AIza')) {
+      console.error('Invalid API key format');
+      return NextResponse.json(
+        { error: 'Invalid API key format' },
+        { status: 500 }
+      );
+    }
+
     console.log('API Key:', apiKey.substring(0, 5) + '...'); // APIキーの最初の5文字のみをログ出力
     console.log('Request parameters:', { start, end, mode: 'driving' });
 
@@ -186,15 +195,35 @@ export async function POST(request: Request) {
 
     } catch (error) {
       console.error('ルート取得エラー:', error);
+      if (error instanceof Error) {
+        return NextResponse.json(
+          { 
+            error: error.message,
+            stack: error.stack,
+            name: error.name
+          },
+          { status: 500 }
+        );
+      }
       return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました' },
+        { error: 'ルート情報の取得に失敗しました' },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error('ルート取得エラー:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { 
+          error: error.message,
+          stack: error.stack,
+          name: error.name
+        },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました' },
+      { error: 'ルート情報の取得に失敗しました' },
       { status: 500 }
     );
   }
