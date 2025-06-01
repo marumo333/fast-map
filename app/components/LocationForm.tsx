@@ -121,7 +121,7 @@ export default function LocationForm() {
     };
 
     initPlaceAutocomplete();
-  }, []);
+  }, [setCurrentLocation, setDestination]);
 
   const handleGetLocation = () => {
     setIsLoading(true);
