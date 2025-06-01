@@ -12,37 +12,46 @@ export default function LocationForm() {
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const destinationAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
-  useEffect(() => {
-    if (currentLocation) {
-      // 現在地の住所を取得
+  const getAddressFromLocation = async (location: { lat: number; lng: number }) => {
+    return new Promise<string>((resolve, reject) => {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode(
-        { location: { lat: currentLocation.lat, lng: currentLocation.lng } },
+        { location },
         (results, status) => {
           if (status === 'OK' && results && results[0]) {
-            setCurrentAddress(results[0].formatted_address);
+            resolve(results[0].formatted_address);
           } else {
             console.error('住所の取得に失敗:', status);
+            reject(new Error('住所の取得に失敗しました'));
           }
         }
       );
+    });
+  };
+
+  useEffect(() => {
+    if (currentLocation) {
+      getAddressFromLocation(currentLocation)
+        .then(address => {
+          setCurrentAddress(address);
+        })
+        .catch(error => {
+          console.error('現在地の住所取得に失敗:', error);
+          setCurrentAddress('住所を取得できませんでした');
+        });
     }
   }, [currentLocation]);
 
   useEffect(() => {
     if (destination) {
-      // 目的地の住所を取得
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode(
-        { location: { lat: destination.lat, lng: destination.lng } },
-        (results, status) => {
-          if (status === 'OK' && results && results[0]) {
-            setDestinationAddress(results[0].formatted_address);
-          } else {
-            console.error('目的地の住所取得に失敗:', status);
-          }
-        }
-      );
+      getAddressFromLocation(destination)
+        .then(address => {
+          setDestinationAddress(address);
+        })
+        .catch(error => {
+          console.error('目的地の住所取得に失敗:', error);
+          setDestinationAddress('住所を取得できませんでした');
+        });
     }
   }, [destination]);
 
@@ -61,20 +70,17 @@ export default function LocationForm() {
         const { latitude, longitude } = position.coords;
         console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
         
-        // 現在地の住所を取得
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode(
-          { location: { lat: latitude, lng: longitude } },
-          (results, status) => {
-            if (status === 'OK' && results && results[0]) {
-              setCurrentAddress(results[0].formatted_address);
-            } else {
-              console.error('住所の取得に失敗:', status);
-            }
-          }
-        );
+        const newLocation = { lat: latitude, lng: longitude };
+        setCurrentLocation(newLocation);
 
-        setCurrentLocation({ lat: latitude, lng: longitude });
+        try {
+          const address = await getAddressFromLocation(newLocation);
+          setCurrentAddress(address);
+        } catch (error) {
+          console.error('現在地の住所取得に失敗:', error);
+          setCurrentAddress('住所を取得できませんでした');
+        }
+
         setIsLoading(false);
       },
       (error) => {
@@ -91,7 +97,8 @@ export default function LocationForm() {
       if (place.geometry && place.geometry.location) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        setCurrentLocation({ lat, lng });
+        const newLocation = { lat, lng };
+        setCurrentLocation(newLocation);
         setCurrentAddress(place.formatted_address || '');
       }
     }
@@ -103,7 +110,8 @@ export default function LocationForm() {
       if (place.geometry && place.geometry.location) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-        setDestination({ lat, lng });
+        const newLocation = { lat, lng };
+        setDestination(newLocation);
         setDestinationAddress(place.formatted_address || '');
       }
     }
