@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Location } from '../types/location';
 
 // GeolocationPositionの型定義
@@ -17,8 +17,11 @@ interface GeolocationPosition {
   timestamp: number;
 }
 
-type LocationContextType = {
+export type LocationContextType = {
   currentLocation: Location | null;
+  setCurrentLocation: (location: Location | null) => void;
+  destination: Location | null;
+  setDestination: (location: Location | null) => void;
   getCurrentLocation: () => Promise<void>;
   isGettingLocation: boolean;
   locationError: string | null;
@@ -27,16 +30,17 @@ type LocationContextType = {
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
-export function LocationProvider({ children }: { children: React.ReactNode }) {
+export function LocationProvider({ children }: { children: ReactNode }) {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [destination, setDestination] = useState<Location | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  const clearLocationError = useCallback(() => {
+  const clearLocationError = () => {
     setLocationError(null);
-  }, []);
+  };
 
-  const getCurrentLocation = useCallback(async () => {
+  const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
       setLocationError('お使いのブラウザは位置情報をサポートしていません。');
       return;
@@ -86,16 +90,21 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsGettingLocation(false);
     }
-  }, []);
+  };
 
   return (
-    <LocationContext.Provider value={{ 
-      currentLocation, 
-      getCurrentLocation,
-      isGettingLocation,
-      locationError,
-      clearLocationError
-    }}>
+    <LocationContext.Provider
+      value={{
+        currentLocation,
+        setCurrentLocation,
+        destination,
+        setDestination,
+        getCurrentLocation,
+        isGettingLocation,
+        locationError,
+        clearLocationError
+      }}
+    >
       {children}
     </LocationContext.Provider>
   );
