@@ -50,60 +50,63 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   useEffect(() => {
     // Google Places APIのサービスを初期化
     const initializeAutocomplete = () => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        if (startInputRef.current) {
-          startAutocomplete.current = new window.google.maps.places.Autocomplete(startInputRef.current, {
-            componentRestrictions: { country: 'jp' },
-            fields: ['geometry', 'formatted_address', 'name'],
-            language: 'ja'
-          });
-
-          if (startAutocomplete.current) {
-            startAutocomplete.current.addListener('place_changed', () => {
-              const place = startAutocomplete.current?.getPlace();
-              if (place?.geometry?.location) {
-                const location: Location = {
-                  lat: place.geometry.location.lat(),
-                  lng: place.geometry.location.lng()
-                };
-                setSelectedStart(location);
-                setStartQuery(place.formatted_address || place.name || '');
-              }
-            });
-          }
-        }
-
-        if (endInputRef.current) {
-          endAutocomplete.current = new window.google.maps.places.Autocomplete(endInputRef.current, {
-            componentRestrictions: { country: 'jp' },
-            fields: ['geometry', 'formatted_address', 'name'],
-            language: 'ja'
-          });
-
-          if (endAutocomplete.current) {
-            endAutocomplete.current.addListener('place_changed', () => {
-              const place = endAutocomplete.current?.getPlace();
-              if (place?.geometry?.location) {
-                const location: Location = {
-                  lat: place.geometry.location.lat(),
-                  lng: place.geometry.location.lng()
-                };
-                setSelectedEnd(location);
-                setEndQuery(place.formatted_address || place.name || '');
-              }
-            });
-          }
-        }
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        console.error('Google Maps APIが初期化されていません');
+        return;
       }
+
+      const startAutocomplete = new window.google.maps.places.Autocomplete(startInputRef.current!, {
+        componentRestrictions: { country: 'jp' },
+        fields: ['geometry', 'formatted_address'],
+        language: 'ja'
+      });
+
+      const endAutocomplete = new window.google.maps.places.Autocomplete(endInputRef.current!, {
+        componentRestrictions: { country: 'jp' },
+        fields: ['geometry', 'formatted_address'],
+        language: 'ja'
+      });
+
+      startAutocomplete.addListener('place_changed', () => {
+        const place = startAutocomplete.getPlace();
+        if (place.geometry) {
+          setSelectedStart({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+            address: place.formatted_address
+          });
+          setStartQuery(place.formatted_address);
+        }
+      });
+
+      endAutocomplete.addListener('place_changed', () => {
+        const place = endAutocomplete.getPlace();
+        if (place.geometry) {
+          setSelectedEnd({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+            address: place.formatted_address
+          });
+          setEndQuery(place.formatted_address);
+        }
+      });
     };
 
     // Google Maps APIが読み込まれるのを待つ
+    let retryCount = 0;
+    const maxRetries = 10;
     const checkGoogleMaps = setInterval(() => {
       if (window.google && window.google.maps && window.google.maps.places) {
         initializeAutocomplete();
         clearInterval(checkGoogleMaps);
+      } else {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          console.error('Google Maps APIの読み込みがタイムアウトしました');
+          clearInterval(checkGoogleMaps);
+        }
       }
-    }, 100);
+    }, 1000);
 
     return () => {
       clearInterval(checkGoogleMaps);
