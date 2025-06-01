@@ -1,36 +1,52 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// 許可するオリジンを列挙
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://fast-map-five.vercel.app',
+  'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app'
+];
+
+// CORSヘッダーを設定する関数
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin'
+  };
+}
+
 export function middleware(request: NextRequest) {
-  // APIルートへのリクエストの場合のみCORSヘッダーを追加
+  // APIルートへのリクエストの場合のみCORSヘッダーを設定
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    const response = NextResponse.next()
+    const origin = request.headers.get('origin');
+    const response = NextResponse.next();
 
     // CORSヘッダーを設定
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-    response.headers.set('Access-Control-Allow-Credentials', 'true')
-    response.headers.set('Access-Control-Max-Age', '86400')
+    Object.entries(getCorsHeaders(origin)).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
 
-    // プリフライトリクエストの場合は即座にレスポンスを返す
+    // プリフライトリクエストの場合は204を返す
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, {
         status: 204,
-        headers: response.headers
-      })
+        headers: getCorsHeaders(origin)
+      });
     }
 
-    return response
+    return response;
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 // ミドルウェアを適用するパスを指定
 export const config = {
-  matcher: [
-    '/api/:path*',
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
-} 
+  matcher: '/api/:path*'
+}; 
