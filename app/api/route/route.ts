@@ -6,6 +6,7 @@ import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'https://fast-map-five.vercel.app',
+  'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app'
 ];
 
 // CORSヘッダーを設定する関数
@@ -13,7 +14,7 @@ function getCorsHeaders(origin: string) {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400', // 24時間
   };
@@ -60,7 +61,14 @@ export async function OPTIONS(request: Request) {
       headers: getCorsHeaders(origin),
     });
   }
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { 
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    }
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
