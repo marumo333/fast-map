@@ -122,43 +122,27 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     mapIds: [MAP_ID]
   });
 
-  useEffect(() => {
-    if (!mapRef.current) return;
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapInstanceRef.current = map;
+    console.log('地図の読み込みが完了しました');
 
-    const initMap = async () => {
-      if (!mapRef.current) return;
+    // 現在地を取得
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
+          map.setCenter({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error('位置情報の取得に失敗:', error);
+        }
+      );
+    }
+  }, []);
 
-      const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
-
-      const map = new Map(mapRef.current, {
-        center: { lat: 35.6812, lng: 139.7671 },
-        zoom: 13,
-        mapId: 'fast-map',
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
-      });
-
-      mapInstanceRef.current = map;
-      console.log('地図の読み込みが完了しました');
-
-      // 現在地を取得
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
-            map.setCenter({ lat: latitude, lng: longitude });
-          },
-          (error) => {
-            console.error('位置情報の取得に失敗:', error);
-          }
-        );
-      }
-    };
-
-    initMap();
+  const onUnmount = useCallback(() => {
+    mapInstanceRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -293,7 +277,19 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }
 
   return (
-    <div ref={mapRef} className="relative w-full h-full" style={{ minHeight: '400px' }} />
+    <GoogleMap
+      mapContainerStyle={containerStyle}
+      center={defaultCenter}
+      zoom={13}
+      onLoad={onLoad}
+      onUnmount={onUnmount}
+      options={{
+        mapId: MAP_ID,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      }}
+    />
   );
 };
 
