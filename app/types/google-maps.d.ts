@@ -19,8 +19,8 @@ declare namespace google.maps {
     addEventListener(type: string, listener: EventListener): void;
     getPlace(): google.maps.places.PlaceResult;
     componentRestrictions: { country: string } | null;
-    locationBias?: LatLngBounds | LatLng | LatLngLiteral;
-    locationRestriction?: LatLngBounds | LatLng | LatLngLiteral;
+    locationBias: string | LatLng | LatLngLiteral | LatLngBounds | LatLngBoundsLiteral | Circle | CircleLiteral | null;
+    locationRestriction: string | LatLng | LatLngLiteral | LatLngBounds | LatLngBoundsLiteral | Circle | CircleLiteral | null;
     name?: string;
     requestedLanguage?: string;
     requestedRegion?: string;
