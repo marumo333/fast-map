@@ -164,6 +164,14 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
+    const { DirectionsRenderer } = google.maps;
+    if (!directionsRendererRef.current) {
+      directionsRendererRef.current = new DirectionsRenderer({
+        map: mapInstanceRef.current,
+        suppressMarkers: true
+      });
+    }
+
     const updateMarkers = async () => {
       const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
 
@@ -173,20 +181,34 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
       // 現在地のマーカーを追加
       if (currentLocation) {
+        const markerView = new google.maps.marker.PinElement({
+          background: '#3B82F6',
+          borderColor: '#FFFFFF',
+          glyphColor: '#FFFFFF',
+          scale: 1.5
+        });
         const currentMarker = new AdvancedMarkerElement({
           map: mapInstanceRef.current,
           position: currentLocation,
-          title: '現在地'
+          title: '現在地',
+          content: markerView.element
         });
         markersRef.current['current'] = currentMarker;
       }
 
       // 目的地のマーカーを追加
       if (destination) {
+        const markerView = new google.maps.marker.PinElement({
+          background: '#EF4444',
+          borderColor: '#FFFFFF',
+          glyphColor: '#FFFFFF',
+          scale: 1.5
+        });
         const destinationMarker = new AdvancedMarkerElement({
           map: mapInstanceRef.current,
           position: destination,
-          title: '目的地'
+          title: '目的地',
+          content: markerView.element
         });
         markersRef.current['destination'] = destinationMarker;
       }
