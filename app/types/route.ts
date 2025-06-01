@@ -1,3 +1,7 @@
+import { DirectionsResult } from '@react-google-maps/api';
+
+export type Route = DirectionsResult;
+
 export interface TrafficInfo {
   duration_in_traffic: number;
   traffic_level: '混雑' | '通常';

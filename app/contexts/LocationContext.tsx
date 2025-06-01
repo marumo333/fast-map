@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { Location } from '../types/location';
+import { Route } from '../types/route';
 
 // GeolocationPositionの型定義
 interface GeolocationPosition {
@@ -17,22 +18,25 @@ interface GeolocationPosition {
   timestamp: number;
 }
 
-export type LocationContextType = {
+interface LocationContextType {
   currentLocation: Location | null;
   setCurrentLocation: (location: Location | null) => void;
   destination: Location | null;
   setDestination: (location: Location | null) => void;
+  route: Route | null;
+  setRoute: (route: Route | null) => void;
   getCurrentLocation: () => Promise<void>;
   isGettingLocation: boolean;
   locationError: string | null;
   clearLocationError: () => void;
-};
+}
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
-export function LocationProvider({ children }: { children: ReactNode }) {
+export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
+  const [route, setRoute] = useState<Route | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -99,6 +103,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setCurrentLocation,
         destination,
         setDestination,
+        route,
+        setRoute,
         getCurrentLocation,
         isGettingLocation,
         locationError,

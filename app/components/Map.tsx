@@ -1,8 +1,10 @@
 'use client';
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Polyline, Marker } from '@react-google-maps/api';
 import { Location } from '../types/location';
 import { Route } from '../types/route';
+import { useLocation } from '../contexts/LocationContext';
+import { searchRoute } from '../utils/api';
 
 // 静的なライブラリ配列を定義
 const GOOGLE_MAPS_LIBRARIES: ("marker" | "places" | "geometry")[] = ["marker", "places", "geometry"];
@@ -106,14 +108,11 @@ const createCustomMarker = (isCurrentLocation: boolean) => {
 };
 
 const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect, endLocation }) => {
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
-  const [currentMarker, setCurrentMarker] = useState<google.maps.Marker | null>(null);
-  const [destinationMarker, setDestinationMarker] = useState<google.maps.Marker | null>(null);
-  const [mapError, setMapError] = useState<string | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [showLocationButton, setShowLocationButton] = useState(false);
-  const [hasRequestedLocation, setHasRequestedLocation] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const { destination, route, setRoute } = useLocation();
+  const markersRef = useRef<{ [key: string]: google.maps.marker.AdvancedMarkerElement }>({});
+  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -123,214 +122,119 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     mapIds: [MAP_ID]
   });
 
-  // 現在位置を取得する関数
-  const getCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setMapError('お使いのブラウザは位置情報をサポートしていません。');
-      return;
-    }
-
-    setIsLocating(true);
-    setHasRequestedLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        onLocationSelect(location);
-        setIsLocating(false);
-      },
-      (error) => {
-        console.error('位置情報の取得に失敗しました:', error);
-        setMapError('位置情報の取得に失敗しました。位置情報の使用を許可してください。');
-        setIsLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      }
-    );
-  }, [onLocationSelect]);
-
   useEffect(() => {
-    if (loadError) {
-      console.error('Google Maps APIの読み込みエラー:', loadError);
-      setMapError('地図の読み込みに失敗しました。APIキーを確認してください。');
-    }
-  }, [loadError]);
+    if (!mapRef.current) return;
 
-  const onLoad = useCallback((map: google.maps.Map) => {
-    console.log('地図の読み込みが完了しました');
-    setMap(map);
-    setIsMapReady(true);
-    setMapError(null);
+    const initMap = async () => {
+      if (!mapRef.current) return;
 
-    // 地図の初期表示位置を設定
-    if (currentLocation) {
-      map.panTo({ lat: currentLocation.lat, lng: currentLocation.lng });
-      map.setZoom(15);
-    }
-  }, [currentLocation]);
+      const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
+      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
 
-  const onUnmount = useCallback(() => {
-    console.log('地図のアンロードが完了しました');
-    setMap(null);
-    setIsMapReady(false);
-    setCurrentMarker(null);
-    setDestinationMarker(null);
-  }, []);
-
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      const location = {
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng()
-      };
-      onLocationSelect(location);
-    }
-  };
-
-  // 現在位置のマーカーを更新
-  useEffect(() => {
-    if (map && currentLocation) {
-      if (currentMarker) {
-        currentMarker.setMap(null);
-      }
-      const marker = new google.maps.Marker({
-        position: currentLocation,
-        map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: '#4285F4',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 3,
-        },
-        title: '現在地',
-        animation: google.maps.Animation.DROP
+      const map = new Map(mapRef.current, {
+        center: { lat: 35.6812, lng: 139.7671 },
+        zoom: 13,
+        mapId: 'fast-map',
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
       });
-      setCurrentMarker(marker);
-      
-      // 現在地に地図を移動
-      map.panTo(currentLocation);
-      map.setZoom(15);
-    }
-  }, [map, currentLocation]);
 
-  // 目的地のマーカーを更新
-  useEffect(() => {
-    if (map && endLocation) {
-      if (destinationMarker) {
-        destinationMarker.setMap(null);
-      }
-      const marker = new google.maps.Marker({
-        position: endLocation,
-        map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 12,
-          fillColor: '#EA4335',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 3,
-        },
-        title: '目的地',
-        animation: google.maps.Animation.DROP
-      });
-      setDestinationMarker(marker);
-      
-      // 目的地が設定されたら地図を移動
-      if (!currentLocation) {
-        map.panTo(endLocation);
-        map.setZoom(15);
-      }
-    }
-  }, [map, endLocation]);
+      mapInstanceRef.current = map;
+      console.log('地図の読み込みが完了しました');
 
-  // ルートのパスを描画
-  const renderRoute = () => {
-    if (!selectedRoute || !map) return null;
-
-    // ルートのパスを取得
-    const path = selectedRoute.path.map(point => ({
-      lat: point[0],
-      lng: point[1]
-    }));
-
-    // ルートの色を設定（有料道路の場合は赤、それ以外は青）
-    const strokeColor = selectedRoute.isTollRoad ? '#FF0000' : '#3B82F6';
-
-    // パスが2点以上ある場合のみ描画
-    if (path.length < 2) return null;
-
-    return (
-      <Polyline
-        path={path}
-        options={{
-          strokeColor,
-          strokeWeight: 6,
-          strokeOpacity: 0.8,
-          geodesic: true,
-          icons: [
-            {
-              icon: {
-                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                scale: 3,
-                strokeColor: strokeColor,
-              },
-              offset: '50%',
-              repeat: '100px'
-            },
-          ],
-        }}
-      />
-    );
-  };
-
-  // 地図の表示範囲を調整
-  useEffect(() => {
-    if (!map || !selectedRoute) return;
-
-    const bounds = new google.maps.LatLngBounds();
-    
-    // 出発地と目的地を境界に追加
-    if (currentLocation) {
-      bounds.extend({ lat: currentLocation.lat, lng: currentLocation.lng });
-    }
-    if (endLocation) {
-      bounds.extend({ lat: endLocation.lat, lng: endLocation.lng });
-    }
-
-    // ルートのパスを境界に追加
-    selectedRoute.path.forEach(point => {
-      bounds.extend({ lat: point[0], lng: point[1] });
-    });
-
-    // 地図の表示範囲を調整
-    map.fitBounds(bounds);
-
-    // 必要に応じてズームレベルを調整
-    const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
-      const currentZoom = map.getZoom();
-      if (currentZoom && currentZoom > 15) {
-        map.setZoom(15);
-      }
-    });
-
-    return () => {
-      if (listener) {
-        google.maps.event.removeListener(listener);
+      // 現在地を取得
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
+            map.setCenter({ lat: latitude, lng: longitude });
+          },
+          (error) => {
+            console.error('位置情報の取得に失敗:', error);
+          }
+        );
       }
     };
-  }, [map, selectedRoute, currentLocation, endLocation]);
 
-  if (mapError) {
+    initMap();
+  }, []);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    const updateMarkers = async () => {
+      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
+      // 既存のマーカーを削除
+      Object.values(markersRef.current).forEach(marker => marker.map = null);
+      markersRef.current = {};
+
+      // 現在地のマーカーを追加
+      if (currentLocation) {
+        const currentMarker = new AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: currentLocation,
+          title: '現在地'
+        });
+        markersRef.current['current'] = currentMarker;
+      }
+
+      // 目的地のマーカーを追加
+      if (destination) {
+        const destinationMarker = new AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: destination,
+          title: '目的地'
+        });
+        markersRef.current['destination'] = destinationMarker;
+      }
+    };
+
+    updateMarkers();
+  }, [currentLocation, destination]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || !currentLocation || !destination) return;
+
+    const calculateRoute = async () => {
+      if (!currentLocation || !destination) return;
+
+      try {
+        const routes = await searchRoute(
+          [currentLocation.lat, currentLocation.lng],
+          [destination.lat, destination.lng]
+        );
+        if (routes && routes.length > 0) {
+          setRoute(routes[0]);
+        }
+      } catch (error) {
+        console.error('ルート検索に失敗:', error);
+      }
+    };
+
+    calculateRoute();
+  }, [currentLocation, destination, setRoute]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || !route) return;
+
+    const { DirectionsRenderer } = google.maps;
+    if (!directionsRendererRef.current) {
+      directionsRendererRef.current = new DirectionsRenderer({
+        map: mapInstanceRef.current,
+        suppressMarkers: true
+      });
+    }
+
+    directionsRendererRef.current.setDirections(route);
+  }, [route]);
+
+  if (loadError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-red-600">{mapError}</div>
+        <div className="text-red-600">{loadError.message}</div>
       </div>
     );
   }
@@ -344,54 +248,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }
 
   return (
-    <div 
-      className="relative w-full h-full" 
-      style={{ minHeight: '400px' }}
-      onMouseMove={() => setShowLocationButton(true)}
-      onMouseLeave={() => setShowLocationButton(false)}
-    >
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={currentLocation ? { lat: currentLocation.lat, lng: currentLocation.lng } : defaultCenter}
-        zoom={13}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
-        onClick={handleMapClick}
-        options={{
-          zoomControl: true,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: false,
-          minZoom: 5,
-          maxZoom: 18,
-          mapId: MAP_ID,
-          mapTypeId: 'roadmap',
-          gestureHandling: 'greedy'
-        }}
-      >
-        {renderRoute()}
-      </GoogleMap>
-      {showLocationButton && !hasRequestedLocation && (
-        <button
-          onClick={getCurrentLocation}
-          disabled={isLocating}
-          className="absolute bottom-4 right-4 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-300"
-          title="現在地を取得"
-        >
-          {isLocating ? (
-            <svg className="w-6 h-6 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          )}
-        </button>
-      )}
-    </div>
+    <div ref={mapRef} className="relative w-full h-full" style={{ minHeight: '400px' }} />
   );
 };
 
