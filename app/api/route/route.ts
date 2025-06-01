@@ -85,17 +85,26 @@ export async function POST(request: Request) {
         }
       });
 
-      console.log('車ルート検索結果:', drivingRes.data);
+      console.log('車ルート検索結果:', {
+        status: drivingRes.data.status,
+        error_message: drivingRes.data.error_message,
+        routes: drivingRes.data.routes?.length || 0
+      });
 
       const drivingStatus = drivingRes.data.status;
       if (drivingStatus !== 'OK') {
         if (statusMap[drivingStatus]) {
-          console.warn('車ルートエラー:', drivingRes.data);
+          console.warn('車ルートエラー:', {
+            status: drivingStatus,
+            error_message: drivingRes.data.error_message,
+            raw_response: drivingRes.data
+          });
           return NextResponse.json(
             { 
               error: `車ルート取得失敗: ${drivingStatus}`,
               details: drivingRes.data.error_message || '不明なエラー',
-              status: statusMap[drivingStatus]
+              status: statusMap[drivingStatus],
+              raw_response: drivingRes.data
             },
             { status: statusMap[drivingStatus] }
           );
