@@ -42,33 +42,49 @@ export const getTrafficInfo = async (
   }
 };
 
+export const searchRoute = async (start: [number, number], end: [number, number]): Promise<Route[]> => {
+  try {
+    console.log('ルート検索開始:', { start, end });
+    
+    const response = await fetch('/api/route', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        start: {
+          lat: start[0],
+          lng: start[1]
+        },
+        end: {
+          lat: end[0],
+          lng: end[1]
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('ルート検索APIエラー:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(`Request failed with status code ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('ルート検索結果:', data);
+    return [data];
+  } catch (error) {
+    console.error('ルート検索エラー:', error);
+    throw error;
+  }
+};
+
 export const api = {
   // ルート検索
-  searchRoute: async (start: [number, number], end: [number, number]): Promise<Route[]> => {
-    try {
-      const response = await fetch('/api/route', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          start: { lat: start[0], lng: start[1] },
-          end: { lat: end[0], lng: end[1] }
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'ルート検索に失敗しました');
-      }
-
-      const data = await response.json();
-      return [data]; // サーバーサイドのAPIは単一のルートを返すため、配列に変換
-    } catch (error) {
-      console.error('ルート検索エラー:', error);
-      throw error;
-    }
-  },
+  searchRoute: searchRoute,
 
   // フィードバック送信
   sendFeedback: async (feedback: Feedback): Promise<void> => {
