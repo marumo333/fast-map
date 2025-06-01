@@ -43,8 +43,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '出発地と目的地の座標が不正です。' }, { status: 400 });
     }
 
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
+      console.error('Google Maps APIキーが設定されていません');
       return NextResponse.json({ error: 'Google Maps APIキーが設定されていません' }, { status: 500 });
     }
 
@@ -56,6 +57,8 @@ export async function POST(request: Request) {
       'INVALID_REQUEST': 400,
       'OVER_QUERY_LIMIT': 429,
     };
+
+    console.log('ルート検索開始:', { start, end });
 
     // 車モード
     const drivingRes = await directionsService.directions({
@@ -74,6 +77,8 @@ export async function POST(request: Request) {
         waypoints: [],
       }
     });
+
+    console.log('車ルート検索結果:', drivingRes.data);
 
     const drivingStatus = drivingRes.data.status;
     if (drivingStatus !== 'OK') {
@@ -102,6 +107,8 @@ export async function POST(request: Request) {
       }
     });
 
+    console.log('徒歩ルート検索結果:', walkingRes.data);
+
     const walkingStatus = walkingRes.data.status;
     if (walkingStatus !== 'OK') {
       if (statusMap[walkingStatus]) {
@@ -125,7 +132,7 @@ export async function POST(request: Request) {
       path.push(...points);
     });
 
-    return NextResponse.json({
+    const response = {
       path,
       distance: drivingLeg.distance.value,
       duration: {
@@ -137,7 +144,10 @@ export async function POST(request: Request) {
         duration_in_traffic: drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value,
         traffic_level: drivingLeg.duration_in_traffic ? '混雑' : '通常'
       }]
-    });
+    };
+
+    console.log('ルート検索成功:', response);
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('ルート取得エラー:', error);
