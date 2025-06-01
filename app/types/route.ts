@@ -1,4 +1,4 @@
-import type { DirectionsResult } from '@types/google.maps';
+/// <reference types="@types/google.maps" />
 
 export interface TrafficInfo {
   duration_in_traffic: number;
@@ -24,4 +24,4 @@ export interface RouteInfo {
   estimatedTime?: number;
 }
 
-export type Route = DirectionsResult | RouteInfo; 
+export type Route = google.maps.DirectionsResult | RouteInfo; 
