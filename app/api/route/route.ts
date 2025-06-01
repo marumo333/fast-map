@@ -11,8 +11,9 @@ const ALLOWED_ORIGINS = [
 
 // CORSヘッダーを設定する関数
 function getCorsHeaders(origin: string) {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '*';
   return {
-    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
@@ -54,20 +55,10 @@ function decodePolyline(encoded: string): [number, number][] {
 // 1) プリフライト (OPTIONS) リクエストへの対応
 // ────────────────────────────────────────────────────────────────────────────────
 export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin') ?? '';
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    return new NextResponse(null, {
-      status: 204,
-      headers: getCorsHeaders(origin),
-    });
-  }
-  return new NextResponse(null, { 
+  const origin = request.headers.get('origin') ?? '*';
+  return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-    }
+    headers: getCorsHeaders(origin),
   });
 }
 
@@ -76,17 +67,8 @@ export async function OPTIONS(request: Request) {
 // ────────────────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
-    const origin = request.headers.get('origin') ?? '';
-    if (!ALLOWED_ORIGINS.includes(origin)) {
-      return NextResponse.json(
-        { error: 'CORS 許可されていないオリジンからのリクエストです' },
-        { 
-          status: 403,
-          headers: getCorsHeaders(origin)
-        }
-      );
-    }
-
+    const origin = request.headers.get('origin') ?? '*';
+    
     // リクエストボディの解析
     const { start, end } = await request.json();
 
