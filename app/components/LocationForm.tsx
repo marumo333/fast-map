@@ -70,9 +70,10 @@ export default function LocationForm() {
       const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
       if (currentLocationInputRef.current && !currentLocationAutocompleteRef.current) {
-        const placeAutocomplete = new PlaceAutocompleteElement();
-        placeAutocomplete.setAttribute('types', 'address');
-        placeAutocomplete.setAttribute('componentRestrictions', JSON.stringify({ country: 'jp' }));
+        const placeAutocomplete = new PlaceAutocompleteElement({
+          types: ['address'],
+          componentRestrictions: { country: 'jp' }
+        });
         
         currentLocationInputRef.current.parentNode?.insertBefore(
           placeAutocomplete,
@@ -94,9 +95,10 @@ export default function LocationForm() {
       }
 
       if (destinationInputRef.current && !destinationAutocompleteRef.current) {
-        const placeAutocomplete = new PlaceAutocompleteElement();
-        placeAutocomplete.setAttribute('types', 'address');
-        placeAutocomplete.setAttribute('componentRestrictions', JSON.stringify({ country: 'jp' }));
+        const placeAutocomplete = new PlaceAutocompleteElement({
+          types: ['address'],
+          componentRestrictions: { country: 'jp' }
+        });
         
         destinationInputRef.current.parentNode?.insertBefore(
           placeAutocomplete,
