@@ -25,20 +25,28 @@ export function middleware(request: NextRequest) {
   // APIルートへのリクエストの場合のみCORSヘッダーを設定
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const origin = request.headers.get('origin');
+    const headers = getCorsHeaders(origin);
 
     // プリフライトリクエストの場合は204を返す
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, {
         status: 204,
-        headers: getCorsHeaders(origin)
+        headers
       });
     }
 
     // 通常のリクエストの場合はCORSヘッダーを設定
     const response = NextResponse.next();
-    Object.entries(getCorsHeaders(origin)).forEach(([key, value]) => {
+    Object.entries(headers).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
+
+    // デバッグ用のログ
+    console.log('CORS Headers:', {
+      origin,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
     return response;
   }
 
@@ -47,5 +55,8 @@ export function middleware(request: NextRequest) {
 
 // ミドルウェアを適用するパスを指定
 export const config = {
-  matcher: '/api/:path*'
+  matcher: [
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico).*)'
+  ]
 }; 
