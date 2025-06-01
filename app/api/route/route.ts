@@ -45,9 +45,15 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
-      console.error('Google Maps APIキーが設定されていません');
-      return NextResponse.json({ error: 'Google Maps APIキーが設定されていません' }, { status: 500 });
+      console.error('Google Maps API key is not set');
+      return NextResponse.json(
+        { error: 'Google Maps API key is not configured' },
+        { status: 500 }
+      );
     }
+
+    console.log('API Key:', apiKey.substring(0, 5) + '...'); // APIキーの最初の5文字のみをログ出力
+    console.log('Request parameters:', { start, end, mode: 'driving' });
 
     const directionsService = new Client({});
     const statusMap: Record<string, number> = {
@@ -60,95 +66,107 @@ export async function POST(request: Request) {
 
     console.log('ルート検索開始:', { start, end });
 
-    // 車モード
-    const drivingRes = await directionsService.directions({
-      params: {
-        origin: start,
-        destination: end,
-        mode: 'driving' as TravelMode,
-        departure_time: new Date(),
-        traffic_model: 'best_guess' as TrafficModel,
-        region: 'jp',
-        language: 'ja' as Language,
-        key: apiKey,
-        avoid: ['ferries'] as TravelRestriction[],
-        alternatives: true,
-        optimize: true,
-        waypoints: [],
-      }
-    });
+    try {
+      // 車モード
+      const drivingRes = await directionsService.directions({
+        params: {
+          origin: start,
+          destination: end,
+          mode: 'driving' as TravelMode,
+          departure_time: new Date(),
+          traffic_model: 'best_guess' as TrafficModel,
+          region: 'jp',
+          language: 'ja' as Language,
+          key: apiKey,
+          avoid: ['ferries'] as TravelRestriction[],
+          alternatives: true,
+          optimize: true,
+          waypoints: [],
+        }
+      });
 
-    console.log('車ルート検索結果:', drivingRes.data);
+      console.log('車ルート検索結果:', drivingRes.data);
 
-    const drivingStatus = drivingRes.data.status;
-    if (drivingStatus !== 'OK') {
-      if (statusMap[drivingStatus]) {
-        console.warn('車ルートエラー:', drivingRes.data);
-        return NextResponse.json(
-          { error: `車ルート取得失敗: ${drivingStatus} - ${drivingRes.data.error_message || ''}` },
-          { status: statusMap[drivingStatus] }
-        );
-      } else {
-        throw new Error(`不明なエラー: ${drivingStatus}`);
+      const drivingStatus = drivingRes.data.status;
+      if (drivingStatus !== 'OK') {
+        if (statusMap[drivingStatus]) {
+          console.warn('車ルートエラー:', drivingRes.data);
+          return NextResponse.json(
+            { 
+              error: `車ルート取得失敗: ${drivingStatus}`,
+              details: drivingRes.data.error_message || '不明なエラー',
+              status: statusMap[drivingStatus]
+            },
+            { status: statusMap[drivingStatus] }
+          );
+        } else {
+          throw new Error(`不明なエラー: ${drivingStatus}`);
+        }
       }
+
+      // 徒歩モード
+      const walkingRes = await directionsService.directions({
+        params: {
+          origin: start,
+          destination: end,
+          mode: 'walking' as TravelMode,
+          key: apiKey,
+          region: 'jp',
+          language: 'ja' as Language,
+          alternatives: true,
+          waypoints: [],
+        }
+      });
+
+      console.log('徒歩ルート検索結果:', walkingRes.data);
+
+      const walkingStatus = walkingRes.data.status;
+      if (walkingStatus !== 'OK') {
+        if (statusMap[walkingStatus]) {
+          console.warn('徒歩ルートエラー:', walkingRes.data);
+          return NextResponse.json(
+            { error: `徒歩ルート取得失敗: ${walkingStatus} - ${walkingRes.data.error_message || ''}` },
+            { status: statusMap[walkingStatus] }
+          );
+        } else {
+          throw new Error(`不明な徒歩ルートエラー: ${walkingStatus}`);
+        }
+      }
+
+      const drivingLeg = drivingRes.data.routes[0].legs[0];
+      const walkingLeg = walkingRes.data.routes[0].legs[0];
+
+      const path: [number, number][] = [];
+
+      drivingLeg.steps.forEach(step => {
+        const points = decodePolyline(step.polyline.points);
+        path.push(...points);
+      });
+
+      const response = {
+        path,
+        distance: drivingLeg.distance.value,
+        duration: {
+          driving: drivingLeg.duration.value,
+          walking: walkingLeg.duration.value,
+        },
+        routeId: 1,
+        trafficInfo: [{
+          duration_in_traffic: drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value,
+          traffic_level: drivingLeg.duration_in_traffic ? '混雑' : '通常'
+        }]
+      };
+
+      console.log('ルート検索成功:', response);
+      return NextResponse.json(response);
+
+    } catch (error) {
+      console.error('ルート取得エラー:', error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました' },
+        { status: 500 }
+      );
     }
-
-    // 徒歩モード
-    const walkingRes = await directionsService.directions({
-      params: {
-        origin: start,
-        destination: end,
-        mode: 'walking' as TravelMode,
-        key: apiKey,
-        region: 'jp',
-        language: 'ja' as Language,
-        alternatives: true,
-        waypoints: [],
-      }
-    });
-
-    console.log('徒歩ルート検索結果:', walkingRes.data);
-
-    const walkingStatus = walkingRes.data.status;
-    if (walkingStatus !== 'OK') {
-      if (statusMap[walkingStatus]) {
-        console.warn('徒歩ルートエラー:', walkingRes.data);
-        return NextResponse.json(
-          { error: `徒歩ルート取得失敗: ${walkingStatus} - ${walkingRes.data.error_message || ''}` },
-          { status: statusMap[walkingStatus] }
-        );
-      } else {
-        throw new Error(`不明な徒歩ルートエラー: ${walkingStatus}`);
-      }
-    }
-
-    const drivingLeg = drivingRes.data.routes[0].legs[0];
-    const walkingLeg = walkingRes.data.routes[0].legs[0];
-
-    const path: [number, number][] = [];
-
-    drivingLeg.steps.forEach(step => {
-      const points = decodePolyline(step.polyline.points);
-      path.push(...points);
-    });
-
-    const response = {
-      path,
-      distance: drivingLeg.distance.value,
-      duration: {
-        driving: drivingLeg.duration.value,
-        walking: walkingLeg.duration.value,
-      },
-      routeId: 1,
-      trafficInfo: [{
-        duration_in_traffic: drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value,
-        traffic_level: drivingLeg.duration_in_traffic ? '混雑' : '通常'
-      }]
-    };
-
-    console.log('ルート検索成功:', response);
-    return NextResponse.json(response);
-
   } catch (error) {
     console.error('ルート取得エラー:', error);
     return NextResponse.json(
