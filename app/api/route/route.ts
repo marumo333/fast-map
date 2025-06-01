@@ -13,9 +13,10 @@ const ALLOWED_ORIGINS = [
 function getCorsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,OPTIONS,PATCH,DELETE,POST,PUT',
-    'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400'
   };
 }
 
@@ -53,7 +54,10 @@ function decodePolyline(encoded: string): [number, number][] {
 // 1) プリフライト (OPTIONS) リクエストへの対応
 // ────────────────────────────────────────────────────────────────────────────────
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { 
+    status: 204,
+    headers: getCorsHeaders()
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -71,7 +75,10 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: '出発地と目的地の座標が不正です。' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: getCorsHeaders()
+        }
       );
     }
 
@@ -81,7 +88,10 @@ export async function POST(request: Request) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: getCorsHeaders()
+        }
       );
     }
     if (!apiKey.startsWith('AIza')) {
