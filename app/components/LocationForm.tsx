@@ -21,6 +21,8 @@ export default function LocationForm() {
         (results, status) => {
           if (status === 'OK' && results && results[0]) {
             setCurrentAddress(results[0].formatted_address);
+          } else {
+            console.error('住所の取得に失敗:', status);
           }
         }
       );
@@ -36,6 +38,8 @@ export default function LocationForm() {
         (results, status) => {
           if (status === 'OK' && results && results[0]) {
             setDestinationAddress(results[0].formatted_address);
+          } else {
+            console.error('目的地の住所取得に失敗:', status);
           }
         }
       );
@@ -64,6 +68,8 @@ export default function LocationForm() {
           (results, status) => {
             if (status === 'OK' && results && results[0]) {
               setCurrentAddress(results[0].formatted_address);
+            } else {
+              console.error('住所の取得に失敗:', status);
             }
           }
         );
@@ -123,15 +129,21 @@ export default function LocationForm() {
             }}
             className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder="現在地を入力"
+            disabled={!!currentLocation}
           />
           <button
             onClick={handleGetLocation}
-            disabled={isLoading}
-            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={isLoading || !!currentLocation}
+            className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
           >
             {isLoading ? '取得中...' : '現在地を取得'}
           </button>
         </div>
+        {currentLocation && (
+          <p className="mt-1 text-sm text-gray-500">
+            現在地が設定されています
+          </p>
+        )}
       </div>
 
       <div>
@@ -154,6 +166,11 @@ export default function LocationForm() {
             placeholder="目的地を入力"
           />
         </div>
+        {destination && (
+          <p className="mt-1 text-sm text-gray-500">
+            目的地が設定されています
+          </p>
+        )}
       </div>
 
       {error && (
