@@ -15,8 +15,10 @@ export default function LocationForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const destinationAutocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const currentLocationInputRef = useRef<HTMLInputElement>(null);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
+  const currentLocationAutocompleteRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
+  const destinationAutocompleteRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
 
   const getAddressFromLocation = async (location: { lat: number; lng: number }) => {
     return new Promise<string>((resolve, reject) => {
@@ -63,31 +65,61 @@ export default function LocationForm() {
     }
   }, [destination]);
 
-  const handleCurrentLocationSelect = () => {
-    if (autocompleteRef.current) {
-      const place = autocompleteRef.current.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const newLocation = { lat, lng };
-        setCurrentLocation(newLocation);
-        setCurrentAddress(place.formatted_address || '');
-      }
-    }
-  };
+  useEffect(() => {
+    const initPlaceAutocomplete = async () => {
+      const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
-  const handleDestinationSelect = () => {
-    if (destinationAutocompleteRef.current) {
-      const place = destinationAutocompleteRef.current.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const newLocation = { lat, lng };
-        setDestination(newLocation);
-        setDestinationAddress(place.formatted_address || '');
+      if (currentLocationInputRef.current && !currentLocationAutocompleteRef.current) {
+        const placeAutocomplete = new PlaceAutocompleteElement();
+        placeAutocomplete.setAttribute('types', 'address');
+        placeAutocomplete.setAttribute('componentRestrictions', JSON.stringify({ country: 'jp' }));
+        
+        currentLocationInputRef.current.parentNode?.insertBefore(
+          placeAutocomplete,
+          currentLocationInputRef.current
+        );
+
+        placeAutocomplete.addEventListener('place_changed', () => {
+          const place = placeAutocomplete.getPlace();
+          if (place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const newLocation = { lat, lng };
+            setCurrentLocation(newLocation);
+            setCurrentAddress(place.formatted_address || '');
+          }
+        });
+
+        currentLocationAutocompleteRef.current = placeAutocomplete;
       }
-    }
-  };
+
+      if (destinationInputRef.current && !destinationAutocompleteRef.current) {
+        const placeAutocomplete = new PlaceAutocompleteElement();
+        placeAutocomplete.setAttribute('types', 'address');
+        placeAutocomplete.setAttribute('componentRestrictions', JSON.stringify({ country: 'jp' }));
+        
+        destinationInputRef.current.parentNode?.insertBefore(
+          placeAutocomplete,
+          destinationInputRef.current
+        );
+
+        placeAutocomplete.addEventListener('place_changed', () => {
+          const place = placeAutocomplete.getPlace();
+          if (place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const newLocation = { lat, lng };
+            setDestination(newLocation);
+            setDestinationAddress(place.formatted_address || '');
+          }
+        });
+
+        destinationAutocompleteRef.current = placeAutocomplete;
+      }
+    };
+
+    initPlaceAutocomplete();
+  }, []);
 
   const handleGetLocation = () => {
     setIsLoading(true);
@@ -140,15 +172,7 @@ export default function LocationForm() {
             type="text"
             value={currentAddress}
             onChange={(e) => setCurrentAddress(e.target.value)}
-            onBlur={handleCurrentLocationSelect}
-            ref={(input) => {
-              if (input && !autocompleteRef.current) {
-                autocompleteRef.current = new google.maps.places.Autocomplete(input, {
-                  types: ['address'],
-                  componentRestrictions: { country: 'jp' }
-                });
-              }
-            }}
+            ref={currentLocationInputRef}
             className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder="現在地を入力"
             disabled={!!currentLocation}
@@ -175,15 +199,7 @@ export default function LocationForm() {
             type="text"
             value={destinationAddress}
             onChange={(e) => setDestinationAddress(e.target.value)}
-            onBlur={handleDestinationSelect}
-            ref={(input) => {
-              if (input && !destinationAutocompleteRef.current) {
-                destinationAutocompleteRef.current = new google.maps.places.Autocomplete(input, {
-                  types: ['address'],
-                  componentRestrictions: { country: 'jp' }
-                });
-              }
-            }}
+            ref={destinationInputRef}
             className="block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder="目的地を入力"
           />
