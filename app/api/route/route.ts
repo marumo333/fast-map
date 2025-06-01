@@ -8,6 +8,17 @@ const ALLOWED_ORIGINS = [
   'https://fast-map-five.vercel.app',
 ];
 
+// CORSヘッダーを設定する関数
+function getCorsHeaders(origin: string) {
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400', // 24時間
+  };
+}
+
 function decodePolyline(encoded: string): [number, number][] {
   const poly: [number, number][] = [];
   let index = 0, lat = 0, lng = 0;
@@ -43,21 +54,13 @@ function decodePolyline(encoded: string): [number, number][] {
 // ────────────────────────────────────────────────────────────────────────────────
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get('origin') ?? '';
-  // リクエスト元オリジンが許可リストにあれば、そのまま返却する
   if (ALLOWED_ORIGINS.includes(origin)) {
-    return NextResponse.json(null, {
+    return new NextResponse(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': origin,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
+      headers: getCorsHeaders(origin),
     });
   }
-  // 許可されていないオリジンの場合も 204 を返すが、CORS ヘッダーは付与しない
-  return NextResponse.json(null, {
-    status: 204,
-  });
+  return new NextResponse(null, { status: 204 });
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -66,11 +69,13 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   try {
     const origin = request.headers.get('origin') ?? '';
-    // オリジンチェック（許可されていなければ 403 を返す）
     if (!ALLOWED_ORIGINS.includes(origin)) {
       return NextResponse.json(
         { error: 'CORS 許可されていないオリジンからのリクエストです' },
-        { status: 403 }
+        { 
+          status: 403,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -84,7 +89,10 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: '出発地と目的地の座標が不正です。' },
-        { status: 400, headers: { 'Access-Control-Allow-Origin': origin } }
+        { 
+          status: 400, 
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -94,14 +102,20 @@ export async function POST(request: Request) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
-        { status: 500, headers: { 'Access-Control-Allow-Origin': origin } }
+        { 
+          status: 500,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
     if (!apiKey.startsWith('AIza')) {
       console.error('Invalid API key format');
       return NextResponse.json(
         { error: 'Invalid API key format' },
-        { status: 500, headers: { 'Access-Control-Allow-Origin': origin } }
+        { 
+          status: 500,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -154,7 +168,7 @@ export async function POST(request: Request) {
             },
             {
               status: statusMap[drivingStatus],
-              headers: { 'Access-Control-Allow-Origin': origin }
+              headers: getCorsHeaders(origin)
             }
           );
         } else {
@@ -196,7 +210,7 @@ export async function POST(request: Request) {
             },
             {
               status: statusMap[walkingStatus],
-              headers: { 'Access-Control-Allow-Origin': origin }
+              headers: getCorsHeaders(origin)
             }
           );
         } else {
@@ -229,7 +243,7 @@ export async function POST(request: Request) {
 
       console.log('ルート検索成功:', response);
       return NextResponse.json(response, {
-        headers: { 'Access-Control-Allow-Origin': origin }
+        headers: getCorsHeaders(origin)
       });
 
     } catch (error) {
@@ -239,7 +253,7 @@ export async function POST(request: Request) {
           { error: 'ルート取得に失敗しました', details: error.message },
           {
             status: 500,
-            headers: { 'Access-Control-Allow-Origin': origin }
+            headers: getCorsHeaders(origin)
           }
         );
       }
@@ -247,7 +261,7 @@ export async function POST(request: Request) {
         { error: 'ルート取得に失敗しました', details: '不明なエラーが発生しました' },
         {
           status: 500,
-          headers: { 'Access-Control-Allow-Origin': origin }
+          headers: getCorsHeaders(origin)
         }
       );
     }
@@ -260,7 +274,7 @@ export async function POST(request: Request) {
         { error: error.message, stack: error.stack, name: error.name },
         {
           status: 500,
-          headers: { 'Access-Control-Allow-Origin': origin }
+          headers: getCorsHeaders(origin)
         }
       );
     }
@@ -268,7 +282,7 @@ export async function POST(request: Request) {
       { error: 'ルート情報の取得に失敗しました' },
       {
         status: 500,
-        headers: { 'Access-Control-Allow-Origin': origin }
+        headers: getCorsHeaders(origin)
       }
     );
   }
