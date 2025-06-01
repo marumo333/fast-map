@@ -1,13 +1,11 @@
 import { DirectionsResult } from '@react-google-maps/api';
 
-export type Route = DirectionsResult;
-
 export interface TrafficInfo {
   duration_in_traffic: number;
   traffic_level: '混雑' | '通常';
 }
 
-export interface Route {
+export interface RouteInfo {
   routeId: number;
   path: [number, number][];
   distance: number;
@@ -24,4 +22,6 @@ export interface Route {
   }[];
   tollFee?: number;
   estimatedTime?: number;
-} 
+}
+
+export type Route = DirectionsResult | RouteInfo; 
