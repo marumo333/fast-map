@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation } from '../contexts/LocationContext';
 import { useRouter } from 'next/navigation';
 
-// TODO: 2025年3月以降の対応
-// 1. google.maps.places.Autocompleteをgoogle.maps.places.PlaceAutocompleteElementに移行
-// 2. google.maps.Markerをgoogle.maps.marker.AdvancedMarkerElementに移行
-// 参考: https://developers.google.com/maps/documentation/javascript/places-migration-overview
-// 参考: https://developers.google.com/maps/documentation/javascript/advanced-markers/migration
+// TODO: 2025年3月以降の移行計画
+// 1. google.maps.places.Autocomplete から google.maps.places.PlaceAutocompleteElement への移行
+// 2. google.maps.Marker から google.maps.marker.AdvancedMarkerElement への移行
+// 参考: https://developers.google.com/maps/documentation/javascript/places-autocomplete-migration
+// 参考: https://developers.google.com/maps/documentation/javascript/markers-migration
 
 export default function LocationForm() {
   const { currentLocation, setCurrentLocation, destination, setDestination } = useLocation();
