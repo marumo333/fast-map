@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Route } from '../../../types/route';
+import { Route } from '@/app/types/route';
 
 // キャッシュの実装
 const routeCache = new Map<number, {

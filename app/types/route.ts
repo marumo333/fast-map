@@ -24,4 +24,4 @@ export interface RouteInfo {
   estimatedTime?: number;
 }
 
-export type Route = google.maps.DirectionsResult | RouteInfo; 
+export type Route = RouteInfo; 
