@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation } from '../contexts/LocationContext';
 import { useRouter } from 'next/navigation';
 
+// TODO: 2025年3月以降の対応
+// 1. google.maps.places.Autocompleteをgoogle.maps.places.PlaceAutocompleteElementに移行
+// 2. google.maps.Markerをgoogle.maps.marker.AdvancedMarkerElementに移行
+// 参考: https://developers.google.com/maps/documentation/javascript/places-migration-overview
+// 参考: https://developers.google.com/maps/documentation/javascript/advanced-markers/migration
+
 export default function LocationForm() {
   const { currentLocation, setCurrentLocation, destination, setDestination } = useLocation();
   const [currentAddress, setCurrentAddress] = useState('');
@@ -22,7 +28,7 @@ export default function LocationForm() {
             resolve(results[0].formatted_address);
           } else {
             console.error('住所の取得に失敗:', status);
-            reject(new Error('住所の取得に失敗しました'));
+            reject(new Error(`住所の取得に失敗しました: ${status}`));
           }
         }
       );
@@ -33,6 +39,7 @@ export default function LocationForm() {
     if (currentLocation) {
       getAddressFromLocation(currentLocation)
         .then(address => {
+          console.log('現在地の住所を取得:', address);
           setCurrentAddress(address);
         })
         .catch(error => {
@@ -46,6 +53,7 @@ export default function LocationForm() {
     if (destination) {
       getAddressFromLocation(destination)
         .then(address => {
+          console.log('目的地の住所を取得:', address);
           setDestinationAddress(address);
         })
         .catch(error => {
@@ -54,42 +62,6 @@ export default function LocationForm() {
         });
     }
   }, [destination]);
-
-  const handleGetLocation = () => {
-    setIsLoading(true);
-    setError(null);
-
-    if (!navigator.geolocation) {
-      setError('お使いのブラウザは位置情報をサポートしていません。');
-      setIsLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
-        
-        const newLocation = { lat: latitude, lng: longitude };
-        setCurrentLocation(newLocation);
-
-        try {
-          const address = await getAddressFromLocation(newLocation);
-          setCurrentAddress(address);
-        } catch (error) {
-          console.error('現在地の住所取得に失敗:', error);
-          setCurrentAddress('住所を取得できませんでした');
-        }
-
-        setIsLoading(false);
-      },
-      (error) => {
-        console.error('位置情報の取得に失敗:', error);
-        setError('位置情報の取得に失敗しました。');
-        setIsLoading(false);
-      }
-    );
-  };
 
   const handleCurrentLocationSelect = () => {
     if (autocompleteRef.current) {
@@ -115,6 +87,48 @@ export default function LocationForm() {
         setDestinationAddress(place.formatted_address || '');
       }
     }
+  };
+
+  const handleGetLocation = () => {
+    setIsLoading(true);
+    setError(null);
+
+    if (!navigator.geolocation) {
+      setError('お使いのブラウザは位置情報をサポートしていません。');
+      setIsLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
+        
+        const newLocation = { lat: latitude, lng: longitude };
+        setCurrentLocation(newLocation);
+
+        try {
+          const address = await getAddressFromLocation(newLocation);
+          console.log('現在地の住所を取得:', address);
+          setCurrentAddress(address);
+        } catch (error) {
+          console.error('現在地の住所取得に失敗:', error);
+          setCurrentAddress('住所を取得できませんでした');
+        }
+
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('位置情報の取得に失敗:', error);
+        setError('位置情報の取得に失敗しました。');
+        setIsLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
   };
 
   return (
