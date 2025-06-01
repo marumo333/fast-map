@@ -43,7 +43,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '出発地と目的地の座標が不正です。' }, { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    // ← ここを「NEXT_PUBLIC_」ではなくサーバー用キー名に
+    const apiKey = process.env.GOOGLE_MAPS_SERVER_KEY;
     if (!apiKey) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // APIキーの形式を検証
+    // APIキーの形式を簡易チェック
     if (!apiKey.startsWith('AIza')) {
       console.error('Invalid API key format');
       return NextResponse.json(
@@ -60,9 +61,6 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    console.log('API Key:', apiKey.substring(0, 5) + '...'); // APIキーの最初の5文字のみをログ出力
-    console.log('Request parameters:', { start, end, mode: 'driving' });
 
     const directionsService = new Client({});
     const statusMap: Record<string, number> = {
@@ -76,7 +74,7 @@ export async function POST(request: Request) {
     console.log('ルート検索開始:', { start, end });
 
     try {
-      // 車モード
+      // --- 車モードのルート取得 ---
       const drivingRes = await directionsService.directions({
         params: {
           origin: start,
@@ -86,12 +84,11 @@ export async function POST(request: Request) {
           traffic_model: 'best_guess' as TrafficModel,
           region: 'jp',
           language: 'ja' as Language,
-          key: apiKey,
+          key: apiKey,                // ← サーバー用キー
           avoid: ['ferries'] as TravelRestriction[],
           alternatives: true,
-          optimize: true,
           waypoints: [],
-        }
+        },
       });
 
       console.log('車ルート検索結果:', {
@@ -108,7 +105,7 @@ export async function POST(request: Request) {
             error_message: drivingRes.data.error_message
           });
           return NextResponse.json(
-            { 
+            {
               error: `車ルート取得失敗: ${drivingStatus}`,
               details: drivingRes.data.error_message || '不明なエラー'
             },
@@ -119,18 +116,18 @@ export async function POST(request: Request) {
         }
       }
 
-      // 徒歩モード
+      // --- 徒歩モードのルート取得 ---
       const walkingRes = await directionsService.directions({
         params: {
           origin: start,
           destination: end,
           mode: 'walking' as TravelMode,
-          key: apiKey,
+          key: apiKey,          // ← サーバー用キー
           region: 'jp',
           language: 'ja' as Language,
           alternatives: true,
           waypoints: [],
-        }
+        },
       });
 
       console.log('徒歩ルート検索結果:', {
@@ -147,7 +144,7 @@ export async function POST(request: Request) {
             error_message: walkingRes.data.error_message
           });
           return NextResponse.json(
-            { 
+            {
               error: `徒歩ルート取得失敗: ${walkingStatus}`,
               details: walkingRes.data.error_message || '不明なエラー'
             },
@@ -158,11 +155,11 @@ export async function POST(request: Request) {
         }
       }
 
+      // レスポンス整形
       const drivingLeg = drivingRes.data.routes[0].legs[0];
       const walkingLeg = walkingRes.data.routes[0].legs[0];
 
       const path: [number, number][] = [];
-
       drivingLeg.steps.forEach(step => {
         const points = decodePolyline(step.polyline.points);
         path.push(...points);
@@ -170,13 +167,15 @@ export async function POST(request: Request) {
 
       const response = {
         path,
-        distance: drivingLeg.distance.value / 1000, // メートルからキロメートルに変換
+        distance: drivingLeg.distance.value / 1000, // メートル→キロメートル
         duration: {
-          driving: Math.ceil(drivingLeg.duration.value / 60), // 秒から分に変換
-          walking: Math.ceil(walkingLeg.duration.value / 60) // 秒から分に変換
+          driving: Math.ceil(drivingLeg.duration.value / 60),  // 秒→分
+          walking: Math.ceil(walkingLeg.duration.value / 60)   // 秒→分
         },
         routeId: 1,
-        duration_in_traffic: Math.ceil((drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value) / 60) // 秒から分に変換
+        duration_in_traffic: Math.ceil(
+          (drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value) / 60
+        ), // 秒→分
       };
 
       console.log('ルート検索成功:', response);
@@ -186,7 +185,7 @@ export async function POST(request: Request) {
       console.error('ルート取得エラー:', error);
       if (error instanceof Error) {
         return NextResponse.json(
-          { 
+          {
             error: 'ルート取得に失敗しました',
             details: error.message
           },
@@ -194,18 +193,19 @@ export async function POST(request: Request) {
         );
       }
       return NextResponse.json(
-        { 
+        {
           error: 'ルート取得に失敗しました',
           details: '不明なエラーが発生しました'
         },
         { status: 500 }
       );
     }
+
   } catch (error) {
     console.error('ルート取得エラー:', error);
     if (error instanceof Error) {
       return NextResponse.json(
-        { 
+        {
           error: error.message,
           stack: error.stack,
           name: error.name
