@@ -281,6 +281,14 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       zoom={13}
       onLoad={onLoad}
       onUnmount={onUnmount}
+      onClick={(e) => {
+        if (e.latLng) {
+          onLocationSelect({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng()
+          });
+        }
+      }}
       options={{
         mapId: MAP_ID,
         mapTypeControl: false,
