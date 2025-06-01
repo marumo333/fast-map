@@ -10,13 +10,12 @@ const ALLOWED_ORIGINS = [
 ];
 
 // CORSヘッダーを設定する関数
-function getCorsHeaders(origin: string) {
+function getCorsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'GET,OPTIONS,PATCH,DELETE,POST,PUT',
+    'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400', // 24時間
   };
 }
 
@@ -53,10 +52,10 @@ function decodePolyline(encoded: string): [number, number][] {
 // ────────────────────────────────────────────────────────────────────────────────
 // 1) プリフライト (OPTIONS) リクエストへの対応
 // ────────────────────────────────────────────────────────────────────────────────
-export async function OPTIONS(request: Request) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
-    headers: getCorsHeaders('*'),
+    headers: getCorsHeaders(),
   });
 }
 
@@ -77,7 +76,7 @@ export async function POST(request: Request) {
         { error: '出発地と目的地の座標が不正です。' },
         { 
           status: 400, 
-          headers: getCorsHeaders('*')
+          headers: getCorsHeaders()
         }
       );
     }
@@ -90,7 +89,7 @@ export async function POST(request: Request) {
         { error: 'Google Maps API key is not configured' },
         { 
           status: 500,
-          headers: getCorsHeaders('*')
+          headers: getCorsHeaders()
         }
       );
     }
@@ -100,7 +99,7 @@ export async function POST(request: Request) {
         { error: 'Invalid API key format' },
         { 
           status: 500,
-          headers: getCorsHeaders('*')
+          headers: getCorsHeaders()
         }
       );
     }
@@ -154,7 +153,7 @@ export async function POST(request: Request) {
             },
             {
               status: statusMap[drivingStatus],
-              headers: getCorsHeaders('*')
+              headers: getCorsHeaders()
             }
           );
         } else {
@@ -196,7 +195,7 @@ export async function POST(request: Request) {
             },
             {
               status: statusMap[walkingStatus],
-              headers: getCorsHeaders('*')
+              headers: getCorsHeaders()
             }
           );
         } else {
@@ -229,7 +228,7 @@ export async function POST(request: Request) {
 
       console.log('ルート検索成功:', response);
       return NextResponse.json(response, {
-        headers: getCorsHeaders('*')
+        headers: getCorsHeaders()
       });
 
     } catch (error) {
@@ -239,7 +238,7 @@ export async function POST(request: Request) {
           { error: 'ルート取得に失敗しました', details: error.message },
           {
             status: 500,
-            headers: getCorsHeaders('*')
+            headers: getCorsHeaders()
           }
         );
       }
@@ -247,7 +246,7 @@ export async function POST(request: Request) {
         { error: 'ルート取得に失敗しました', details: '不明なエラーが発生しました' },
         {
           status: 500,
-          headers: getCorsHeaders('*')
+          headers: getCorsHeaders()
         }
       );
     }
@@ -259,7 +258,7 @@ export async function POST(request: Request) {
         { error: error.message, stack: error.stack, name: error.name },
         {
           status: 500,
-          headers: getCorsHeaders('*')
+          headers: getCorsHeaders()
         }
       );
     }
@@ -267,7 +266,7 @@ export async function POST(request: Request) {
       { error: 'ルート情報の取得に失敗しました' },
       {
         status: 500,
-        headers: getCorsHeaders('*')
+        headers: getCorsHeaders()
       }
     );
   }
