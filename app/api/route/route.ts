@@ -53,10 +53,7 @@ function decodePolyline(encoded: string): [number, number][] {
 // 1) プリフライト (OPTIONS) リクエストへの対応
 // ────────────────────────────────────────────────────────────────────────────────
 export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: getCorsHeaders(),
-  });
+  return new NextResponse(null, { status: 204 });
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -74,10 +71,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: '出発地と目的地の座標が不正です。' },
-        { 
-          status: 400, 
-          headers: getCorsHeaders()
-        }
+        { status: 400 }
       );
     }
 
@@ -87,20 +81,14 @@ export async function POST(request: Request) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
-        { 
-          status: 500,
-          headers: getCorsHeaders()
-        }
+        { status: 500 }
       );
     }
     if (!apiKey.startsWith('AIza')) {
       console.error('Invalid API key format');
       return NextResponse.json(
         { error: 'Invalid API key format' },
-        { 
-          status: 500,
-          headers: getCorsHeaders()
-        }
+        { status: 500 }
       );
     }
 
