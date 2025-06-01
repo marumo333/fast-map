@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@googlemaps/google-maps-services-js';
 
-// 許可するオリジンを列挙（ローカルや本番フロントの URL を追加）
+// 許可するオリジンを列挙
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'https://fast-map-five.vercel.app',
@@ -10,9 +10,9 @@ const ALLOWED_ORIGINS = [
 ];
 
 // CORSヘッダーを設定する関数
-function getCorsHeaders() {
+function getCorsHeaders(origin: string) {
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
@@ -53,10 +53,11 @@ function decodePolyline(encoded: string): [number, number][] {
 // ────────────────────────────────────────────────────────────────────────────────
 // 1) プリフライト (OPTIONS) リクエストへの対応
 // ────────────────────────────────────────────────────────────────────────────────
-export async function OPTIONS() {
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin') || '';
   return new NextResponse(null, { 
     status: 204,
-    headers: getCorsHeaders()
+    headers: getCorsHeaders(origin)
   });
 }
 
@@ -64,6 +65,8 @@ export async function OPTIONS() {
 // 2) 実際の POST ハンドラ
 // ────────────────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
+  const origin = request.headers.get('origin') || '';
+  
   try {
     // リクエストボディの解析
     const { start, end } = await request.json();
@@ -77,7 +80,7 @@ export async function POST(request: Request) {
         { error: '出発地と目的地の座標が不正です。' },
         { 
           status: 400,
-          headers: getCorsHeaders()
+          headers: getCorsHeaders(origin)
         }
       );
     }
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
         { error: 'Google Maps API key is not configured' },
         { 
           status: 500,
-          headers: getCorsHeaders()
+          headers: getCorsHeaders(origin)
         }
       );
     }
@@ -151,7 +154,7 @@ export async function POST(request: Request) {
             },
             {
               status: statusMap[drivingStatus],
-              headers: getCorsHeaders()
+              headers: getCorsHeaders(origin)
             }
           );
         } else {
@@ -193,7 +196,7 @@ export async function POST(request: Request) {
             },
             {
               status: statusMap[walkingStatus],
-              headers: getCorsHeaders()
+              headers: getCorsHeaders(origin)
             }
           );
         } else {
@@ -226,7 +229,7 @@ export async function POST(request: Request) {
 
       console.log('ルート検索成功:', response);
       return NextResponse.json(response, {
-        headers: getCorsHeaders()
+        headers: getCorsHeaders(origin)
       });
 
     } catch (error) {
@@ -236,7 +239,7 @@ export async function POST(request: Request) {
           { error: 'ルート取得に失敗しました', details: error.message },
           {
             status: 500,
-            headers: getCorsHeaders()
+            headers: getCorsHeaders(origin)
           }
         );
       }
@@ -244,7 +247,7 @@ export async function POST(request: Request) {
         { error: 'ルート取得に失敗しました', details: '不明なエラーが発生しました' },
         {
           status: 500,
-          headers: getCorsHeaders()
+          headers: getCorsHeaders(origin)
         }
       );
     }
@@ -256,7 +259,7 @@ export async function POST(request: Request) {
         { error: error.message, stack: error.stack, name: error.name },
         {
           status: 500,
-          headers: getCorsHeaders()
+          headers: getCorsHeaders(origin)
         }
       );
     }
@@ -264,7 +267,7 @@ export async function POST(request: Request) {
       { error: 'ルート情報の取得に失敗しました' },
       {
         status: 500,
-        headers: getCorsHeaders()
+        headers: getCorsHeaders(origin)
       }
     );
   }
