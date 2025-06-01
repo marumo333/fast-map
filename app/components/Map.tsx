@@ -218,18 +218,38 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   }, [currentLocation, destination, setRoute]);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || !route) return;
-
-    const { DirectionsRenderer } = google.maps;
-    if (!directionsRendererRef.current) {
-      directionsRendererRef.current = new DirectionsRenderer({
-        map: mapInstanceRef.current,
-        suppressMarkers: true
-      });
+    if (route && directionsRendererRef.current) {
+      const directionsResult: google.maps.DirectionsResult = {
+        request: {
+          origin: { lat: currentLocation?.lat || 0, lng: currentLocation?.lng || 0 },
+          destination: { lat: destination?.lat || 0, lng: destination?.lng || 0 },
+          travelMode: google.maps.TravelMode.DRIVING
+        },
+        routes: [{
+          legs: [{
+            distance: { text: `${route.distance}km`, value: route.distance * 1000 },
+            duration: { text: `${route.duration.driving}分`, value: (route.duration.driving || 0) * 60 },
+            duration_in_traffic: { text: `${route.duration_in_traffic}分`, value: route.duration_in_traffic * 60 },
+            start_address: '',
+            end_address: '',
+            start_location: new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
+            end_location: new google.maps.LatLng(destination?.lat || 0, destination?.lng || 0),
+            steps: []
+          }],
+          overview_path: route.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
+          overview_polyline: { points: '' },
+          bounds: new google.maps.LatLngBounds(
+            new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
+            new google.maps.LatLng(destination?.lat || 0, destination?.lng || 0)
+          ),
+          copyrights: '',
+          warnings: [],
+          waypoint_order: []
+        }]
+      };
+      directionsRendererRef.current.setDirections(directionsResult);
     }
-
-    directionsRendererRef.current.setDirections(route);
-  }, [route]);
+  }, [route, currentLocation, destination]);
 
   if (loadError) {
     return (
