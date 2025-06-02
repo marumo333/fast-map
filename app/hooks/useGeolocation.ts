@@ -61,6 +61,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
     }
   }, []);
 
+  // 初期位置を取得し、30秒ごとに更新
   useEffect(() => {
     getCurrentLocation();
     const interval = setInterval(getCurrentLocation, 30000); // 30秒ごとに位置情報を更新
