@@ -142,7 +142,7 @@ export default function Home() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/route', {
+      const response = await fetch('https://fast-6ir0sv4r8-marumo333s-projects.vercel.app/route', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
