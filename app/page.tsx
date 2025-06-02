@@ -122,7 +122,7 @@ export default function Home() {
     };
 
     updateLocations();
-  }, [startLocation, endLocation, currentLocation, updateLocationAddress]);
+  }, [startLocation, endLocation, currentLocation, updateLocationAddress, setStartLocation, setEndLocation]);
 
   const handleTrafficInfoUpdate = useCallback((info: any) => {
     console.log('交通情報更新:', info);
