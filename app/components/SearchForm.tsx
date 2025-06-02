@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Location } from '../types/location';
 import { useLocation } from '../contexts/LocationContext';
 
@@ -30,6 +30,23 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   // TODO: 2025年3月1日以降、PlaceAutocompleteElementに移行予定
   const startAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
   const endAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode(
+        { location },
+        (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            resolve(results[0].formatted_address);
+          } else {
+            console.error('住所の取得に失敗:', status);
+            reject(new Error(`住所の取得に失敗しました: ${status}`));
+          }
+        }
+      );
+    });
+  }, []);
 
   useEffect(() => {
     if (currentLocation && !selectedStart) {

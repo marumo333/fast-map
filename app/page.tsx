@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RouteSelector from './components/RouteSelector';
 import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
@@ -51,8 +51,7 @@ export default function Home() {
     getCurrentLocation: () => Promise<void>;
   };
 
-  // 緯度・経度から住所を取得する関数
-  const getAddressFromLocation = async (location: Location): Promise<string> => {
+  const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
     try {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&language=ja`
@@ -66,7 +65,7 @@ export default function Home() {
       console.error('住所取得エラー:', error);
       return '住所を取得できませんでした';
     }
-  };
+  }, []);
 
   // 位置情報が更新されたときに住所を取得
   useEffect(() => {

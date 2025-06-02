@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from '../contexts/LocationContext';
 import { useRouter } from 'next/navigation';
 
@@ -20,7 +20,7 @@ export default function LocationForm() {
   const currentLocationAutocompleteRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
   const destinationAutocompleteRef = useRef<google.maps.places.PlaceAutocompleteElement | null>(null);
 
-  const getAddressFromLocation = async (location: { lat: number; lng: number }) => {
+  const getAddressFromLocation = useCallback(async (location: { lat: number; lng: number }) => {
     return new Promise<string>((resolve, reject) => {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode(
@@ -35,7 +35,7 @@ export default function LocationForm() {
         }
       );
     });
-  };
+  }, []);
 
   // 現在地の住所を取得
   useEffect(() => {
