@@ -88,27 +88,36 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
 };
 
 export const createCustomMarker = (label: string, color: string) => {
-  const div = document.createElement('div');
-  div.style.width = '40px';
-  div.style.height = '40px';
-  div.style.backgroundColor = color;
-  div.style.border = '4px solid #FFFFFF';
-  div.style.borderRadius = '50%';
-  div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-  div.style.display = 'flex';
-  div.style.alignItems = 'center';
-  div.style.justifyContent = 'center';
-  div.style.position = 'relative';
-  div.style.transition = 'all 0.3s ease';
+  const container = document.createElement('div');
+  container.style.position = 'relative';
+  container.style.width = '40px';
+  container.style.height = '40px';
+  container.style.display = 'flex';
+  container.style.alignItems = 'center';
+  container.style.justifyContent = 'center';
 
-  const innerCircle = document.createElement('div');
-  innerCircle.style.width = '16px';
-  innerCircle.style.height = '16px';
-  innerCircle.style.backgroundColor = '#FFFFFF';
-  innerCircle.style.borderRadius = '50%';
-  innerCircle.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-  div.appendChild(innerCircle);
+  // 波紋エフェクト用の要素
+  const ripple = document.createElement('div');
+  ripple.style.position = 'absolute';
+  ripple.style.width = '100%';
+  ripple.style.height = '100%';
+  ripple.style.borderRadius = '50%';
+  ripple.style.backgroundColor = color;
+  ripple.style.opacity = '0.3';
+  ripple.style.animation = 'ripple 2s infinite';
+  container.appendChild(ripple);
 
+  // 中心のマーカー
+  const marker = document.createElement('div');
+  marker.style.width = '20px';
+  marker.style.height = '20px';
+  marker.style.backgroundColor = color;
+  marker.style.border = '3px solid #FFFFFF';
+  marker.style.borderRadius = '50%';
+  marker.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+  container.appendChild(marker);
+
+  // ラベル
   const labelElement = document.createElement('div');
   labelElement.style.position = 'absolute';
   labelElement.style.bottom = '-20px';
@@ -121,9 +130,25 @@ export const createCustomMarker = (label: string, color: string) => {
   labelElement.style.whiteSpace = 'nowrap';
   labelElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
   labelElement.textContent = label;
-  div.appendChild(labelElement);
+  container.appendChild(labelElement);
 
-  return div;
+  // アニメーション用のスタイルを追加
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes ripple {
+      0% {
+        transform: scale(0.5);
+        opacity: 0.3;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  return container;
 };
 
 export const initializePlaceAutocomplete = async (
