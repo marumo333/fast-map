@@ -165,16 +165,22 @@ export const initializePlaceAutocomplete = async (
 
   try {
     await waitForGoogleMaps();
-    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+    const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+    const placeAutocomplete = new PlaceAutocompleteElement({
       componentRestrictions: { country: 'jp' }
     });
 
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
+    inputRef.current.parentNode?.insertBefore(
+      placeAutocomplete,
+      inputRef.current
+    );
+
+    placeAutocomplete.addEventListener('place_changed', () => {
+      const place = placeAutocomplete.getPlace();
       onPlaceSelected(place);
     });
 
-    return autocomplete;
+    return placeAutocomplete;
   } catch (error) {
     console.error('PlaceAutocompleteElementの初期化に失敗:', error);
     return null;
