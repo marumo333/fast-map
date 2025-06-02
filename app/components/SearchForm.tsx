@@ -34,18 +34,11 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   useEffect(() => {
     if (currentLocation && !selectedStart) {
       setSelectedStart(currentLocation);
-      // 現在地の住所を取得して表示
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode(
-        { location: { lat: currentLocation.lat, lng: currentLocation.lng } },
-        (results: GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
-          if (status === 'OK' && results && results[0]) {
-            setStartQuery(results[0].formatted_address);
-          }
-        }
-      );
+      getAddressFromLocation(currentLocation).then(address => {
+        setStartQuery(address);
+      });
     }
-  }, []); // 依存配列を空にして初回のみ実行
+  }, [currentLocation, selectedStart, getAddressFromLocation]);
 
   useEffect(() => {
     // Google Places APIのサービスを初期化

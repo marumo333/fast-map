@@ -101,7 +101,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     if (!currentLocation) {
       setCurrentLocation({ lat: 35.6812, lng: 139.7671 });
     }
-  }, []);
+  }, [currentLocation]);
 
   return (
     <LocationContext.Provider

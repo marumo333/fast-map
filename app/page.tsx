@@ -89,7 +89,7 @@ export default function Home() {
         if (loc) setStartLocation(loc);
       });
     }
-  }, []); // 依存配列を空にして初回のみ実行
+  }, [startLocation, endLocation, currentLocation, getAddressFromLocation]);
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -127,7 +127,7 @@ export default function Home() {
         setStartLocation(prev => prev ? { ...prev, address } : null);
       });
     }
-  }, []); // 依存配列を空にして初回のみ実行
+  }, [currentLocation, startLocation, getAddressFromLocation]);
 
   const handleSearch = async (start: Location, end: Location) => {
     try {

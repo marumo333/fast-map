@@ -37,33 +37,23 @@ export default function LocationForm() {
     });
   };
 
+  // 現在地の住所を取得
   useEffect(() => {
     if (currentLocation && !currentAddress) {
-      getAddressFromLocation(currentLocation)
-        .then(address => {
-          console.log('現在地の住所を取得:', address);
-          setCurrentAddress(address);
-        })
-        .catch(error => {
-          console.error('現在地の住所取得に失敗:', error);
-          setCurrentAddress('住所を取得できませんでした');
-        });
+      getAddressFromLocation(currentLocation).then(address => {
+        setCurrentAddress(address);
+      });
     }
-  }, []);
+  }, [currentLocation, currentAddress, getAddressFromLocation]);
 
+  // 目的地の住所を取得
   useEffect(() => {
     if (destination && !destinationAddress) {
-      getAddressFromLocation(destination)
-        .then(address => {
-          console.log('目的地の住所を取得:', address);
-          setDestinationAddress(address);
-        })
-        .catch(error => {
-          console.error('目的地の住所取得に失敗:', error);
-          setDestinationAddress('住所を取得できませんでした');
-        });
+      getAddressFromLocation(destination).then(address => {
+        setDestinationAddress(address);
+      });
     }
-  }, []);
+  }, [destination, destinationAddress, getAddressFromLocation]);
 
   useEffect(() => {
     const initPlaceAutocomplete = async () => {
