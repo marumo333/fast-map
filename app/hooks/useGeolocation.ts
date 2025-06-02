@@ -45,7 +45,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 10000,
-          maximumAge: 0
+          maximumAge: 30000 // 30秒間キャッシュされた位置情報を使用可能
         });
       });
 
@@ -60,6 +60,13 @@ export const useGeolocation = (): UseGeolocationReturn => {
       setIsGettingLocation(false);
     }
   }, []);
+
+  useEffect(() => {
+    getCurrentLocation();
+    const interval = setInterval(getCurrentLocation, 30000); // 30秒ごとに位置情報を更新
+
+    return () => clearInterval(interval);
+  }, [getCurrentLocation]);
 
   // 初期位置を東京に設定
   useEffect(() => {
