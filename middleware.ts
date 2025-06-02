@@ -44,6 +44,8 @@ export function middleware(request: NextRequest) {
     // デバッグ用のログ
     console.log('CORS Headers:', {
       origin,
+      pathname: request.nextUrl.pathname,
+      method: request.method,
       headers: Object.fromEntries(response.headers.entries())
     });
 
@@ -55,8 +57,5 @@ export function middleware(request: NextRequest) {
 
 // ミドルウェアを適用するパスを指定
 export const config = {
-  matcher: [
-    '/api/:path*',
-    '/((?!_next/static|_next/image|favicon.ico).*)'
-  ]
+  matcher: '/api/:path*'
 }; 

@@ -22,18 +22,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/$1",
-      "headers": {
-        "Access-Control-Allow-Origin": "https://fast-map-five.vercel.app",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Max-Age": "86400",
-        "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
-      }
+      "dest": "/$1"
     }
   ],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://fast-map-five.vercel.app"
+    "NEXT_PUBLIC_API_URL": "https://fast-6ir0sv4r8-marumo333s-projects.vercel.app"
   }
 }
