@@ -48,15 +48,15 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">現在のルート:</span>
                 <span className="font-medium text-gray-900">
-                  {Math.round(currentRoute.durationInTraffic / 60)}分
+                  {Math.round((currentRoute.durationInTraffic || currentRoute.duration) / 60)}分
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">代替ルート:</span>
                 <span className="font-medium text-gray-900">
-                  {Math.round(suggestedRoute.duration_in_traffic / 60)}分
+                  {Math.round((suggestedRoute.durationInTraffic || suggestedRoute.duration) / 60)}分
                   <span className="text-green-600 ml-1">
-                    ({Math.round((1 - suggestedRoute.duration_in_traffic / currentRoute.duration_in_traffic) * 100)}%短縮)
+                    ({Math.round((1 - (suggestedRoute.durationInTraffic || suggestedRoute.duration) / (currentRoute.durationInTraffic || currentRoute.duration)) * 100)}%短縮)
                   </span>
                 </span>
               </div>
