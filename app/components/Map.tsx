@@ -209,8 +209,11 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         routes: [{
           legs: [{
             distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
-            duration: { text: `${selectedRoute.duration.driving}分`, value: (selectedRoute.duration.driving || 0) * 60 },
-            duration_in_traffic: { text: `${selectedRoute.duration_in_traffic}分`, value: selectedRoute.duration_in_traffic * 60 },
+            duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
+            duration_in_traffic: selectedRoute.durationInTraffic ? {
+              text: `${selectedRoute.durationInTraffic}分`,
+              value: selectedRoute.durationInTraffic * 60
+            } : undefined,
             start_address: '',
             end_address: '',
             start_location: new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
