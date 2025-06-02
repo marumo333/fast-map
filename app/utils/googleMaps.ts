@@ -50,7 +50,7 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
 
       if (!window.google?.maps) {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding&callback=initGoogleMaps`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding&callback=initGoogleMaps&loading=async`;
         script.async = true;
         script.defer = true;
 
