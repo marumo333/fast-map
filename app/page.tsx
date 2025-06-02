@@ -34,6 +34,37 @@ const Map = dynamic(() => import('./components/Map'), {
   )
 });
 
+// LocationInfoコンポーネントを通常の関数コンポーネントとして分離
+const LocationInfo: React.FC<{ location: LocationWithAddress | null, label: string, setStartLocation: any, setEndLocation: any, getAddressFromLocation: (location: Location) => Promise<string> }> = ({ location, label, setStartLocation, setEndLocation, getAddressFromLocation }) => {
+  const [address, setAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (location && !location.address) {
+      getAddressFromLocation(location).then(newAddress => {
+        setAddress(newAddress);
+        if (label === '出発地') {
+          setStartLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
+        } else {
+          setEndLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
+        }
+      });
+    } else if (location?.address) {
+      setAddress(location.address);
+    }
+  }, [location, label]);
+
+  if (!location) return null;
+
+  return (
+    <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
+      <div className="font-medium">{label}:</div>
+      <div className="pl-2">
+        {address || location.address || '住所を取得中...'}
+      </div>
+    </div>
+  );
+};
+
 export default function Home() {
   const { isDarkMode } = useTheme();
   const [startLocation, setStartLocation] = useState<LocationWithAddress | null>(null);
@@ -214,36 +245,6 @@ export default function Home() {
     setNotification(null);
   }, [notification]);
 
-  const LocationInfo = useCallback(({ location, label }: { location: LocationWithAddress | null, label: string }) => {
-    const [address, setAddress] = useState<string | null>(null);
-
-    useEffect(() => {
-      if (location && !location.address) {
-        getAddressFromLocation(location).then(newAddress => {
-          setAddress(newAddress);
-          if (label === '出発地') {
-            setStartLocation(prev => prev ? { ...prev, address: newAddress } : null);
-          } else {
-            setEndLocation(prev => prev ? { ...prev, address: newAddress } : null);
-          }
-        });
-      } else if (location?.address) {
-        setAddress(location.address);
-      }
-    }, [location, label, getAddressFromLocation]);
-
-    if (!location) return null;
-
-    return (
-      <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
-        <div className="font-medium">{label}:</div>
-        <div className="pl-2">
-          {address || location.address || '住所を取得中...'}
-        </div>
-      </div>
-    );
-  }, [getAddressFromLocation]);
-
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
       <div className="w-full h-full">
@@ -271,8 +272,8 @@ export default function Home() {
                   {/* 位置情報表示 */}
                   <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>位置情報</h2>
-                    <LocationInfo location={startLocation} label="出発地" />
-                    <LocationInfo location={endLocation} label="目的地" />
+                    <LocationInfo location={startLocation} label="出発地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getAddressFromLocation} />
+                    <LocationInfo location={endLocation} label="目的地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getAddressFromLocation} />
                   </div>
 
                   {/* ルート選択 */}

@@ -210,6 +210,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               aria-label="出発地"
               aria-autocomplete="list"
               role="combobox"
+              aria-controls="start-location-listbox"
               aria-expanded="false"
               aria-haspopup="listbox"
             />
@@ -234,6 +235,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               aria-label="目的地"
               aria-autocomplete="list"
               role="combobox"
+              aria-controls="end-location-listbox"
               aria-expanded="false"
               aria-haspopup="listbox"
             />
