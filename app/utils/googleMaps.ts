@@ -1,4 +1,9 @@
-import { Location } from '../types/location';
+
+interface GoogleMapsLibraries {
+  Map: typeof google.maps.Map;
+  DirectionsService: typeof google.maps.DirectionsService;
+  DirectionsRenderer: typeof google.maps.DirectionsRenderer;
+}
 
 export const waitForGoogleMaps = async (): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
@@ -16,24 +21,26 @@ export const waitForGoogleMaps = async (): Promise<void> => {
   });
 };
 
-export const initializeGoogleMaps = async () => {
-  const checkGoogleMaps = setInterval(async () => {
-    if (window.google && window.google.maps) {
-      clearInterval(checkGoogleMaps);
-      try {
-        const { Map, DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-        return { Map, DirectionsService, DirectionsRenderer };
-      } catch (error) {
-        console.error('Google Maps APIの初期化に失敗:', error);
-        throw error;
+export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
+  return new Promise((resolve, reject) => {
+    const checkGoogleMaps = setInterval(async () => {
+      if (window.google && window.google.maps) {
+        clearInterval(checkGoogleMaps);
+        try {
+          const { Map, DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
+          resolve({ Map, DirectionsService, DirectionsRenderer });
+        } catch (error) {
+          console.error('Google Maps APIの初期化に失敗:', error);
+          reject(error);
+        }
       }
-    }
-  }, 100);
+    }, 100);
 
-  setTimeout(() => {
-    clearInterval(checkGoogleMaps);
-    throw new Error('Google Maps APIの初期化がタイムアウトしました');
-  }, 10000);
+    setTimeout(() => {
+      clearInterval(checkGoogleMaps);
+      reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
+    }, 10000);
+  });
 };
 
 export const createCustomMarker = (label: string, color: string) => {

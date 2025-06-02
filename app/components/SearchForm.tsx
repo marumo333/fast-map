@@ -45,13 +45,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         startAutocomplete.current = await initializePlaceAutocomplete(
           startInputRef,
           (place) => {
-            if (place.geometry?.location) {
+            const location = place.location;
+            if (location) {
               setSelectedStart({
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-                address: place.formatted_address || ''
+                lat: location.lat(),
+                lng: location.lng(),
+                address: place.formattedAddress || ''
               });
-              setStartQuery(place.formatted_address || '');
+              setStartQuery(place.formattedAddress || '');
             }
           }
         );
@@ -61,13 +62,14 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         endAutocomplete.current = await initializePlaceAutocomplete(
           endInputRef,
           (place) => {
-            if (place.geometry?.location) {
+            const location = place.location;
+            if (location) {
               setSelectedEnd({
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-                address: place.formatted_address || ''
+                lat: location.lat(),
+                lng: location.lng(),
+                address: place.formattedAddress || ''
               });
-              setEndQuery(place.formatted_address || '');
+              setEndQuery(place.formattedAddress || '');
             }
           }
         );

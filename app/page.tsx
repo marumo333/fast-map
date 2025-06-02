@@ -24,6 +24,15 @@ type LocationWithAddress = Location & {
   address?: string;
 };
 
+// Mapコンポーネントのpropsの型を更新
+interface MapComponentProps {
+  startLocation: Location | null;
+  endLocation: Location | null;
+  onRouteSelect: (route: google.maps.DirectionsRoute) => void;
+  selectedRoute: google.maps.DirectionsRoute | null;
+  suggestedRoute: google.maps.DirectionsRoute | null;
+}
+
 // Leafletのマップコンポーネントを動的にインポート
 const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
@@ -309,16 +318,54 @@ export default function Home() {
                   <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="h-[600px] relative">
                       <Map
-                        selectedRoute={selectedRoute}
-                        currentLocation={currentLocation}
-                        onLocationSelect={(location) => {
-                          if (!startLocation) {
-                            setStartLocation(location as LocationWithAddress);
-                          } else {
-                            setEndLocation(location as LocationWithAddress);
-                          }
-                        }}
+                        startLocation={startLocation}
                         endLocation={endLocation}
+                        onRouteSelect={(route) => {
+                          // ルート情報を変換して保存
+                          const convertedRoute: Route = {
+                            routeId: 1,
+                            path: route.overview_path.map(point => [point.lat(), point.lng()]),
+                            distance: route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0,
+                            duration: route.legs[0].duration?.value ? Math.ceil(route.legs[0].duration.value / 60) : 0,
+                            durationInTraffic: route.legs[0].duration_in_traffic?.value ? Math.ceil(route.legs[0].duration_in_traffic.value / 60) : undefined,
+                            isTollRoad: route.legs.some(leg => leg.steps.some(step => 'toll' in step && step.toll)),
+                            toll: route.legs.reduce((total, leg) => {
+                              return total + leg.steps.reduce((stepTotal, step) => {
+                                return stepTotal + ('toll' in step && step.toll ? Number(step.toll) : 0);
+                              }, 0);
+                            }, 0)
+                          };
+                          setSelectedRoute(convertedRoute);
+                        }}
+                        selectedRoute={selectedRoute ? {
+                          bounds: new google.maps.LatLngBounds(
+                            new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
+                            new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0)
+                          ),
+                          copyrights: '',
+                          legs: [{
+                            distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
+                            duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
+                            duration_in_traffic: selectedRoute.durationInTraffic ? {
+                              text: `${selectedRoute.durationInTraffic}分`,
+                              value: selectedRoute.durationInTraffic * 60
+                            } : undefined,
+                            start_address: '',
+                            end_address: '',
+                            start_location: new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
+                            end_location: new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0),
+                            steps: [],
+                            traffic_speed_entry: [],
+                            via_waypoints: []
+                          }],
+                          overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
+                          overview_polyline: '',
+                          warnings: [],
+                          waypoint_order: [],
+                          summary: `${startLocation?.address || ''}から${endLocation?.address || ''}まで`,
+                          fare: undefined
+                        } as google.maps.DirectionsRoute : null}
+                        suggestedRoute={null}
                       />
                     </div>
                   </div>
