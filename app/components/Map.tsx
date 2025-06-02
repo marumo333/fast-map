@@ -95,11 +95,7 @@ const Map: React.FC<MapProps> = ({
     // 現在地のマーカーを設定
     if (currentLocation) {
       const currentMarker = markersRef.current.current;
-      const currentPosition = currentMarker?.position;
-      if (!currentMarker || 
-          !currentPosition ||
-          Math.abs(Number(currentPosition.lat) - Number(currentLocation.lat)) > 0.000001 || 
-          Math.abs(Number(currentPosition.lng) - Number(currentLocation.lng)) > 0.000001) {
+      if (!currentMarker) {
         const newCurrentMarker = new AdvancedMarkerElement({
           map: mapInstanceRef.current,
           position: currentLocation,
