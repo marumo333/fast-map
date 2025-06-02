@@ -203,7 +203,7 @@ export default function LocationForm() {
             value={currentAddress}
             onChange={(e) => setCurrentAddress(e.target.value)}
             ref={currentLocationInputRef}
-            className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-black"
             placeholder="現在地を入力"
             disabled={!!currentLocation}
           />
@@ -230,7 +230,7 @@ export default function LocationForm() {
             value={destinationAddress}
             onChange={(e) => setDestinationAddress(e.target.value)}
             ref={destinationInputRef}
-            className="block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="block w-full px-3 py-2 rounded-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-black"
             placeholder="目的地を入力"
           />
         </div>
