@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import RouteSelector from './components/RouteSelector';
 import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
@@ -53,7 +53,6 @@ export default function Home() {
 
   const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
-      // Google Maps APIが読み込まれるのを待つ
       const checkGoogleMaps = setInterval(() => {
         if (window.google && window.google.maps) {
           clearInterval(checkGoogleMaps);
@@ -75,7 +74,6 @@ export default function Home() {
         }
       }, 100);
 
-      // タイムアウト処理
       setTimeout(() => {
         clearInterval(checkGoogleMaps);
         reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
@@ -83,70 +81,84 @@ export default function Home() {
     });
   }, []);
 
-  // 位置情報が更新されたときに住所を取得
-  useEffect(() => {
-    const updateLocationAddress = async (location: LocationWithAddress | null, setLocation: (location: LocationWithAddress | null) => void) => {
-      if (location && !location.address) {
+  const updateLocationAddress = useCallback(async (
+    location: LocationWithAddress | null,
+    setLocation: (location: LocationWithAddress | null) => void
+  ) => {
+    if (location && !location.address) {
+      try {
         const address = await getAddressFromLocation(location);
         setLocation({ ...location, address });
+      } catch (error) {
+        console.error('住所の更新に失敗:', error);
+      }
+    }
+  }, [getAddressFromLocation]);
+
+  useEffect(() => {
+    const updateLocations = async () => {
+      if (!startLocation?.address) {
+        await updateLocationAddress(startLocation, setStartLocation);
+      }
+      if (!endLocation?.address) {
+        await updateLocationAddress(endLocation, setEndLocation);
+      }
+      if (currentLocation && !currentLocation.address) {
+        await updateLocationAddress(currentLocation as LocationWithAddress, (loc) => {
+          if (loc) setStartLocation(loc);
+        });
       }
     };
 
-    // 初回のみ実行
-    if (!startLocation?.address) {
-      updateLocationAddress(startLocation, setStartLocation);
-    }
-    if (!endLocation?.address) {
-      updateLocationAddress(endLocation, setEndLocation);
-    }
-    if (currentLocation && !currentLocation.address) {
-      updateLocationAddress(currentLocation as LocationWithAddress, (loc) => {
-        if (loc) setStartLocation(loc);
-      });
-    }
-  }, [startLocation, endLocation, currentLocation, getAddressFromLocation]);
+    updateLocations();
+  }, [startLocation, endLocation, currentLocation, updateLocationAddress]);
 
-  // 交通情報のポーリング
+  const handleTrafficInfoUpdate = useCallback((info: any) => {
+    console.log('交通情報更新:', info);
+    setTrafficInfo(info);
+    setShowTrafficInfo(true);
+    setTimeout(() => {
+      setShowTrafficInfo(false);
+    }, 3000);
+  }, []);
+
   useTrafficPolling(
     selectedRoute?.routeId ?? 0,
-    30000, // 30秒ごとに更新
-    (info) => {
-      console.log('交通情報更新:', info);
-      setTrafficInfo(info);
-      setShowTrafficInfo(true);
-      // 3秒後に通知を非表示
-      setTimeout(() => {
-        setShowTrafficInfo(false);
-      }, 3000);
-    },
+    30000,
+    handleTrafficInfoUpdate,
     startLocation ?? undefined,
     endLocation ?? undefined
   );
 
-  // ルート変更の検出
+  const handleRouteChange = useCallback((newRoute: Route) => {
+    setSelectedRoute(newRoute);
+    setShowNotification(true);
+  }, []);
+
   useRouteChangeDetection(
     selectedRoute ?? undefined,
     trafficInfo,
-    (newRoute) => {
-      setSelectedRoute(newRoute);
-      setShowNotification(true);
-    }
+    handleRouteChange
   );
 
-  // 現在地が取得されたら出発地として設定（初回のみ）
   useEffect(() => {
-    if (currentLocation && !startLocation) {
-      setStartLocation(currentLocation as LocationWithAddress);
-      // 現在地の住所を取得
-      getAddressFromLocation(currentLocation).then(address => {
-        setStartLocation(prev => prev ? { ...prev, address } : null);
-      });
-    }
+    const initializeCurrentLocation = async () => {
+      if (currentLocation && !startLocation) {
+        try {
+          const address = await getAddressFromLocation(currentLocation);
+          setStartLocation({ ...currentLocation, address });
+        } catch (error) {
+          console.error('現在地の住所取得に失敗:', error);
+          setStartLocation(currentLocation as LocationWithAddress);
+        }
+      }
+    };
+
+    initializeCurrentLocation();
   }, [currentLocation, startLocation, getAddressFromLocation]);
 
-  const handleSearch = async (start: Location, end: Location) => {
+  const handleSearch = useCallback(async (start: Location, end: Location) => {
     try {
-      // 出発地が指定されていない場合は現在地を使用
       const startLocation = start || currentLocation;
       if (!startLocation) {
         throw new Error('出発地が設定されていません。現在地の取得を許可してください。');
@@ -174,10 +186,9 @@ export default function Home() {
       }
 
       const routeData = await response.json();
-      // ルートデータに必要なプロパティを追加
       const selectedRoute = {
         ...routeData,
-        routeId: 1, // デフォルトのルートID
+        routeId: 1,
         path: routeData.path || [],
         distance: routeData.distance || 0,
         duration: routeData.duration?.driving || 0,
@@ -188,23 +199,22 @@ export default function Home() {
       setSelectedRoute(selectedRoute);
       setIsLoading(false);
       setShowNotification(true);
-      setShowSearchForm(false); // 検索完了後にフォームを閉じる
+      setShowSearchForm(false);
     } catch (error) {
       console.error('ルート検索エラー:', error);
       setError(error instanceof Error ? error.message : 'ルート検索中にエラーが発生しました');
       setIsLoading(false);
     }
-  };
+  }, [currentLocation]);
 
-  const handleNotificationAction = (action: 'accept' | 'dismiss') => {
+  const handleNotificationAction = useCallback((action: 'accept' | 'dismiss') => {
     if (action === 'accept' && notification?.alternativeRoute) {
       setSelectedRoute(notification.alternativeRoute);
     }
     setNotification(null);
-  };
+  }, [notification]);
 
-  // 位置情報を表示するコンポーネント
-  const LocationInfo = ({ location, label }: { location: LocationWithAddress | null, label: string }) => {
+  const LocationInfo = useCallback(({ location, label }: { location: LocationWithAddress | null, label: string }) => {
     const [address, setAddress] = useState<string | null>(null);
 
     useEffect(() => {
@@ -220,7 +230,7 @@ export default function Home() {
       } else if (location?.address) {
         setAddress(location.address);
       }
-    }, [location, label]);
+    }, [location, label, getAddressFromLocation]);
 
     if (!location) return null;
 
@@ -232,7 +242,7 @@ export default function Home() {
         </div>
       </div>
     );
-  };
+  }, [getAddressFromLocation]);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
