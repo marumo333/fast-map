@@ -22,10 +22,19 @@ export default function LocationForm() {
 
   const getAddressFromLocation = useCallback(async (location: { lat: number; lng: number }) => {
     return new Promise<string>((resolve, reject) => {
-      const geocoder = new google.maps.Geocoder();
+      // Google Maps APIが読み込まれるのを待つ
+      if (!window.google || !window.google.maps) {
+        reject(new Error('Google Maps APIが初期化されていません'));
+        return;
+      }
+
+      const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode(
         { location },
-        (results, status) => {
+        (
+          results: google.maps.GeocoderResult[],
+          status: google.maps.GeocoderStatus
+        ) => {
           if (status === 'OK' && results && results[0]) {
             resolve(results[0].formatted_address);
           } else {

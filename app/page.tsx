@@ -53,6 +53,11 @@ export default function Home() {
 
   const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
     try {
+      // Google Maps APIが読み込まれるのを待つ
+      if (!window.google || !window.google.maps) {
+        throw new Error('Google Maps APIが初期化されていません');
+      }
+
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&language=ja`
       );
