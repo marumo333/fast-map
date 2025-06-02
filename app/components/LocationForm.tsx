@@ -73,6 +73,25 @@ export default function LocationForm() {
   useEffect(() => {
     const initPlaceAutocomplete = async () => {
       try {
+        // Google Maps APIが読み込まれるのを待つ
+        const waitForGoogleMaps = () => {
+          return new Promise<void>((resolve, reject) => {
+            const checkGoogleMaps = setInterval(() => {
+              if (window.google && window.google.maps) {
+                clearInterval(checkGoogleMaps);
+                resolve();
+              }
+            }, 100);
+
+            // タイムアウト処理
+            setTimeout(() => {
+              clearInterval(checkGoogleMaps);
+              reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
+            }, 10000);
+          });
+        };
+
+        await waitForGoogleMaps();
         const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
         if (currentLocationInputRef.current && !currentLocationAutocompleteRef.current) {
