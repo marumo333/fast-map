@@ -38,7 +38,7 @@ export default function LocationForm() {
   };
 
   useEffect(() => {
-    if (currentLocation) {
+    if (currentLocation && !currentAddress) {
       getAddressFromLocation(currentLocation)
         .then(address => {
           console.log('現在地の住所を取得:', address);
@@ -49,10 +49,10 @@ export default function LocationForm() {
           setCurrentAddress('住所を取得できませんでした');
         });
     }
-  }, [currentLocation]);
+  }, []);
 
   useEffect(() => {
-    if (destination) {
+    if (destination && !destinationAddress) {
       getAddressFromLocation(destination)
         .then(address => {
           console.log('目的地の住所を取得:', address);
@@ -63,7 +63,7 @@ export default function LocationForm() {
           setDestinationAddress('住所を取得できませんでした');
         });
     }
-  }, [destination]);
+  }, []);
 
   useEffect(() => {
     const initPlaceAutocomplete = async () => {

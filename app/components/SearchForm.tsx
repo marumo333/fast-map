@@ -32,7 +32,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const endAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
-    if (currentLocation) {
+    if (currentLocation && !selectedStart) {
       setSelectedStart(currentLocation);
       // 現在地の住所を取得して表示
       const geocoder = new window.google.maps.Geocoder();
@@ -45,7 +45,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         }
       );
     }
-  }, [currentLocation]);
+  }, []); // 依存配列を空にして初回のみ実行
 
   useEffect(() => {
     // Google Places APIのサービスを初期化

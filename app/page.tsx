@@ -77,14 +77,19 @@ export default function Home() {
       }
     };
 
-    updateLocationAddress(startLocation, setStartLocation);
-    updateLocationAddress(endLocation, setEndLocation);
+    // 初回のみ実行
+    if (!startLocation?.address) {
+      updateLocationAddress(startLocation, setStartLocation);
+    }
+    if (!endLocation?.address) {
+      updateLocationAddress(endLocation, setEndLocation);
+    }
     if (currentLocation && !currentLocation.address) {
       updateLocationAddress(currentLocation as LocationWithAddress, (loc) => {
         if (loc) setStartLocation(loc);
       });
     }
-  }, [startLocation, endLocation, currentLocation]);
+  }, []); // 依存配列を空にして初回のみ実行
 
   // 交通情報のポーリング
   useTrafficPolling(
@@ -113,7 +118,7 @@ export default function Home() {
     }
   );
 
-  // 現在地が取得されたら出発地として設定
+  // 現在地が取得されたら出発地として設定（初回のみ）
   useEffect(() => {
     if (currentLocation && !startLocation) {
       setStartLocation(currentLocation as LocationWithAddress);
@@ -122,7 +127,7 @@ export default function Home() {
         setStartLocation(prev => prev ? { ...prev, address } : null);
       });
     }
-  }, [currentLocation, startLocation]);
+  }, []); // 依存配列を空にして初回のみ実行
 
   const handleSearch = async (start: Location, end: Location) => {
     try {
