@@ -179,36 +179,40 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
           <label htmlFor="start" className="block text-sm font-medium text-gray-700 mb-1">
             出発地
           </label>
-          <input
-            ref={startInputRef}
-            type="text"
-            id="start"
-            name="start"
-            value={startQuery}
-            onChange={(e) => setStartQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black"
-            placeholder="出発地を入力"
-            required
-            aria-label="出発地"
-          />
+          <div className="relative">
+            <input
+              ref={startInputRef}
+              type="text"
+              id="start"
+              name="start"
+              value={startQuery}
+              onChange={(e) => setStartQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
+              placeholder="出発地を入力"
+              required
+              aria-label="出発地"
+            />
+          </div>
         </div>
 
         <div className="relative">
           <label htmlFor="end" className="block text-sm font-medium text-gray-700 mb-1">
             目的地
           </label>
-          <input
-            ref={endInputRef}
-            type="text"
-            id="end"
-            name="end"
-            value={endQuery}
-            onChange={(e) => setEndQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black"
-            placeholder="目的地を入力"
-            required
-            aria-label="目的地"
-          />
+          <div className="relative">
+            <input
+              ref={endInputRef}
+              type="text"
+              id="end"
+              name="end"
+              value={endQuery}
+              onChange={(e) => setEndQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
+              placeholder="目的地を入力"
+              required
+              aria-label="目的地"
+            />
+          </div>
         </div>
 
         <button
