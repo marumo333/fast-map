@@ -167,6 +167,12 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
           content: markerView.element
         });
         markersRef.current['current'] = currentMarker;
+
+        // 現在地が更新されたら地図の中心を更新
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter(currentLocation);
+          mapInstanceRef.current.setZoom(15); // ズームレベルを調整
+        }
       }
 
       // 目的地のマーカーを追加
