@@ -182,60 +182,53 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     if (!mapInstanceRef.current || !selectedRoute || !currentLocation || !endLocation) return;
 
     const directionsService = new google.maps.DirectionsService();
-    directionsService.route(
-      {
-        origin: { lat: currentLocation.lat, lng: currentLocation.lng },
-        destination: { lat: endLocation.lat, lng: endLocation.lng },
-        travelMode: google.maps.TravelMode.DRIVING
-      },
-      (result, status) => {
-        if (status === 'OK' && result && directionsRendererRef.current) {
-          directionsRendererRef.current.setDirections(result);
-        } else {
-          console.error('ルートの表示に失敗:', status);
+    const request = {
+      origin: { lat: currentLocation.lat, lng: currentLocation.lng },
+      destination: { lat: endLocation.lat, lng: endLocation.lng },
+      travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    directionsService.route(request, (result, status) => {
+      if (status === 'OK' && result && directionsRendererRef.current) {
+        directionsRendererRef.current.setDirections(result);
+      } else {
+        console.error('ルートの表示に失敗:', status);
+        // フォールバックとして手動でルートを表示
+        if (directionsRendererRef.current) {
+          const directionsResult: google.maps.DirectionsResult = {
+            request,
+            routes: [{
+              legs: [{
+                distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
+                duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
+                duration_in_traffic: selectedRoute.durationInTraffic ? {
+                  text: `${selectedRoute.durationInTraffic}分`,
+                  value: selectedRoute.durationInTraffic * 60
+                } : undefined,
+                start_address: '',
+                end_address: '',
+                start_location: new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
+                end_location: new google.maps.LatLng(endLocation.lat, endLocation.lng),
+                steps: [],
+                traffic_speed_entry: [],
+                via_waypoints: []
+              }],
+              overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
+              overview_polyline: '',
+              bounds: new google.maps.LatLngBounds(
+                new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
+                new google.maps.LatLng(endLocation.lat, endLocation.lng)
+              ),
+              copyrights: '',
+              warnings: [],
+              waypoint_order: [],
+              summary: ''
+            }]
+          };
+          directionsRendererRef.current.setDirections(directionsResult);
         }
       }
-    );
-  }, [selectedRoute, currentLocation, endLocation]);
-
-  useEffect(() => {
-    if (selectedRoute && directionsRendererRef.current) {
-      const directionsResult: google.maps.DirectionsResult = {
-        request: {
-          origin: { lat: currentLocation?.lat || 0, lng: currentLocation?.lng || 0 },
-          destination: { lat: endLocation?.lat || 0, lng: endLocation?.lng || 0 },
-          travelMode: google.maps.TravelMode.DRIVING
-        },
-        routes: [{
-          legs: [{
-            distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
-            duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
-            duration_in_traffic: selectedRoute.durationInTraffic ? {
-              text: `${selectedRoute.durationInTraffic}分`,
-              value: selectedRoute.durationInTraffic * 60
-            } : undefined,
-            start_address: '',
-            end_address: '',
-            start_location: new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
-            end_location: new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0),
-            steps: [],
-            traffic_speed_entry: [],
-            via_waypoints: []
-          }],
-          overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
-          overview_polyline: '',
-          bounds: new google.maps.LatLngBounds(
-            new google.maps.LatLng(currentLocation?.lat || 0, currentLocation?.lng || 0),
-            new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0)
-          ),
-          copyrights: '',
-          warnings: [],
-          waypoint_order: [],
-          summary: ''
-        }]
-      };
-      directionsRendererRef.current.setDirections(directionsResult);
-    }
+    });
   }, [selectedRoute, currentLocation, endLocation]);
 
   if (loadError) {
