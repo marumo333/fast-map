@@ -25,9 +25,9 @@ export const useRouteChangeDetection = (
           );
 
           // 現在のルートより所要時間が短い代替ルートを探す
-          const betterRoute = alternativeRoutes.find(route => 
-            route.routeId !== currentRoute.routeId && 
-            route.duration_in_traffic < currentRoute.duration_in_traffic * 0.9 // 10%以上短縮される場合
+          const betterRoute = alternativeRoutes.find(route =>
+            route.routeId !== currentRoute.routeId &&
+            (route.durationInTraffic || route.duration) < (currentRoute.durationInTraffic || currentRoute.duration) * 0.9 // 10%以上短縮される場合
           );
 
           if (betterRoute) {
