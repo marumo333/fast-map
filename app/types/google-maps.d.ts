@@ -1,10 +1,23 @@
 /// <reference types="@types/google.maps" />
 
 declare namespace google.maps {
+  interface MapsLibrary {
+    Map: typeof google.maps.Map;
+  }
+
+  interface RoutesLibrary {
+    DirectionsService: typeof google.maps.DirectionsService;
+    DirectionsRenderer: typeof google.maps.DirectionsRenderer;
+  }
+
   interface PlacesLibrary {
     PlaceAutocompleteElement: {
       new(options?: PlaceAutocompleteElementOptions): PlaceAutocompleteElement;
     };
+  }
+
+  interface GeocodingLibrary {
+    Geocoder: typeof google.maps.Geocoder;
   }
 
   interface PlaceAutocompleteElementOptions {

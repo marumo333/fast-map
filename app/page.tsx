@@ -11,6 +11,7 @@ import { useLocation } from './contexts/LocationContext';
 import SearchForm from './components/SearchForm';
 import Navbar from './components/Navbar';
 import { useTheme } from './settings/ThemeContext';
+import { getAddressFromLocation } from './utils/geocoding';
 
 // Notification型を定義
 type Notification = {
@@ -91,36 +92,6 @@ export default function Home() {
     getCurrentLocation: () => Promise<void>;
   };
 
-  const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      const checkGoogleMaps = setInterval(() => {
-        if (window.google && window.google.maps) {
-          clearInterval(checkGoogleMaps);
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode(
-            { location },
-            (
-              results: google.maps.GeocoderResult[],
-              status: google.maps.GeocoderStatus
-            ) => {
-              if (status === 'OK' && results && results[0]) {
-                resolve(results[0].formatted_address);
-              } else {
-                console.error('住所の取得に失敗:', status);
-                reject(new Error(`住所の取得に失敗しました: ${status}`));
-              }
-            }
-          );
-        }
-      }, 100);
-
-      setTimeout(() => {
-        clearInterval(checkGoogleMaps);
-        reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
-      }, 10000);
-    });
-  }, []);
-
   const updateLocationAddress = useCallback(async (
     location: LocationWithAddress | null,
     setLocation: (location: LocationWithAddress | null) => void
@@ -133,7 +104,7 @@ export default function Home() {
         console.error('住所の更新に失敗:', error);
       }
     }
-  }, [getAddressFromLocation]);
+  }, []);
 
   useEffect(() => {
     const updateLocations = async () => {
