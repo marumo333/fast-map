@@ -86,13 +86,11 @@ const Map: React.FC<MapProps> = ({
 
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
 
-    // 既存のマーカーをクリア
-    Object.values(markersRef.current).forEach(marker => {
-      if (marker) {
-        marker.map = null;
-      }
-    });
-    markersRef.current = {};
+    // 既存のマーカーをクリア（現在地のマーカーのみ）
+    if (markersRef.current.current) {
+      markersRef.current.current.map = null;
+      markersRef.current.current = undefined;
+    }
 
     // 現在地のマーカーを設定
     if (currentLocation) {
@@ -115,8 +113,8 @@ const Map: React.FC<MapProps> = ({
       }
     }
 
-    // 出発地のマーカーを設定
-    if (startLocation) {
+    // 出発地のマーカーを設定（初回のみ）
+    if (startLocation && !markersRef.current.start) {
       const startMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: startLocation,
@@ -125,8 +123,8 @@ const Map: React.FC<MapProps> = ({
       markersRef.current.start = startMarker;
     }
 
-    // 目的地のマーカーを設定
-    if (endLocation) {
+    // 目的地のマーカーを設定（初回のみ）
+    if (endLocation && !markersRef.current.end) {
       const endMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: endLocation,
