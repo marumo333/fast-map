@@ -1,4 +1,3 @@
-
 interface GoogleMapsLibraries {
   Map: typeof google.maps.Map;
   DirectionsService: typeof google.maps.DirectionsService;
@@ -27,7 +26,9 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
       if (window.google && window.google.maps) {
         clearInterval(checkGoogleMaps);
         try {
-          const { Map, DirectionsService, DirectionsRenderer } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
+          const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
+          const { DirectionsService } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
+          const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
           resolve({ Map, DirectionsService, DirectionsRenderer });
         } catch (error) {
           console.error('Google Maps APIの初期化に失敗:', error);
@@ -84,7 +85,7 @@ export const createCustomMarker = (label: string, color: string) => {
 
 export const initializePlaceAutocomplete = async (
   inputRef: React.RefObject<HTMLInputElement>,
-  onPlaceSelected: (place: google.maps.places.Place) => void
+  onPlaceSelected: (place: google.maps.places.PlaceResult) => void
 ) => {
   if (!inputRef.current) return null;
 
