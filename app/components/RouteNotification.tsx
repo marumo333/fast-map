@@ -48,7 +48,7 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">現在のルート:</span>
                 <span className="font-medium text-gray-900">
-                  {Math.round(currentRoute.duration_in_traffic / 60)}分
+                  {Math.round(currentRoute.durationInTraffic / 60)}分
                 </span>
               </div>
               <div className="flex justify-between text-sm">
