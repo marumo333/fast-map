@@ -88,6 +88,31 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
       console.log('現在地を取得しました:', newLocation);
       setCurrentLocation(newLocation);
+
+      // 位置情報の監視を開始
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const updatedLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          console.log('現在地が更新されました:', updatedLocation);
+          setCurrentLocation(updatedLocation);
+        },
+        (error) => {
+          console.error('位置情報の監視エラー:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+
+      // コンポーネントのアンマウント時に監視を停止
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
       setLocationError(error instanceof Error ? error.message : '位置情報の取得に失敗しました。');

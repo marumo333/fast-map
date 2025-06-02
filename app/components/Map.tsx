@@ -132,20 +132,28 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
 
     // 現在地のマーカーを設定
     if (currentLocation) {
+      console.log('現在地のマーカーを設定:', currentLocation);
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: { lat: currentLocation.lat, lng: currentLocation.lng },
-        title: '現在地'
+        title: '現在地',
+        content: createCustomMarker(true)
       });
       markersRef.current['current'] = marker;
+
+      // 現在地を中心に地図を移動
+      mapInstanceRef.current.setCenter({ lat: currentLocation.lat, lng: currentLocation.lng });
+      mapInstanceRef.current.setZoom(15);
     }
 
     // 目的地のマーカーを設定
     if (endLocation) {
+      console.log('目的地のマーカーを設定:', endLocation);
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: { lat: endLocation.lat, lng: endLocation.lng },
-        title: '目的地'
+        title: '目的地',
+        content: createCustomMarker(false)
       });
       markersRef.current['end'] = marker;
     }
