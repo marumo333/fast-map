@@ -200,6 +200,8 @@ export default function LocationForm() {
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
             type="text"
+            id="current-location"
+            name="current-location"
             value={currentAddress}
             onChange={(e) => setCurrentAddress(e.target.value)}
             ref={currentLocationInputRef}
@@ -227,6 +229,8 @@ export default function LocationForm() {
         <div className="mt-1">
           <input
             type="text"
+            id="destination"
+            name="destination"
             value={destinationAddress}
             onChange={(e) => setDestinationAddress(e.target.value)}
             ref={destinationInputRef}

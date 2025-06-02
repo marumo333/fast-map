@@ -183,8 +183,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             <input
               ref={startInputRef}
               type="text"
-              id="start"
-              name="start"
+              id="start-location"
+              name="start-location"
               value={startQuery}
               onChange={(e) => setStartQuery(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
@@ -203,8 +203,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
             <input
               ref={endInputRef}
               type="text"
-              id="end"
-              name="end"
+              id="end-location"
+              name="end-location"
               value={endQuery}
               onChange={(e) => setEndQuery(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"

@@ -1,6 +1,7 @@
 // app/api/routes/route.ts
 import { NextResponse } from 'next/server';
 import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@googlemaps/google-maps-services-js';
+import type { NextRequest } from 'next/server';
 
 // 許可するオリジンを列挙
 const ALLOWED_ORIGINS = [
@@ -66,12 +67,24 @@ export async function OPTIONS(request: Request) {
 // ────────────────────────────────────────────────────────────────────────────────
 // 2) 実際の POST ハンドラ
 // ────────────────────────────────────────────────────────────────────────────────
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   
   try {
-    // リクエストボディの解析
-    const { start, end } = await request.json();
+    const body = await request.json();
+    const { start, end } = body;
+
+    // CORSヘッダーを追加
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+
+    // プリフライトリクエストの処理
+    if (request.method === 'OPTIONS') {
+      return new NextResponse(null, { headers });
+    }
 
     if (
       !start || !end ||
