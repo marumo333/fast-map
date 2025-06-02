@@ -28,6 +28,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
   const [loading, setLoading] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
+  const [isWatching, setIsWatching] = useState(false);
   const UPDATE_INTERVAL = 30000; // 30秒
 
   const clearLocationError = () => {
@@ -54,6 +55,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
           setCurrentLocation(location);
           setLastUpdateTime(Date.now());
           setLoading(false);
+          setIsWatching(true); // 位置情報の監視を開始
           resolve();
         },
         (error) => {
@@ -66,6 +68,9 @@ export const useGeolocation = (): UseGeolocationReturn => {
   };
 
   useEffect(() => {
+    // 監視が開始されていない場合は何もしない
+    if (!isWatching) return;
+
     if (watchId) {
       navigator.geolocation.clearWatch(watchId);
     }
@@ -99,7 +104,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
         navigator.geolocation.clearWatch(id);
       }
     };
-  }, [lastUpdateTime]);
+  }, [isWatching, lastUpdateTime]);
 
   return {
     currentLocation,
