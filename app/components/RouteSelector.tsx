@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Location } from '../types/location';
 import { Route } from '../types/route';
-import RouteCard from './RouteCard';
+import RouteNotification from './RouteNotification';
 
 type RouteSelectorProps = {
   startLocation: Location | null;
@@ -80,11 +80,14 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
 
       <div className="grid grid-cols-1 gap-4">
         {routes.map((route) => (
-          <RouteCard
+          <RouteNotification
             key={route.routeId}
-            route={route}
-            isSelected={route.routeId === selectedRouteId}
-            onSelect={() => handleRouteSelect(route.routeId)}
+            type="congestion"
+            message={route.isTollRoad ? '有料ルート' : '無料ルート'}
+            onAccept={() => handleRouteSelect(route.routeId)}
+            onDismiss={() => {}}
+            currentRoute={route}
+            suggestedRoute={undefined}
           />
         ))}
       </div>

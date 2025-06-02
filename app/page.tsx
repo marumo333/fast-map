@@ -281,13 +281,14 @@ export default function Home() {
                   {selectedRoute && (
                     <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                       <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
-                      <div className={`space-y-2 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        <p>距離: {selectedRoute.distance}km</p>
-                        <p>所要時間: {selectedRoute.duration}分</p>
-                        {selectedRoute.isTollRoad && (
-                          <p className="text-yellow-600 dark:text-yellow-400">有料道路を含む</p>
-                        )}
-                      </div>
+                      <RouteNotification
+                        type="congestion"
+                        message={selectedRoute.isTollRoad ? '有料ルート' : '無料ルート'}
+                        onAccept={() => {}}
+                        onDismiss={() => {}}
+                        currentRoute={selectedRoute}
+                        suggestedRoute={undefined}
+                      />
                     </div>
                   )}
                 </div>
