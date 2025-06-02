@@ -4,8 +4,7 @@ import type { NextRequest } from 'next/server'
 // 許可するオリジンを列挙
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
-  'https://fast-map-five.vercel.app',
-  'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app'
+  'https://fast-map-five.vercel.app'
 ];
 
 // CORSヘッダーを設定する関数
@@ -17,7 +16,7 @@ function getCorsHeaders(origin: string | null) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': '86400',
-    'Vary': 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers'
+    'Vary': 'Origin'
   };
 }
 
@@ -30,9 +29,16 @@ export function middleware(request: NextRequest) {
     headers: Object.fromEntries(request.headers.entries())
   });
 
+  const origin = request.headers.get('origin');
+  
+  // オリジンの検証
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    console.log('許可されていないオリジン:', origin);
+    return new NextResponse(null, { status: 403 });
+  }
+
   // APIルートへのリクエストの場合のみCORSヘッダーを設定
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    const origin = request.headers.get('origin');
     const headers = getCorsHeaders(origin);
 
     // プリフライトリクエストの場合は204を返す
