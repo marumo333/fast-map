@@ -158,13 +158,27 @@ const Map: React.FC<MapProps> = ({
       const result = await directionsServiceRef.current.route({
         origin: startLocation,
         destination: endLocation,
-        travelMode: google.maps.TravelMode.DRIVING
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true
       });
 
       if (result.routes.length > 0) {
         console.log('ルート計算結果:', result);
         directionsRendererRef.current.setDirections(result);
         onRouteSelect(result.routes[0]);
+
+        // 代替ルートを表示
+        if (result.routes.length > 1) {
+          const routeOptions = result.routes.map((route, index) => {
+            const isShortest = index === 0;
+            const isLessCongested = index === 1;
+            return {
+              route,
+              type: isShortest ? '最短ルート' : isLessCongested ? '混雑回避ルート' : 'その他のルート'
+            };
+          });
+          console.log('代替ルート:', routeOptions);
+        }
       }
     } catch (error) {
       console.error('ルート計算に失敗:', error);
