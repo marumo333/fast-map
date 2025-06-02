@@ -176,7 +176,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">
-          <label htmlFor="start" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="start-location" className="block text-sm font-medium text-gray-700 mb-1">
             出発地
           </label>
           <div className="relative">
@@ -196,7 +196,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         </div>
 
         <div className="relative">
-          <label htmlFor="end" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="end-location" className="block text-sm font-medium text-gray-700 mb-1">
             目的地
           </label>
           <div className="relative">
