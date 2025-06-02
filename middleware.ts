@@ -22,6 +22,14 @@ function getCorsHeaders(origin: string | null) {
 }
 
 export function middleware(request: NextRequest) {
+  // デバッグログ
+  console.log('Request details:', {
+    pathname: request.nextUrl.pathname,
+    method: request.method,
+    origin: request.headers.get('origin'),
+    headers: Object.fromEntries(request.headers.entries())
+  });
+
   // APIルートへのリクエストの場合のみCORSヘッダーを設定
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const origin = request.headers.get('origin');
@@ -29,6 +37,7 @@ export function middleware(request: NextRequest) {
 
     // プリフライトリクエストの場合は204を返す
     if (request.method === 'OPTIONS') {
+      console.log('Handling OPTIONS request with headers:', headers);
       return new NextResponse(null, {
         status: 204,
         headers
@@ -41,14 +50,7 @@ export function middleware(request: NextRequest) {
       response.headers.set(key, value);
     });
 
-    // デバッグ用のログ
-    console.log('CORS Headers:', {
-      origin,
-      pathname: request.nextUrl.pathname,
-      method: request.method,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
     return response;
   }
 
