@@ -24,4 +24,12 @@ export interface RouteInfo {
   estimatedTime?: number;
 }
 
-export type Route = RouteInfo; 
+export interface Route {
+  path: [number, number][];
+  distance: number;
+  duration: number;
+  durationInTraffic?: number;
+  routeId: number;
+  isTollRoad: boolean;
+  toll: number;
+} 

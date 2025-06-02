@@ -235,10 +235,20 @@ export async function POST(request: NextRequest) {
         duration_in_traffic: Math.ceil(
           (drivingLeg.duration_in_traffic?.value || drivingLeg.duration.value) / 60
         ), // 秒→分
+        isTollRoad: true, // 有料道路を含むルート
+        toll: 1000, // 仮の料金（実際のAPIから取得する必要あり）
       };
 
-      console.log('ルート検索成功:', response);
-      return NextResponse.json(response, {
+      // 無料ルートの情報も取得
+      const freeRouteResponse = {
+        ...response,
+        routeId: 2,
+        isTollRoad: false,
+        toll: 0,
+      };
+
+      console.log('ルート検索成功:', { response, freeRouteResponse });
+      return NextResponse.json([response, freeRouteResponse], {
         headers: getCorsHeaders(origin)
       });
 

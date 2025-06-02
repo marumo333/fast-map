@@ -137,84 +137,66 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    const { DirectionsRenderer } = google.maps;
+    // DirectionsRendererの初期化
     if (!directionsRendererRef.current) {
-      directionsRendererRef.current = new DirectionsRenderer({
+      directionsRendererRef.current = new google.maps.DirectionsRenderer({
         map: mapInstanceRef.current,
-        suppressMarkers: true
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: '#4F46E5',
+          strokeWeight: 5,
+          strokeOpacity: 0.8
+        }
       });
     }
 
-    const updateMarkers = async () => {
-      const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+    // マーカーの設定
+    if (currentLocation) {
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        map: mapInstanceRef.current,
+        position: { lat: currentLocation.lat, lng: currentLocation.lng },
+        title: '現在地'
+      });
+      markersRef.current['current'] = marker;
+    }
 
-      // 既存のマーカーを削除
-      Object.values(markersRef.current).forEach(marker => marker.map = null);
-      markersRef.current = {};
+    if (endLocation) {
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        map: mapInstanceRef.current,
+        position: { lat: endLocation.lat, lng: endLocation.lng },
+        title: '目的地'
+      });
+      markersRef.current['end'] = marker;
+    }
 
-      // 現在地のマーカーを追加
-      if (currentLocation) {
-        const markerView = new google.maps.marker.PinElement({
-          background: '#3B82F6',
-          borderColor: '#FFFFFF',
-          glyphColor: '#FFFFFF',
-          scale: 1.5
-        });
-        const currentMarker = new AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: currentLocation,
-          title: '現在地',
-          content: markerView.element
-        });
-        markersRef.current['current'] = currentMarker;
-
-        // 現在地が更新されたら地図の中心を更新
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.setCenter(currentLocation);
-          mapInstanceRef.current.setZoom(15); // ズームレベルを調整
-        }
-      }
-
-      // 目的地のマーカーを追加
-      if (endLocation) {
-        const markerView = new google.maps.marker.PinElement({
-          background: '#EF4444',
-          borderColor: '#FFFFFF',
-          glyphColor: '#FFFFFF',
-          scale: 1.5
-        });
-        const destinationMarker = new AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: endLocation,
-          title: '目的地',
-          content: markerView.element
-        });
-        markersRef.current['destination'] = destinationMarker;
-      }
-    };
-
-    updateMarkers();
+    // 地図の中心とズームを調整
+    if (currentLocation && endLocation) {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat: currentLocation.lat, lng: currentLocation.lng });
+      bounds.extend({ lat: endLocation.lat, lng: endLocation.lng });
+      mapInstanceRef.current.fitBounds(bounds);
+    }
   }, [currentLocation, endLocation]);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || !currentLocation || !endLocation) return;
+    if (!mapInstanceRef.current || !selectedRoute || !currentLocation || !endLocation) return;
 
-    const calculateRoute = async () => {
-      try {
-        const routes = await searchRoute(
-          [currentLocation.lat, currentLocation.lng],
-          [endLocation.lat, endLocation.lng]
-        );
-        if (routes && routes.length > 0) {
-          setRoute(routes[0]);
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: { lat: currentLocation.lat, lng: currentLocation.lng },
+        destination: { lat: endLocation.lat, lng: endLocation.lng },
+        travelMode: google.maps.TravelMode.DRIVING
+      },
+      (result, status) => {
+        if (status === 'OK' && result && directionsRendererRef.current) {
+          directionsRendererRef.current.setDirections(result);
+        } else {
+          console.error('ルートの表示に失敗:', status);
         }
-      } catch (error) {
-        console.error('ルート検索に失敗:', error);
       }
-    };
-
-    calculateRoute();
-  }, [currentLocation, endLocation, setRoute]);
+    );
+  }, [selectedRoute, currentLocation, endLocation]);
 
   useEffect(() => {
     if (selectedRoute && directionsRendererRef.current) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Location } from '../types/location';
 import { Route } from '../types/route';
-import { api } from '../utils/api';
+import RouteCard from './RouteCard';
 
 type RouteSelectorProps = {
   startLocation: Location | null;
@@ -16,6 +16,8 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
+  const [routes, setRoutes] = useState<Route[]>([]);
 
   const handleRouteSelect = async (routeId: number) => {
     if (!startLocation || !endLocation) {
@@ -32,16 +34,29 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
         end: [endLocation.lat, endLocation.lng]
       });
 
-      // 実際のAPIからルート情報を取得
-      const routes = await api.searchRoute(
-        [startLocation.lat, startLocation.lng],
-        [endLocation.lat, endLocation.lng]
-      );
+      const response = await fetch('/api/route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          start: startLocation,
+          end: endLocation
+        }),
+      });
 
-      console.log('取得したルート:', routes);
+      if (!response.ok) {
+        throw new Error('ルートの取得に失敗しました');
+      }
+
+      const routeData = await response.json();
+      console.log('取得したルート:', routeData);
+
+      setRoutes(routeData);
+      setSelectedRouteId(routeId);
 
       // 選択されたルートを探す
-      const selectedRoute = routes.find(route => route.routeId === routeId);
+      const selectedRoute = routeData.find((route: Route) => route.routeId === routeId);
       if (!selectedRoute) {
         throw new Error('選択されたルートが見つかりません');
       }
@@ -63,22 +78,22 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3">
-        <button
-          onClick={() => handleRouteSelect(1)}
-          disabled={isLoading}
-          className="w-full p-4 bg-blue-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-blue-600 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isLoading ? '読み込み中...' : '最短ルート'}
-        </button>
-        <button
-          onClick={() => handleRouteSelect(2)}
-          disabled={isLoading}
-          className="w-full p-4 bg-green-500 text-white rounded-lg text-base font-medium shadow-sm hover:bg-green-600 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isLoading ? '読み込み中...' : '混雑回避ルート'}
-        </button>
+      <div className="grid grid-cols-1 gap-4">
+        {routes.map((route) => (
+          <RouteCard
+            key={route.routeId}
+            route={route}
+            isSelected={route.routeId === selectedRouteId}
+            onSelect={() => handleRouteSelect(route.routeId)}
+          />
+        ))}
       </div>
+
+      {routes.length === 0 && (
+        <div className="text-center text-gray-500">
+          ルートを検索するには、出発地と目的地を選択してください
+        </div>
+      )}
     </div>
   );
 };
