@@ -155,6 +155,7 @@ const Map: React.FC<MapProps> = ({
       });
 
       if (result.routes.length > 0) {
+        console.log('ルート計算結果:', result);
         directionsRendererRef.current.setDirections(result);
         onRouteSelect(result.routes[0]);
       }

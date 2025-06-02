@@ -321,8 +321,8 @@ export default function Home() {
                               text: `${selectedRoute.durationInTraffic}分`,
                               value: selectedRoute.durationInTraffic * 60
                             } : undefined,
-                            start_address: '',
-                            end_address: '',
+                            start_address: startLocation?.address || '',
+                            end_address: endLocation?.address || '',
                             start_location: new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
                             end_location: new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0),
                             steps: [],
