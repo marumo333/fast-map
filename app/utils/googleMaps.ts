@@ -4,6 +4,8 @@ interface GoogleMapsLibraries {
   Map: typeof google.maps.Map;
   DirectionsService: typeof google.maps.DirectionsService;
   DirectionsRenderer: typeof google.maps.DirectionsRenderer;
+  Geocoder: typeof google.maps.Geocoder;
+  PlacesService: typeof google.maps.places.PlacesService;
 }
 
 let isInitializing = false;
@@ -40,7 +42,7 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
     initializationPromise = new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
-      }, 30000); // タイムアウトを30秒に延長
+      }, 30000);
 
       if (typeof window === 'undefined') {
         clearTimeout(timeout);
@@ -50,7 +52,7 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
 
       if (!window.google?.maps) {
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding&callback=initGoogleMaps&loading=async`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding&callback=initGoogleMaps`;
         script.async = true;
         script.defer = true;
 
@@ -60,7 +62,9 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
             resolve({
               Map: window.google.maps.Map,
               DirectionsService: window.google.maps.DirectionsService,
-              DirectionsRenderer: window.google.maps.DirectionsRenderer
+              DirectionsRenderer: window.google.maps.DirectionsRenderer,
+              Geocoder: window.google.maps.Geocoder,
+              PlacesService: window.google.maps.places.PlacesService
             });
           } else {
             reject(new Error('Google Maps APIの初期化に失敗しました'));
@@ -73,7 +77,9 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
         resolve({
           Map: window.google.maps.Map,
           DirectionsService: window.google.maps.DirectionsService,
-          DirectionsRenderer: window.google.maps.DirectionsRenderer
+          DirectionsRenderer: window.google.maps.DirectionsRenderer,
+          Geocoder: window.google.maps.Geocoder,
+          PlacesService: window.google.maps.places.PlacesService
         });
       }
     });
@@ -158,25 +164,17 @@ export const initializePlaceAutocomplete = async (
   if (!inputRef.current) return null;
 
   try {
-    // Google Maps APIの初期化を待つ
     await waitForGoogleMaps();
-
-    const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
-    const placeAutocomplete = new PlaceAutocompleteElement({
+    const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: 'jp' }
     });
 
-    inputRef.current.parentNode?.insertBefore(
-      placeAutocomplete,
-      inputRef.current
-    );
-
-    placeAutocomplete.addEventListener('place_changed', () => {
-      const place = placeAutocomplete.getPlace();
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
       onPlaceSelected(place);
     });
 
-    return placeAutocomplete;
+    return autocomplete;
   } catch (error) {
     console.error('PlaceAutocompleteElementの初期化に失敗:', error);
     return null;
