@@ -27,33 +27,38 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const [selectedEnd, setSelectedEnd] = useState<Location | null>(null);
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
-  // TODO: 2025年3月1日以降、PlaceAutocompleteElementに移行予定
-  const startAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
-  const endAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
+  const startAutocomplete = useRef<google.maps.PlaceAutocompleteElement | null>(null);
+  const endAutocomplete = useRef<google.maps.PlaceAutocompleteElement | null>(null);
 
   const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
       // Google Maps APIが読み込まれるのを待つ
-      if (!window.google || !window.google.maps) {
-        reject(new Error('Google Maps APIが初期化されていません'));
-        return;
-      }
-
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode(
-        { location },
-        (
-          results: google.maps.GeocoderResult[],
-          status: google.maps.GeocoderStatus
-        ) => {
-          if (status === 'OK' && results && results[0]) {
-            resolve(results[0].formatted_address);
-          } else {
-            console.error('住所の取得に失敗:', status);
-            reject(new Error(`住所の取得に失敗しました: ${status}`));
-          }
+      const checkGoogleMaps = setInterval(() => {
+        if (window.google && window.google.maps) {
+          clearInterval(checkGoogleMaps);
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode(
+            { location },
+            (
+              results: google.maps.GeocoderResult[],
+              status: google.maps.GeocoderStatus
+            ) => {
+              if (status === 'OK' && results && results[0]) {
+                resolve(results[0].formatted_address);
+              } else {
+                console.error('住所の取得に失敗:', status);
+                reject(new Error(`住所の取得に失敗しました: ${status}`));
+              }
+            }
+          );
         }
-      );
+      }, 100);
+
+      // タイムアウト処理
+      setTimeout(() => {
+        clearInterval(checkGoogleMaps);
+        reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
+      }, 10000);
     });
   }, []);
 
@@ -68,68 +73,65 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
 
   useEffect(() => {
     // Google Places APIのサービスを初期化
-    const initializeAutocomplete = () => {
-      if (!window.google || !window.google.maps || !window.google.maps.places) {
-        console.error('Google Maps APIが初期化されていません');
-        return;
+    const initializeAutocomplete = async () => {
+      try {
+        const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+
+        if (startInputRef.current && !startAutocomplete.current) {
+          const placeAutocomplete = new PlaceAutocompleteElement({
+            componentRestrictions: { country: 'jp' }
+          });
+
+          startInputRef.current.parentNode?.insertBefore(
+            placeAutocomplete,
+            startInputRef.current
+          );
+
+          placeAutocomplete.addEventListener('place_changed', () => {
+            const place = placeAutocomplete.getPlace();
+            if (place.geometry?.location) {
+              setSelectedStart({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                address: place.formatted_address || ''
+              });
+              setStartQuery(place.formatted_address || '');
+            }
+          });
+
+          startAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+        }
+
+        if (endInputRef.current && !endAutocomplete.current) {
+          const placeAutocomplete = new PlaceAutocompleteElement({
+            componentRestrictions: { country: 'jp' }
+          });
+
+          endInputRef.current.parentNode?.insertBefore(
+            placeAutocomplete,
+            endInputRef.current
+          );
+
+          placeAutocomplete.addEventListener('place_changed', () => {
+            const place = placeAutocomplete.getPlace();
+            if (place.geometry?.location) {
+              setSelectedEnd({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                address: place.formatted_address || ''
+              });
+              setEndQuery(place.formatted_address || '');
+            }
+          });
+
+          endAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+        }
+      } catch (error) {
+        console.error('PlaceAutocompleteElementの初期化に失敗:', error);
       }
-
-      const startAutocomplete = new window.google.maps.places.Autocomplete(startInputRef.current!, {
-        componentRestrictions: { country: 'jp' },
-        fields: ['geometry', 'formatted_address'],
-        language: 'ja'
-      });
-
-      const endAutocomplete = new window.google.maps.places.Autocomplete(endInputRef.current!, {
-        componentRestrictions: { country: 'jp' },
-        fields: ['geometry', 'formatted_address'],
-        language: 'ja'
-      });
-
-      startAutocomplete.addListener('place_changed', () => {
-        const place = startAutocomplete.getPlace();
-        if (place.geometry) {
-          setSelectedStart({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            address: place.formatted_address
-          });
-          setStartQuery(place.formatted_address);
-        }
-      });
-
-      endAutocomplete.addListener('place_changed', () => {
-        const place = endAutocomplete.getPlace();
-        if (place.geometry) {
-          setSelectedEnd({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            address: place.formatted_address
-          });
-          setEndQuery(place.formatted_address);
-        }
-      });
     };
 
-    // Google Maps APIが読み込まれるのを待つ
-    let retryCount = 0;
-    const maxRetries = 10;
-    const checkGoogleMaps = setInterval(() => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        initializeAutocomplete();
-        clearInterval(checkGoogleMaps);
-      } else {
-        retryCount++;
-        if (retryCount >= maxRetries) {
-          console.error('Google Maps APIの読み込みがタイムアウトしました');
-          clearInterval(checkGoogleMaps);
-        }
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(checkGoogleMaps);
-    };
+    initializeAutocomplete();
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

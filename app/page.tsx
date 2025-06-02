@@ -52,24 +52,35 @@ export default function Home() {
   };
 
   const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
-    try {
+    return new Promise<string>((resolve, reject) => {
       // Google Maps APIが読み込まれるのを待つ
-      if (!window.google || !window.google.maps) {
-        throw new Error('Google Maps APIが初期化されていません');
-      }
+      const checkGoogleMaps = setInterval(() => {
+        if (window.google && window.google.maps) {
+          clearInterval(checkGoogleMaps);
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode(
+            { location },
+            (
+              results: google.maps.GeocoderResult[],
+              status: google.maps.GeocoderStatus
+            ) => {
+              if (status === 'OK' && results && results[0]) {
+                resolve(results[0].formatted_address);
+              } else {
+                console.error('住所の取得に失敗:', status);
+                reject(new Error(`住所の取得に失敗しました: ${status}`));
+              }
+            }
+          );
+        }
+      }, 100);
 
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&language=ja`
-      );
-      const data = await response.json();
-      if (data.results && data.results[0]) {
-        return data.results[0].formatted_address;
-      }
-      return '住所を取得できませんでした';
-    } catch (error) {
-      console.error('住所取得エラー:', error);
-      return '住所を取得できませんでした';
-    }
+      // タイムアウト処理
+      setTimeout(() => {
+        clearInterval(checkGoogleMaps);
+        reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
+      }, 10000);
+    });
   }, []);
 
   // 位置情報が更新されたときに住所を取得
