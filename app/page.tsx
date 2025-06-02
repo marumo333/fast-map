@@ -6,6 +6,8 @@ import { Location } from './types/location';
 import { Route } from './types/route';
 import { useRouteChangeDetection } from './hooks/useRouteChangeDetection';
 import RouteNotification from './components/RouteNotification';
+import RouteInfo from './components/RouteInfo';
+import RouteRecommendation from './components/RouteRecomendation';
 import dynamic from 'next/dynamic';
 import { useLocation } from './contexts/LocationContext';
 import SearchForm from './components/SearchForm';
@@ -272,6 +274,20 @@ export default function Home() {
                   {selectedRoute && (
                     <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                       <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
+                      <RouteInfo
+                        routeInfo={{
+                          distance: selectedRoute.distance * 1000,
+                          duration: {
+                            driving: selectedRoute.duration * 60,
+                            walking: selectedRoute.duration * 60 * 1.5
+                          },
+                          isTollRoad: selectedRoute.isTollRoad
+                        }}
+                      />
+                      <RouteRecommendation
+                        routes={[selectedRoute]}
+                        onSelect={(route) => setSelectedRoute(route as Route)}
+                      />
                       <RouteNotification
                         type="congestion"
                         message={selectedRoute.isTollRoad ? '有料ルート' : '無料ルート'}

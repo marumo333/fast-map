@@ -22,10 +22,6 @@ const RouteRecommendation: React.FC<RouteRecommendationProps> = ({
         return '最短ルート - 最も早く目的地に到着できます';
       case 2:
         return '混雑回避ルート - 交通量の少ない道を優先します';
-      case 3:
-        return '景色の良いルート - 観光スポットを経由します';
-      default:
-        return 'その他のルート';
     }
   };
 
