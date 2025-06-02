@@ -109,10 +109,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      // コンポーネントのアンマウント時に監視を停止
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-      };
+      // コンポーネントのアンマウント時に監視を停止するためのクリーンアップ関数を設定
+      useEffect(() => {
+        return () => {
+          navigator.geolocation.clearWatch(watchId);
+        };
+      }, [watchId]);
+
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
       setLocationError(error instanceof Error ? error.message : '位置情報の取得に失敗しました。');
