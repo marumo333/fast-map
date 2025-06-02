@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Location } from '../types/location';
 import { useLocation } from '../contexts/LocationContext';
 
@@ -32,7 +32,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
 
   const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
-      // Google Maps APIが読み込まれるのを待つ
       const checkGoogleMaps = setInterval(async () => {
         if (window.google && window.google.maps) {
           clearInterval(checkGoogleMaps);
@@ -60,7 +59,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         }
       }, 100);
 
-      // タイムアウト処理
       setTimeout(() => {
         clearInterval(checkGoogleMaps);
         reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
@@ -69,104 +67,117 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   }, []);
 
   useEffect(() => {
-    if (currentLocation && !selectedStart) {
-      setSelectedStart(currentLocation);
-      getAddressFromLocation(currentLocation).then(address => {
-        setStartQuery(address);
-      });
-    }
-  }, [currentLocation, selectedStart, getAddressFromLocation]);
-
-  useEffect(() => {
-    // Google Places APIのサービスを初期化
-    const initializeAutocomplete = async () => {
-      try {
-        // Google Maps APIが読み込まれるのを待つ
-        const waitForGoogleMaps = () => {
-          return new Promise<void>((resolve, reject) => {
-            const checkGoogleMaps = setInterval(() => {
-              if (window.google && window.google.maps) {
-                clearInterval(checkGoogleMaps);
-                resolve();
-              }
-            }, 100);
-
-            // タイムアウト処理
-            setTimeout(() => {
-              clearInterval(checkGoogleMaps);
-              reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
-            }, 10000);
-          });
-        };
-
-        await waitForGoogleMaps();
-        const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
-
-        if (startInputRef.current && !startAutocomplete.current) {
-          const placeAutocomplete = new PlaceAutocompleteElement({
-            componentRestrictions: { country: 'jp' }
-          });
-
-          startInputRef.current.parentNode?.insertBefore(
-            placeAutocomplete,
-            startInputRef.current
-          );
-
-          placeAutocomplete.addEventListener('place_changed', () => {
-            const place = placeAutocomplete.getPlace();
-            if (place.geometry?.location) {
-              setSelectedStart({
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-                address: place.formatted_address || ''
-              });
-              setStartQuery(place.formatted_address || '');
-            }
-          });
-
-          startAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+    const initializeCurrentLocation = async () => {
+      if (currentLocation && !selectedStart) {
+        try {
+          const address = await getAddressFromLocation(currentLocation);
+          setSelectedStart(currentLocation);
+          setStartQuery(address);
+        } catch (error) {
+          console.error('現在地の住所取得に失敗:', error);
+          setSelectedStart(currentLocation);
         }
-
-        if (endInputRef.current && !endAutocomplete.current) {
-          const placeAutocomplete = new PlaceAutocompleteElement({
-            componentRestrictions: { country: 'jp' }
-          });
-
-          endInputRef.current.parentNode?.insertBefore(
-            placeAutocomplete,
-            endInputRef.current
-          );
-
-          placeAutocomplete.addEventListener('place_changed', () => {
-            const place = placeAutocomplete.getPlace();
-            if (place.geometry?.location) {
-              setSelectedEnd({
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-                address: place.formatted_address || ''
-              });
-              setEndQuery(place.formatted_address || '');
-            }
-          });
-
-          endAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
-        }
-      } catch (error) {
-        console.error('PlaceAutocompleteElementの初期化に失敗:', error);
       }
     };
 
-    initializeAutocomplete();
+    initializeCurrentLocation();
+  }, [currentLocation, selectedStart, getAddressFromLocation]);
+
+  const initializeAutocomplete = useCallback(async () => {
+    try {
+      const waitForGoogleMaps = () => {
+        return new Promise<void>((resolve, reject) => {
+          const checkGoogleMaps = setInterval(() => {
+            if (window.google && window.google.maps) {
+              clearInterval(checkGoogleMaps);
+              resolve();
+            }
+          }, 100);
+
+          setTimeout(() => {
+            clearInterval(checkGoogleMaps);
+            reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
+          }, 10000);
+        });
+      };
+
+      await waitForGoogleMaps();
+      const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+
+      if (startInputRef.current && !startAutocomplete.current) {
+        const placeAutocomplete = new PlaceAutocompleteElement({
+          componentRestrictions: { country: 'jp' }
+        });
+
+        startInputRef.current.parentNode?.insertBefore(
+          placeAutocomplete,
+          startInputRef.current
+        );
+
+        placeAutocomplete.addEventListener('place_changed', () => {
+          const place = placeAutocomplete.getPlace();
+          if (place.geometry?.location) {
+            setSelectedStart({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              address: place.formatted_address || ''
+            });
+            setStartQuery(place.formatted_address || '');
+          }
+        });
+
+        startAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+      }
+
+      if (endInputRef.current && !endAutocomplete.current) {
+        const placeAutocomplete = new PlaceAutocompleteElement({
+          componentRestrictions: { country: 'jp' }
+        });
+
+        endInputRef.current.parentNode?.insertBefore(
+          placeAutocomplete,
+          endInputRef.current
+        );
+
+        placeAutocomplete.addEventListener('place_changed', () => {
+          const place = placeAutocomplete.getPlace();
+          if (place.geometry?.location) {
+            setSelectedEnd({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              address: place.formatted_address || ''
+            });
+            setEndQuery(place.formatted_address || '');
+          }
+        });
+
+        endAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+      }
+    } catch (error) {
+      console.error('PlaceAutocompleteElementの初期化に失敗:', error);
+    }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    initializeAutocomplete();
+  }, [initializeAutocomplete]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (selectedStart && selectedEnd) {
       onSearch(selectedStart, selectedEnd);
     }
-  };
+  }, [selectedStart, selectedEnd, onSearch]);
 
-  return (
+  const handleStartQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartQuery(e.target.value);
+  }, []);
+
+  const handleEndQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndQuery(e.target.value);
+  }, []);
+
+  const formJSX = useMemo(() => (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">ルート検索</h2>
@@ -192,7 +203,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               id="start-location"
               name="start-location"
               value={startQuery}
-              onChange={(e) => setStartQuery(e.target.value)}
+              onChange={handleStartQueryChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
               placeholder="出発地を入力"
               required
@@ -216,7 +227,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               id="end-location"
               name="end-location"
               value={endQuery}
-              onChange={(e) => setEndQuery(e.target.value)}
+              onChange={handleEndQueryChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
               placeholder="目的地を入力"
               required
@@ -242,7 +253,9 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
         </button>
       </form>
     </div>
-  );
+  ), [startQuery, endQuery, selectedStart, selectedEnd, isSearching, handleSubmit, handleStartQueryChange, handleEndQueryChange, onClose]);
+
+  return formJSX;
 };
 
 export default SearchForm; 
