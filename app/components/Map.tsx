@@ -49,7 +49,7 @@ const Map: React.FC<MapProps> = ({
       const directionsService = new DirectionsService();
       const directionsRenderer = new DirectionsRenderer({
         map,
-        suppressMarkers: true,
+        suppressMarkers: false,
         polylineOptions: {
           strokeColor: '#3B82F6',
           strokeWeight: 5
