@@ -1,22 +1,14 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Location } from '../types/location';
 import { useLocation } from '../contexts/LocationContext';
+import { getAddressFromLocation } from '../utils/geocoding';
+import { initializePlaceAutocomplete } from '../utils/googleMaps';
 
 interface SearchFormProps {
   onSearch: (start: Location, end: Location) => void;
   isSearching: boolean;
   onClose: () => void;
-}
-
-interface GeocoderResult {
-  formatted_address: string;
-  geometry: {
-    location: {
-      lat: () => number;
-      lng: () => number;
-    };
-  };
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose }) => {
@@ -29,42 +21,6 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const endInputRef = useRef<HTMLInputElement>(null);
   const startAutocomplete = useRef<google.maps.PlaceAutocompleteElement | null>(null);
   const endAutocomplete = useRef<google.maps.PlaceAutocompleteElement | null>(null);
-
-  const getAddressFromLocation = useCallback(async (location: Location): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      const checkGoogleMaps = setInterval(async () => {
-        if (window.google && window.google.maps) {
-          clearInterval(checkGoogleMaps);
-          try {
-            const { Geocoder } = await google.maps.importLibrary("geocoding") as google.maps.GeocodingLibrary;
-            const geocoder = new Geocoder();
-            geocoder.geocode(
-              { location },
-              (
-                results: google.maps.GeocoderResult[] | null,
-                status: google.maps.GeocoderStatus
-              ) => {
-                if (status === 'OK' && results && results[0]) {
-                  resolve(results[0].formatted_address);
-                } else {
-                  console.error('住所の取得に失敗:', status);
-                  reject(new Error(`住所の取得に失敗しました: ${status}`));
-                }
-              }
-            );
-          } catch (error) {
-            console.error('Geocoderの初期化に失敗:', error);
-            reject(error);
-          }
-        }
-      }, 100);
-
-      setTimeout(() => {
-        clearInterval(checkGoogleMaps);
-        reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
-      }, 10000);
-    });
-  }, []);
 
   useEffect(() => {
     const initializeCurrentLocation = async () => {
@@ -81,86 +37,45 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
     };
 
     initializeCurrentLocation();
-  }, [currentLocation, selectedStart, getAddressFromLocation]);
+  }, [currentLocation, selectedStart]);
 
-  const initializeAutocomplete = useCallback(async () => {
-    try {
-      const waitForGoogleMaps = () => {
-        return new Promise<void>((resolve, reject) => {
-          const checkGoogleMaps = setInterval(() => {
-            if (window.google && window.google.maps) {
-              clearInterval(checkGoogleMaps);
-              resolve();
-            }
-          }, 100);
-
-          setTimeout(() => {
-            clearInterval(checkGoogleMaps);
-            reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
-          }, 10000);
-        });
-      };
-
-      await waitForGoogleMaps();
-      const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
-
+  useEffect(() => {
+    const initAutocomplete = async () => {
       if (startInputRef.current && !startAutocomplete.current) {
-        const placeAutocomplete = new PlaceAutocompleteElement({
-          componentRestrictions: { country: 'jp' }
-        });
-
-        startInputRef.current.parentNode?.insertBefore(
-          placeAutocomplete,
-          startInputRef.current
-        );
-
-        placeAutocomplete.addEventListener('place_changed', () => {
-          const place = placeAutocomplete.getPlace();
-          if (place.geometry?.location) {
-            setSelectedStart({
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-              address: place.formatted_address || ''
-            });
-            setStartQuery(place.formatted_address || '');
+        startAutocomplete.current = await initializePlaceAutocomplete(
+          startInputRef,
+          (place) => {
+            if (place.geometry?.location) {
+              setSelectedStart({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                address: place.formatted_address || ''
+              });
+              setStartQuery(place.formatted_address || '');
+            }
           }
-        });
-
-        startAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+        );
       }
 
       if (endInputRef.current && !endAutocomplete.current) {
-        const placeAutocomplete = new PlaceAutocompleteElement({
-          componentRestrictions: { country: 'jp' }
-        });
-
-        endInputRef.current.parentNode?.insertBefore(
-          placeAutocomplete,
-          endInputRef.current
-        );
-
-        placeAutocomplete.addEventListener('place_changed', () => {
-          const place = placeAutocomplete.getPlace();
-          if (place.geometry?.location) {
-            setSelectedEnd({
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-              address: place.formatted_address || ''
-            });
-            setEndQuery(place.formatted_address || '');
+        endAutocomplete.current = await initializePlaceAutocomplete(
+          endInputRef,
+          (place) => {
+            if (place.geometry?.location) {
+              setSelectedEnd({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(),
+                address: place.formatted_address || ''
+              });
+              setEndQuery(place.formatted_address || '');
+            }
           }
-        });
-
-        endAutocomplete.current = placeAutocomplete as unknown as google.maps.PlaceAutocompleteElement;
+        );
       }
-    } catch (error) {
-      console.error('PlaceAutocompleteElementの初期化に失敗:', error);
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    initializeAutocomplete();
-  }, [initializeAutocomplete]);
+    initAutocomplete();
+  }, []);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -169,95 +84,60 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
     }
   }, [selectedStart, selectedEnd, onSearch]);
 
-  const handleStartQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setStartQuery(e.target.value);
-  }, []);
-
-  const handleEndQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setEndQuery(e.target.value);
-  }, []);
-
-  const formJSX = useMemo(() => (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">ルート検索</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="start" className="block text-sm font-medium text-gray-700">
+          出発地
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            id="start"
+            ref={startInputRef}
+            value={startQuery}
+            onChange={(e) => setStartQuery(e.target.value)}
+            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+            placeholder="出発地を入力"
+          />
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
-          <label htmlFor="start-location" className="block text-sm font-medium text-gray-700 mb-1">
-            出発地
-          </label>
-          <div className="relative">
-            <input
-              ref={startInputRef}
-              type="text"
-              id="start-location"
-              name="start-location"
-              value={startQuery}
-              onChange={handleStartQueryChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
-              placeholder="出発地を入力"
-              required
-              aria-label="出発地"
-              aria-autocomplete="list"
-              role="combobox"
-              aria-controls="start-location-listbox"
-              aria-expanded="false"
-              aria-haspopup="listbox"
-            />
-          </div>
+      <div>
+        <label htmlFor="end" className="block text-sm font-medium text-gray-700">
+          目的地
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            id="end"
+            ref={endInputRef}
+            value={endQuery}
+            onChange={(e) => setEndQuery(e.target.value)}
+            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+            placeholder="目的地を入力"
+          />
         </div>
+      </div>
 
-        <div className="relative">
-          <label htmlFor="end-location" className="block text-sm font-medium text-gray-700 mb-1">
-            目的地
-          </label>
-          <div className="relative">
-            <input
-              ref={endInputRef}
-              type="text"
-              id="end-location"
-              name="end-location"
-              value={endQuery}
-              onChange={handleEndQueryChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary text-black opacity-0 absolute"
-              placeholder="目的地を入力"
-              required
-              aria-label="目的地"
-              aria-autocomplete="list"
-              role="combobox"
-              aria-controls="end-location-listbox"
-              aria-expanded="false"
-              aria-haspopup="listbox"
-            />
-          </div>
-        </div>
-
+      <div className="flex justify-end space-x-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          キャンセル
+        </button>
         <button
           type="submit"
           disabled={!selectedStart || !selectedEnd || isSearching}
-          className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-            !selectedStart || !selectedEnd || isSearching
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-primary hover:bg-primary-dark'
-          }`}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
         >
           {isSearching ? '検索中...' : 'ルートを検索'}
         </button>
-      </form>
-    </div>
-  ), [startQuery, endQuery, selectedStart, selectedEnd, isSearching, handleSubmit, handleStartQueryChange, handleEndQueryChange, onClose]);
-
-  return formJSX;
+      </div>
+    </form>
+  );
 };
 
 export default SearchForm; 

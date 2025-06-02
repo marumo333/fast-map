@@ -1,296 +1,242 @@
 'use client';
-import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Polyline, Marker } from '@react-google-maps/api';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Location } from '../types/location';
-import { Route } from '../types/route';
 import { useLocation } from '../contexts/LocationContext';
-import { searchRoute } from '../utils/api';
+import { getAddressFromLocation } from '../utils/geocoding';
+import { initializeGoogleMaps, createCustomMarker } from '../utils/googleMaps';
 
-// 静的なライブラリ配列を定義
-const GOOGLE_MAPS_LIBRARIES: ("marker" | "places" | "geometry")[] = ["marker", "places", "geometry"];
-
-// Map IDを定義
-const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID || '';
-
-// APIキーの取得
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-if (!API_KEY) {
-  console.error('Google Maps APIキーが設定されていません。.env.localファイルを確認してください。');
+interface MapProps {
+  startLocation: Location | null;
+  endLocation: Location | null;
+  onRouteSelect: (route: google.maps.DirectionsRoute) => void;
+  selectedRoute: google.maps.DirectionsRoute | null;
+  suggestedRoute: google.maps.DirectionsRoute | null;
 }
 
-type MapProps = {
-  selectedRoute: Route | null;
-  currentLocation: Location | null;
-  onLocationSelect: (location: Location) => void;
-  endLocation?: Location | null;
-};
-
-const containerStyle = {
-  width: '100%',
-  height: '100%',
-  minHeight: '400px'  // 最小の高さを設定
-};
-
-const defaultCenter = {
-  lat: 35.6812,
-  lng: 139.7671
-};
-
-// カスタムマーカーのスタイル
-const createCustomMarker = (isCurrentLocation: boolean) => {
-  const div = document.createElement('div');
-  div.style.width = '40px';  // サイズを大きく
-  div.style.height = '40px';
-  div.style.backgroundColor = isCurrentLocation ? '#3B82F6' : '#EF4444';
-  div.style.border = '4px solid #FFFFFF';  // ボーダーを太く
-  div.style.borderRadius = '50%';
-  div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';  // シャドウを強調
-  div.style.display = 'flex';
-  div.style.alignItems = 'center';
-  div.style.justifyContent = 'center';
-  div.style.position = 'relative';
-  div.style.transition = 'all 0.3s ease';  // アニメーションを追加
-
-  // 内側の円を追加
-  const innerCircle = document.createElement('div');
-  innerCircle.style.width = '16px';  // サイズを大きく
-  innerCircle.style.height = '16px';
-  innerCircle.style.backgroundColor = '#FFFFFF';
-  innerCircle.style.borderRadius = '50%';
-  innerCircle.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';  // 内側の円にもシャドウ
-  div.appendChild(innerCircle);
-
-  // 現在地の場合、パルスアニメーションを追加
-  if (isCurrentLocation) {
-    const pulse = document.createElement('div');
-    pulse.style.position = 'absolute';
-    pulse.style.width = '100%';
-    pulse.style.height = '100%';
-    pulse.style.borderRadius = '50%';
-    pulse.style.backgroundColor = 'rgba(59, 130, 246, 0.3)';
-    pulse.style.animation = 'pulse 2s infinite';
-    div.appendChild(pulse);
-
-    // パルスアニメーションのスタイルを追加
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes pulse {
-        0% {
-          transform: scale(1);
-          opacity: 0.8;
-        }
-        50% {
-          transform: scale(1.5);
-          opacity: 0.4;
-        }
-        100% {
-          transform: scale(2);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-
-    // ホバーエフェクトを追加
-    div.addEventListener('mouseenter', () => {
-      div.style.transform = 'scale(1.1)';
-      div.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
-    });
-
-    div.addEventListener('mouseleave', () => {
-      div.style.transform = 'scale(1)';
-      div.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-    });
-  }
-
-  return div;
-};
-
-const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSelect, endLocation }) => {
+const Map: React.FC<MapProps> = ({
+  startLocation,
+  endLocation,
+  onRouteSelect,
+  selectedRoute,
+  suggestedRoute
+}) => {
+  const { currentLocation } = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const { destination, route, setRoute } = useLocation();
-  const markersRef = useRef<{ [key: string]: google.maps.marker.AdvancedMarkerElement }>({});
+  const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
+  const markersRef = useRef<{
+    current?: google.maps.marker.AdvancedMarkerElement;
+    start?: google.maps.marker.AdvancedMarkerElement;
+    end?: google.maps.marker.AdvancedMarkerElement;
+  }>({});
 
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: API_KEY || '',
-    libraries: GOOGLE_MAPS_LIBRARIES,
-    version: 'weekly',
-    mapIds: [MAP_ID]
-  });
+  const initializeMap = useCallback(async () => {
+    if (!mapRef.current || mapInstanceRef.current) return;
 
-  // マーカー更新関数をメモ化
-  const updateMarkers = useCallback(() => {
+    try {
+      const { Map, DirectionsService, DirectionsRenderer } = await initializeGoogleMaps();
+      
+      const map = new Map(mapRef.current, {
+        center: { lat: 35.6812, lng: 139.7671 },
+        zoom: 12,
+        mapId: 'roadmap',
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+      });
+
+      const directionsService = new DirectionsService();
+      const directionsRenderer = new DirectionsRenderer({
+        map,
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: '#3B82F6',
+          strokeWeight: 5
+        }
+      });
+
+      mapInstanceRef.current = map;
+      directionsServiceRef.current = directionsService;
+      directionsRendererRef.current = directionsRenderer;
+
+      map.addListener('click', () => {
+        if (directionsRendererRef.current) {
+          directionsRendererRef.current.setDirections({
+            routes: [],
+            request: {
+              origin: { lat: 0, lng: 0 },
+              destination: { lat: 0, lng: 0 },
+              travelMode: google.maps.TravelMode.DRIVING
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('地図の初期化に失敗:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    initializeMap();
+  }, [initializeMap]);
+
+  const updateMarkers = useCallback(async () => {
     if (!mapInstanceRef.current) return;
 
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+
     // 既存のマーカーをクリア
-    Object.values(markersRef.current).forEach(marker => marker.map = null);
+    Object.values(markersRef.current).forEach(marker => {
+      if (marker) {
+        marker.map = null;
+      }
+    });
     markersRef.current = {};
 
     // 現在地のマーカーを設定
     if (currentLocation) {
       console.log('現在地のマーカーを設定:', currentLocation);
-      const marker = new google.maps.marker.AdvancedMarkerElement({
+      const currentMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
-        position: { lat: currentLocation.lat, lng: currentLocation.lng },
-        title: '現在地',
-        content: createCustomMarker(true)
+        position: currentLocation,
+        content: createCustomMarker('現在地', '#3B82F6')
       });
-      markersRef.current['current'] = marker;
+      markersRef.current.current = currentMarker;
 
-      // 現在地を中心に地図を移動
-      mapInstanceRef.current.setCenter({ lat: currentLocation.lat, lng: currentLocation.lng });
+      // 地図の中心を現在地に設定
+      mapInstanceRef.current.setCenter(currentLocation);
       mapInstanceRef.current.setZoom(15);
+    }
+
+    // 出発地のマーカーを設定
+    if (startLocation) {
+      console.log('出発地のマーカーを設定:', startLocation);
+      const startMarker = new AdvancedMarkerElement({
+        map: mapInstanceRef.current,
+        position: startLocation,
+        content: createCustomMarker('出発地', '#10B981')
+      });
+      markersRef.current.start = startMarker;
     }
 
     // 目的地のマーカーを設定
     if (endLocation) {
       console.log('目的地のマーカーを設定:', endLocation);
-      const marker = new google.maps.marker.AdvancedMarkerElement({
+      const endMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
-        position: { lat: endLocation.lat, lng: endLocation.lng },
-        title: '目的地',
-        content: createCustomMarker(false)
+        position: endLocation,
+        content: createCustomMarker('目的地', '#EF4444')
       });
-      markersRef.current['end'] = marker;
+      markersRef.current.end = endMarker;
     }
 
-    // 地図の中心とズームを調整
-    if (currentLocation && endLocation) {
+    // 出発地と目的地の両方が設定されている場合、地図の表示範囲を調整
+    if (startLocation && endLocation) {
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend({ lat: currentLocation.lat, lng: currentLocation.lng });
-      bounds.extend({ lat: endLocation.lat, lng: endLocation.lng });
+      bounds.extend(startLocation);
+      bounds.extend(endLocation);
       mapInstanceRef.current.fitBounds(bounds);
     }
-  }, [currentLocation, endLocation]);
+  }, [currentLocation, startLocation, endLocation]);
 
-  // ルート表示関数をメモ化
-  const displayRoute = useCallback(() => {
-    if (!mapInstanceRef.current || !selectedRoute || !currentLocation || !endLocation) return;
-
-    const directionsService = new google.maps.DirectionsService();
-    const request = {
-      origin: { lat: currentLocation.lat, lng: currentLocation.lng },
-      destination: { lat: endLocation.lat, lng: endLocation.lng },
-      travelMode: google.maps.TravelMode.DRIVING
-    };
-
-    directionsService.route(request, (result, status) => {
-      if (status === 'OK' && result && directionsRendererRef.current) {
-        directionsRendererRef.current.setDirections(result);
-      } else {
-        console.error('ルートの表示に失敗:', status);
-        if (directionsRendererRef.current) {
-          const directionsResult: google.maps.DirectionsResult = {
-            request,
-            routes: [{
-              legs: [{
-                distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
-                duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
-                duration_in_traffic: selectedRoute.durationInTraffic ? {
-                  text: `${selectedRoute.durationInTraffic}分`,
-                  value: selectedRoute.durationInTraffic * 60
-                } : undefined,
-                start_address: '',
-                end_address: '',
-                start_location: new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
-                end_location: new google.maps.LatLng(endLocation.lat, endLocation.lng),
-                steps: [],
-                traffic_speed_entry: [],
-                via_waypoints: []
-              }],
-              overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
-              overview_polyline: '',
-              bounds: new google.maps.LatLngBounds(
-                new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
-                new google.maps.LatLng(endLocation.lat, endLocation.lng)
-              ),
-              copyrights: '',
-              warnings: [],
-              waypoint_order: [],
-              summary: ''
-            }]
-          };
-          directionsRendererRef.current.setDirections(directionsResult);
-        }
-      }
-    });
-  }, [selectedRoute, currentLocation, endLocation]);
-
-  const onLoad = useCallback((map: google.maps.Map) => {
-    mapInstanceRef.current = map;
-    console.log('地図の読み込みが完了しました');
-
-    // DirectionsRendererの初期化
-    directionsRendererRef.current = new google.maps.DirectionsRenderer({
-      map: mapInstanceRef.current,
-      suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: '#4F46E5',
-        strokeWeight: 5,
-        strokeOpacity: 0.8
-      }
-    });
-
-    // デフォルトの中心位置を東京に設定
-    map.setCenter({ lat: 35.6812, lng: 139.7671 });
-  }, []);
-
-  const onUnmount = useCallback(() => {
-    mapInstanceRef.current = null;
-    directionsRendererRef.current = null;
-  }, []);
-
-  // マーカーとルートの更新を一つのuseEffectにまとめる
   useEffect(() => {
     updateMarkers();
-    displayRoute();
-  }, [updateMarkers, displayRoute]);
+  }, [updateMarkers]);
 
-  // クリックハンドラーをメモ化
-  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
-    if (e.latLng) {
-      onLocationSelect({
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng()
+  const calculateRoute = useCallback(async () => {
+    if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) return;
+
+    try {
+      const result = await directionsServiceRef.current.route({
+        origin: startLocation,
+        destination: endLocation,
+        travelMode: google.maps.TravelMode.DRIVING
       });
+
+      if (result.routes.length > 0) {
+        directionsRendererRef.current.setDirections(result);
+        onRouteSelect(result.routes[0]);
+      }
+    } catch (error) {
+      console.error('ルート計算に失敗:', error);
     }
-  }, [onLocationSelect]);
+  }, [startLocation, endLocation, onRouteSelect]);
 
-  if (loadError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-red-600">{loadError.message}</div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (startLocation && endLocation) {
+      calculateRoute();
+    }
+  }, [startLocation, endLocation, calculateRoute]);
 
-  if (!isLoaded) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        <div className="text-gray-600">地図を読み込み中...</div>
-      </div>
-    );
-  }
+  const handleRouteClick = useCallback((route: google.maps.DirectionsRoute) => {
+    if (!directionsRendererRef.current) return;
+    const directions = directionsRendererRef.current.getDirections();
+    if (directions) {
+      const routeIndex = directions.routes.indexOf(route);
+      if (routeIndex !== -1) {
+        directionsRendererRef.current.setRouteIndex(routeIndex);
+        onRouteSelect(route);
+      }
+    }
+  }, [onRouteSelect]);
+
+  const routeOptions = useMemo(() => {
+    const directions = directionsRendererRef.current?.getDirections();
+    if (!directions?.routes) return null;
+
+    return directions.routes.map((route, index) => {
+      const isSelected = selectedRoute === route;
+      const isSuggested = suggestedRoute === route;
+      const hasToll = route.legs.some(leg => 
+        leg.steps.some(step => 'toll' in step && step.toll)
+      );
+
+      return (
+        <div
+          key={index}
+          onClick={() => handleRouteClick(route)}
+          className={`p-4 mb-2 rounded-lg cursor-pointer transition-colors ${
+            isSelected
+              ? 'bg-blue-100 border-2 border-blue-500'
+              : isSuggested
+              ? 'bg-green-100 border-2 border-green-500'
+              : 'bg-white border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="font-medium">
+                {route.legs[0].distance?.text} ({route.legs[0].duration?.text})
+              </div>
+              {hasToll && (
+                <div className="text-sm text-red-600 mt-1">
+                  有料道路を含む
+                </div>
+              )}
+            </div>
+            {isSelected && (
+              <div className="text-blue-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
+  }, [selectedRoute, suggestedRoute, handleRouteClick]);
 
   return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={defaultCenter}
-      zoom={13}
-      onLoad={onLoad}
-      onUnmount={onUnmount}
-      onClick={handleMapClick}
-      options={{
-        mapId: MAP_ID,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
-      }}
-    />
+    <div className="relative h-full">
+      <div ref={mapRef} className="w-full h-full" />
+      {routeOptions && (
+        <div className="absolute bottom-4 left-4 right-4 max-h-[40vh] overflow-y-auto bg-white rounded-lg shadow-lg p-4">
+          {routeOptions}
+        </div>
+      )}
+    </div>
   );
 };
 
