@@ -19,8 +19,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
   const [selectedEnd, setSelectedEnd] = useState<Location | null>(null);
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
-  const startAutocomplete = useRef<google.maps.PlaceAutocompleteElement | null>(null);
-  const endAutocomplete = useRef<google.maps.PlaceAutocompleteElement | null>(null);
+  const startAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
+  const endAutocomplete = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
     const initializeCurrentLocation = async () => {
