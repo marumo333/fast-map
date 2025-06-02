@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
   });
 
   // APIルートへのリクエストの場合のみCORSヘッダーを設定
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (request.nextUrl.pathname.startsWith('/api/') || request.nextUrl.pathname === '/route') {
     const origin = request.headers.get('origin');
     const headers = getCorsHeaders(origin);
 
@@ -59,5 +59,5 @@ export function middleware(request: NextRequest) {
 
 // ミドルウェアを適用するパスを指定
 export const config = {
-  matcher: '/api/:path*'
+  matcher: ['/api/:path*', '/route']
 }; 
