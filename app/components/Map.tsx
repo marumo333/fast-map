@@ -126,19 +126,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     mapInstanceRef.current = map;
     console.log('地図の読み込みが完了しました');
 
-    // 現在地を取得
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          console.log('現在地を取得しました:', { lat: latitude, lng: longitude });
-          map.setCenter({ lat: latitude, lng: longitude });
-        },
-        (error) => {
-          console.error('位置情報の取得に失敗:', error);
-        }
-      );
-    }
+    // デフォルトの中心位置を東京に設定
+    map.setCenter({ lat: 35.6812, lng: 139.7671 });
   }, []);
 
   const onUnmount = useCallback(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Location } from '../types/location';
 import { Route } from '../types/route';
 
@@ -95,6 +95,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       setIsGettingLocation(false);
     }
   };
+
+  // 初期位置を東京に設定
+  useEffect(() => {
+    if (!currentLocation) {
+      setCurrentLocation({ lat: 35.6812, lng: 139.7671 });
+    }
+  }, []);
 
   return (
     <LocationContext.Provider
