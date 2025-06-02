@@ -122,35 +122,15 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     mapIds: [MAP_ID]
   });
 
-  const onLoad = useCallback((map: google.maps.Map) => {
-    mapInstanceRef.current = map;
-    console.log('地図の読み込みが完了しました');
-
-    // デフォルトの中心位置を東京に設定
-    map.setCenter({ lat: 35.6812, lng: 139.7671 });
-  }, []);
-
-  const onUnmount = useCallback(() => {
-    mapInstanceRef.current = null;
-  }, []);
-
-  useEffect(() => {
+  // マーカー更新関数をメモ化
+  const updateMarkers = useCallback(() => {
     if (!mapInstanceRef.current) return;
 
-    // DirectionsRendererの初期化
-    if (!directionsRendererRef.current) {
-      directionsRendererRef.current = new google.maps.DirectionsRenderer({
-        map: mapInstanceRef.current,
-        suppressMarkers: true,
-        polylineOptions: {
-          strokeColor: '#4F46E5',
-          strokeWeight: 5,
-          strokeOpacity: 0.8
-        }
-      });
-    }
+    // 既存のマーカーをクリア
+    Object.values(markersRef.current).forEach(marker => marker.map = null);
+    markersRef.current = {};
 
-    // マーカーの設定
+    // 現在地のマーカーを設定
     if (currentLocation) {
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map: mapInstanceRef.current,
@@ -160,6 +140,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       markersRef.current['current'] = marker;
     }
 
+    // 目的地のマーカーを設定
     if (endLocation) {
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map: mapInstanceRef.current,
@@ -178,7 +159,8 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     }
   }, [currentLocation, endLocation]);
 
-  useEffect(() => {
+  // ルート表示関数をメモ化
+  const displayRoute = useCallback(() => {
     if (!mapInstanceRef.current || !selectedRoute || !currentLocation || !endLocation) return;
 
     const directionsService = new google.maps.DirectionsService();
@@ -193,7 +175,6 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
         directionsRendererRef.current.setDirections(result);
       } else {
         console.error('ルートの表示に失敗:', status);
-        // フォールバックとして手動でルートを表示
         if (directionsRendererRef.current) {
           const directionsResult: google.maps.DirectionsResult = {
             request,
@@ -231,6 +212,46 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
     });
   }, [selectedRoute, currentLocation, endLocation]);
 
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapInstanceRef.current = map;
+    console.log('地図の読み込みが完了しました');
+
+    // DirectionsRendererの初期化
+    directionsRendererRef.current = new google.maps.DirectionsRenderer({
+      map: mapInstanceRef.current,
+      suppressMarkers: true,
+      polylineOptions: {
+        strokeColor: '#4F46E5',
+        strokeWeight: 5,
+        strokeOpacity: 0.8
+      }
+    });
+
+    // デフォルトの中心位置を東京に設定
+    map.setCenter({ lat: 35.6812, lng: 139.7671 });
+  }, []);
+
+  const onUnmount = useCallback(() => {
+    mapInstanceRef.current = null;
+    directionsRendererRef.current = null;
+  }, []);
+
+  // マーカーとルートの更新を一つのuseEffectにまとめる
+  useEffect(() => {
+    updateMarkers();
+    displayRoute();
+  }, [updateMarkers, displayRoute]);
+
+  // クリックハンドラーをメモ化
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      onLocationSelect({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng()
+      });
+    }
+  }, [onLocationSelect]);
+
   if (loadError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -254,14 +275,7 @@ const Map: React.FC<MapProps> = ({ selectedRoute, currentLocation, onLocationSel
       zoom={13}
       onLoad={onLoad}
       onUnmount={onUnmount}
-      onClick={(e) => {
-        if (e.latLng) {
-          onLocationSelect({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng()
-          });
-        }
-      }}
+      onClick={handleMapClick}
       options={{
         mapId: MAP_ID,
         mapTypeControl: false,
