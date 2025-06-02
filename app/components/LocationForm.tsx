@@ -196,7 +196,7 @@ export default function LocationForm() {
   return (
     <div className="space-y-4 p-4 bg-white rounded-lg shadow">
       <div>
-        <label className="block text-sm font-medium text-black">現在地</label>
+        <label htmlFor="current-location" className="block text-sm font-medium text-black">現在地</label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <input
             type="text"
@@ -225,7 +225,7 @@ export default function LocationForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-black">目的地</label>
+        <label htmlFor="destination" className="block text-sm font-medium text-black">目的地</label>
         <div className="mt-1">
           <input
             type="text"
