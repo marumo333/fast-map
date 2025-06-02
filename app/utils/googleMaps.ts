@@ -158,6 +158,9 @@ export const initializePlaceAutocomplete = async (
   if (!inputRef.current) return null;
 
   try {
+    // Google Maps APIの初期化を待つ
+    await waitForGoogleMaps();
+
     const { PlaceAutocompleteElement } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
     const placeAutocomplete = new PlaceAutocompleteElement({
       componentRestrictions: { country: 'jp' }
