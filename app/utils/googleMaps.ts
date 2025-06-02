@@ -1,8 +1,13 @@
+import { Location } from '../types/location';
+
 interface GoogleMapsLibraries {
   Map: typeof google.maps.Map;
   DirectionsService: typeof google.maps.DirectionsService;
   DirectionsRenderer: typeof google.maps.DirectionsRenderer;
 }
+
+let isInitializing = false;
+let initializationPromise: Promise<GoogleMapsLibraries> | null = null;
 
 export const waitForGoogleMaps = async (): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
@@ -21,27 +26,65 @@ export const waitForGoogleMaps = async (): Promise<void> => {
 };
 
 export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
-  return new Promise((resolve, reject) => {
-    const checkGoogleMaps = setInterval(async () => {
-      if (window.google && window.google.maps) {
-        clearInterval(checkGoogleMaps);
-        try {
-          const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-          const { DirectionsService } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
-          const { DirectionsRenderer } = await google.maps.importLibrary("routes") as google.maps.RoutesLibrary;
-          resolve({ Map, DirectionsService, DirectionsRenderer });
-        } catch (error) {
-          console.error('Google Maps APIの初期化に失敗:', error);
-          reject(error);
-        }
-      }
-    }, 100);
+  if (initializationPromise) {
+    return initializationPromise;
+  }
 
-    setTimeout(() => {
-      clearInterval(checkGoogleMaps);
-      reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
-    }, 10000);
-  });
+  if (isInitializing) {
+    throw new Error('Google Maps APIの初期化が既に進行中です');
+  }
+
+  isInitializing = true;
+
+  try {
+    initializationPromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Google Maps APIの初期化がタイムアウトしました'));
+      }, 30000); // タイムアウトを30秒に延長
+
+      if (typeof window === 'undefined') {
+        clearTimeout(timeout);
+        reject(new Error('ブラウザ環境でのみ実行可能です'));
+        return;
+      }
+
+      if (!window.google?.maps) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding&callback=initGoogleMaps`;
+        script.async = true;
+        script.defer = true;
+
+        window.initGoogleMaps = () => {
+          clearTimeout(timeout);
+          if (window.google?.maps) {
+            resolve({
+              Map: window.google.maps.Map,
+              DirectionsService: window.google.maps.DirectionsService,
+              DirectionsRenderer: window.google.maps.DirectionsRenderer
+            });
+          } else {
+            reject(new Error('Google Maps APIの初期化に失敗しました'));
+          }
+        };
+
+        document.head.appendChild(script);
+      } else {
+        clearTimeout(timeout);
+        resolve({
+          Map: window.google.maps.Map,
+          DirectionsService: window.google.maps.DirectionsService,
+          DirectionsRenderer: window.google.maps.DirectionsRenderer
+        });
+      }
+    });
+
+    return await initializationPromise;
+  } catch (error) {
+    initializationPromise = null;
+    throw error;
+  } finally {
+    isInitializing = false;
+  }
 };
 
 export const createCustomMarker = (label: string, color: string) => {

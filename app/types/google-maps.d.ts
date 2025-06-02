@@ -41,4 +41,11 @@ declare namespace google.maps {
     requestedRegion?: string;
     types?: string[];
   }
+}
+
+declare global {
+  interface Window {
+    google?: typeof google;
+    initGoogleMaps?: () => void;
+  }
 } 
