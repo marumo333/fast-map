@@ -54,7 +54,7 @@ export const initializeGoogleMaps = async (): Promise<GoogleMapsLibraries> => {
         script.async = true;
         script.defer = true;
 
-        window.initGoogleMaps = () => {
+        (window as any).initGoogleMaps = () => {
           clearTimeout(timeout);
           if (window.google?.maps) {
             resolve({
