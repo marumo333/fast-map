@@ -96,17 +96,24 @@ const Map: React.FC<MapProps> = ({
 
     // 現在地のマーカーを設定
     if (currentLocation) {
-      console.log('現在地のマーカーを設定:', currentLocation);
-      const currentMarker = new AdvancedMarkerElement({
-        map: mapInstanceRef.current,
-        position: currentLocation,
-        content: createCustomMarker('現在地', '#3B82F6')
-      });
-      markersRef.current.current = currentMarker;
+      const currentMarker = markersRef.current.current;
+      const currentPosition = currentMarker?.position;
+      if (!currentMarker || 
+          !currentPosition ||
+          currentPosition.lat !== currentLocation.lat || 
+          currentPosition.lng !== currentLocation.lng) {
+        console.log('現在地のマーカーを更新:', currentLocation);
+        const newCurrentMarker = new AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: currentLocation,
+          content: createCustomMarker('現在地', '#3B82F6')
+        });
+        markersRef.current.current = newCurrentMarker;
 
-      // 地図の中心を現在地に設定
-      mapInstanceRef.current.setCenter(currentLocation);
-      mapInstanceRef.current.setZoom(15);
+        // 地図の中心を現在地に設定
+        mapInstanceRef.current.setCenter(currentLocation);
+        mapInstanceRef.current.setZoom(15);
+      }
     }
 
     // 出発地のマーカーを設定
