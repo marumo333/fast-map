@@ -24,85 +24,87 @@ interface UseGeolocationReturn {
 
 export const useGeolocation = (): UseGeolocationReturn => {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   const clearLocationError = useCallback(() => {
-    setLocationError(null);
+    setError(null);
   }, []);
 
   const getCurrentLocation = useCallback(async (): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+
     if (!navigator.geolocation) {
-      setLocationError('位置情報が利用できません');
+      setError('お使いのブラウザは位置情報をサポートしていません');
+      setIsLoading(false);
       return;
     }
 
-    setIsGettingLocation(true);
-    setLocationError(null);
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location: Location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setCurrentLocation(location);
+          setIsLoading(false);
 
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          // 30秒ごとに位置情報を更新
+          if (watchId) {
+            navigator.geolocation.clearWatch(watchId);
+          }
+
+          const id = navigator.geolocation.watchPosition(
+            (pos) => {
+              const newLocation: Location = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              };
+              setCurrentLocation(newLocation);
+            },
+            (err) => {
+              console.error('位置情報の監視中にエラーが発生しました:', err);
+              setError('位置情報の取得に失敗しました');
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 30000, // 30秒以上古い位置情報は使用しない
+            }
+          );
+          setWatchId(id);
+          resolve();
+        },
+        (error) => {
+          console.error('位置情報の取得に失敗:', error);
+          setError('位置情報の取得に失敗しました');
+          setIsLoading(false);
+          reject(error);
+        },
+        {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000 // 30秒間キャッシュされた位置情報を使用可能
-        });
-      });
+          timeout: 5000,
+          maximumAge: 0,
+        }
+      );
+    });
+  }, [watchId]);
 
-      setCurrentLocation({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude
-      });
-    } catch (error) {
-      console.error('位置情報の取得に失敗:', error);
-      setLocationError('位置情報の取得に失敗しました');
-    } finally {
-      setIsGettingLocation(false);
-    }
-  }, []);
-
-  // 位置情報の監視を開始
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationError('位置情報が利用できません');
-      return;
-    }
-
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setCurrentLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
-      },
-      (error) => {
-        console.error('位置情報の監視に失敗:', error);
-        setLocationError('位置情報の監視に失敗しました');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000 // 30秒間キャッシュされた位置情報を使用可能
-      }
-    );
-
-    // クリーンアップ関数
     return () => {
-      navigator.geolocation.clearWatch(watchId);
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
-  }, []);
-
-  // 初期位置を東京に設定
-  useEffect(() => {
-    if (!currentLocation) {
-      setCurrentLocation({ lat: 35.6812, lng: 139.7671 });
-    }
-  }, [currentLocation]);
+  }, [watchId]);
 
   return {
     currentLocation,
-    isGettingLocation,
-    locationError,
+    isGettingLocation: isLoading,
+    locationError: error,
     getCurrentLocation,
     clearLocationError
   };
