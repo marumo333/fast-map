@@ -142,7 +142,7 @@ export default function Home() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/route', {
+      const response = await fetch('/route', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
