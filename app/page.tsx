@@ -180,11 +180,10 @@ export default function Home() {
         routeId: 1, // デフォルトのルートID
         path: routeData.path || [],
         distance: routeData.distance || 0,
-        duration: {
-          driving: routeData.duration?.driving || 0,
-          walking: routeData.duration?.walking || 0
-        },
-        isTollRoad: routeData.isTollRoad || false
+        duration: routeData.duration?.driving || 0,
+        durationInTraffic: routeData.duration_in_traffic || undefined,
+        isTollRoad: routeData.isTollRoad || false,
+        toll: routeData.tollFee || 0
       };
       setSelectedRoute(selectedRoute);
       setIsLoading(false);
@@ -284,7 +283,7 @@ export default function Home() {
                       <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
                       <div className={`space-y-2 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         <p>距離: {selectedRoute.distance}km</p>
-                        <p>所要時間: {selectedRoute.duration.driving}分</p>
+                        <p>所要時間: {selectedRoute.duration}分</p>
                         {selectedRoute.isTollRoad && (
                           <p className="text-yellow-600 dark:text-yellow-400">有料道路を含む</p>
                         )}
