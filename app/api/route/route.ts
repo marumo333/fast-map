@@ -74,16 +74,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { start, end } = body;
 
-    // CORSヘッダーを追加
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    };
-
     // プリフライトリクエストの処理
     if (request.method === 'OPTIONS') {
-      return new NextResponse(null, { headers });
+      return new NextResponse(null, { 
+        headers: getCorsHeaders(origin)
+      });
     }
 
     if (
