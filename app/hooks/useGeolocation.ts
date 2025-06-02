@@ -61,13 +61,36 @@ export const useGeolocation = (): UseGeolocationReturn => {
     }
   }, []);
 
-  // 初期位置を取得し、30秒ごとに更新
+  // 位置情報の監視を開始
   useEffect(() => {
-    getCurrentLocation();
-    const interval = setInterval(getCurrentLocation, 30000); // 30秒ごとに位置情報を更新
+    if (!navigator.geolocation) {
+      setLocationError('位置情報が利用できません');
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, [getCurrentLocation]);
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      (error) => {
+        console.error('位置情報の監視に失敗:', error);
+        setLocationError('位置情報の監視に失敗しました');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000 // 30秒間キャッシュされた位置情報を使用可能
+      }
+    );
+
+    // クリーンアップ関数
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
 
   // 初期位置を東京に設定
   useEffect(() => {
