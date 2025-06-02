@@ -34,6 +34,6 @@
     }
   ],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://fast-6ir0sv4r8-marumo333s-projects.vercel.app"
+    "NEXT_PUBLIC_API_URL": "https://fast-map-five.vercel.app"
   }
 }
