@@ -191,6 +191,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               placeholder="出発地を入力"
               required
               aria-label="出発地"
+              aria-autocomplete="list"
+              role="combobox"
+              aria-expanded="false"
+              aria-haspopup="listbox"
             />
           </div>
         </div>
@@ -211,6 +215,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isSearching, onClose 
               placeholder="目的地を入力"
               required
               aria-label="目的地"
+              aria-autocomplete="list"
+              role="combobox"
+              aria-expanded="false"
+              aria-haspopup="listbox"
             />
           </div>
         </div>
