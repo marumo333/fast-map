@@ -216,7 +216,7 @@ export default function Home() {
     }
   };
 
-  const handleMapClick = (lat: number, lng: number) => {
+  const handleMapClick = async (lat: number, lng: number) => {
     if (!startLocation) {
       console.log('出発地が設定されていません');
       return;
@@ -226,6 +226,21 @@ export default function Home() {
     console.log('目的地を設定:', newEndLocation);
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
+
+    try {
+      const directionsService = new google.maps.DirectionsService();
+      const result = await directionsService.route({
+        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
+        destination: new google.maps.LatLng(lat, lng),
+        travelMode: google.maps.TravelMode.DRIVING
+      });
+
+      if (result.routes.length > 0) {
+        handleRouteSelect(result.routes[0]);
+      }
+    } catch (error) {
+      console.error('経路の計算に失敗しました:', error);
+    }
   };
 
   return (
