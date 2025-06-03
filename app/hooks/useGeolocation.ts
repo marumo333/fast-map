@@ -79,7 +79,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
+          timeout: 30000,  // 30秒に延長
           maximumAge: 0
         }
       );

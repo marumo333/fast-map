@@ -243,8 +243,17 @@ export default function Home() {
       try {
         await getCurrentLocation();
         if (currentLocation) {
-          setStartLocation(currentLocation);
-          console.log('現在地を出発地として設定:', currentLocation);
+          const locationWithAddress = { ...currentLocation };
+          setStartLocation(locationWithAddress);
+          console.log('現在地を出発地として設定:', locationWithAddress);
+          
+          // 住所情報を非同期で更新
+          try {
+            const address = await getAddressFromLocation(currentLocation);
+            setStartLocation(prev => prev ? { ...prev, address } : null);
+          } catch (error) {
+            console.error('現在地の住所取得に失敗:', error);
+          }
         } else {
           setError('位置情報の取得に失敗しました。もう一度お試しください。');
           return;
