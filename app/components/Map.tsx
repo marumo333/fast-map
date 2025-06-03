@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { Location } from '../types/location';
 import { useLocation } from '../contexts/LocationContext';
 import { initializeGoogleMaps, createCustomMarker } from '../utils/googleMaps';
@@ -201,11 +201,17 @@ const Map: React.FC<MapProps> = ({
       if (routeIndex !== -1) {
         directionsRendererRef.current.setRouteIndex(routeIndex);
         onRouteSelect(route);
+        // ルート選択時に選択肢欄を非表示にする
+        setShowRouteOptions(false);
       }
     }
   }, [onRouteSelect]);
 
+  const [showRouteOptions, setShowRouteOptions] = useState(true);
+
   const routeOptions = useMemo(() => {
+    if (!showRouteOptions) return null;
+    
     const directions = directionsRendererRef.current?.getDirections();
     if (!directions?.routes) return null;
 
@@ -250,7 +256,7 @@ const Map: React.FC<MapProps> = ({
         </div>
       );
     });
-  }, [selectedRoute, suggestedRoute, handleRouteClick]);
+  }, [selectedRoute, suggestedRoute, handleRouteClick, showRouteOptions]);
 
   return (
     <div className="relative h-full">
