@@ -64,9 +64,12 @@ const Map: React.FC<MapProps> = ({
 
       map.addListener('click', (e: google.maps.MapMouseEvent) => {
         if (e.latLng && onMapClick) {
+          const lat = e.latLng.lat();
+          const lng = e.latLng.lng();
+          console.log('地図クリック:', { lat, lng });  // デバッグ用
           onMapClick({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng()
+            lat,
+            lng
           });
         }
       });

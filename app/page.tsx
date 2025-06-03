@@ -358,7 +358,11 @@ export default function Home() {
                         suggestedRoute={null}
                         onMapClick={(location) => {
                           if (startLocation) {
-                            setEndLocation(location);
+                            console.log('目的地を設定:', location);  // デバッグ用
+                            setEndLocation({
+                              lat: location.lat,
+                              lng: location.lng
+                            });
                           }
                         }}
                       />
