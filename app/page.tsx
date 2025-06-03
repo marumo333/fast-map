@@ -313,7 +313,13 @@ export default function Home() {
                       <RouteRecommendation
                         routes={[selectedRoute]}
                         onSelect={(route) => setSelectedRoute(route as Route)}
-                        onClose={() => setSelectedRoute(null)}
+                        onClose={() => {
+                          // おすすめルートだけを閉じる
+                          const routeInfo = document.querySelector('.route-recommendations');
+                          if (routeInfo) {
+                            routeInfo.remove();
+                          }
+                        }}
                       />
                       <RouteNotification
                         type="congestion"

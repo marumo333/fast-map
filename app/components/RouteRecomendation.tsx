@@ -22,7 +22,9 @@ const RouteRecommendation: React.FC<RouteRecommendationProps> = ({
 
   const handleClose = () => {
     setIsVisible(false);
-    onClose?.();
+    if (onClose) {
+      onClose();
+    }
   };
 
   if (!isVisible) return null;
