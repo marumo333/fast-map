@@ -157,6 +157,7 @@ export default function Home() {
 
   const handleGetCurrentLocation = async () => {
     try {
+      setIsLoading(true);
       await getCurrentLocation();
       if (currentLocation) {
         console.log('現在地を出発地として設定:', currentLocation);
@@ -164,9 +165,20 @@ export default function Home() {
         setEndLocation(null);
         setSelectedRoute(null);
         setShowSearchForm(false);
+        
+        // 住所情報を非同期で更新
+        try {
+          const address = await getAddressFromLocation(currentLocation);
+          setStartLocation(prev => prev ? { ...prev, address } : null);
+        } catch (error) {
+          console.error('現在地の住所取得に失敗:', error);
+        }
       }
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
+      setError('位置情報の取得に失敗しました');
+    } finally {
+      setIsLoading(false);
     }
   };
 
