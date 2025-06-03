@@ -161,7 +161,11 @@ const Map: React.FC<MapProps> = ({
         origin: startLocation,
         destination: endLocation,
         travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true
+        provideRouteAlternatives: true,
+        // @ts-ignore: Google Maps APIの型定義が古いため
+        departureTime: new Date(),
+        // @ts-ignore: Google Maps APIの型定義が古いため
+        trafficModel: 'best_guess'
       });
 
       if (result.routes.length > 0) {
@@ -221,6 +225,7 @@ const Map: React.FC<MapProps> = ({
       const hasToll = route.legs.some(leg => 
         leg.steps.some(step => 'toll' in step && step.toll)
       );
+      const routeType = index === 0 ? '最短ルート' : index === 1 ? '混雑回避ルート' : 'その他のルート';
 
       return (
         <div
@@ -236,7 +241,10 @@ const Map: React.FC<MapProps> = ({
         >
           <div className="flex justify-between items-center">
             <div>
-              <div className="font-medium">
+              <div className="font-medium text-gray-900">
+                {routeType}
+              </div>
+              <div className="text-sm text-gray-600">
                 {route.legs[0].distance?.text} ({route.legs[0].duration?.text})
               </div>
               {hasToll && (
