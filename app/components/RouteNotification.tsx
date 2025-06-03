@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Route } from '../types/route';
 
 export type NotificationType = 'congestion' | 'accident' | 'construction';
@@ -20,6 +20,15 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
   currentRoute,
   suggestedRoute
 }) => {
+  const [isVisible, setIsVisible] = useState(true);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    onDismiss();
+  };
+
+  if (!isVisible) return null;
+
   const getIcon = () => {
     switch (type) {
       case 'congestion':
@@ -78,7 +87,7 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
             </button>
             <button
               type="button"
-              onClick={onDismiss}
+              onClick={handleDismiss}
               className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               閉じる

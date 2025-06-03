@@ -304,16 +304,18 @@ export default function Home() {
                           },
                           isTollRoad: selectedRoute.isTollRoad
                         }}
+                        onClose={() => setSelectedRoute(null)}
                       />
                       <RouteRecommendation
                         routes={[selectedRoute]}
                         onSelect={(route) => setSelectedRoute(route as Route)}
+                        onClose={() => setSelectedRoute(null)}
                       />
                       <RouteNotification
                         type="congestion"
                         message={selectedRoute.isTollRoad ? '有料ルート' : '無料ルート'}
                         onAccept={() => {}}
-                        onDismiss={() => {}}
+                        onDismiss={() => setSelectedRoute(null)}
                         currentRoute={selectedRoute}
                         suggestedRoute={undefined}
                       />
