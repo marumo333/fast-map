@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import RouteSelector from './components/RouteSelector';
 import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
 import { Route } from './types/route';
@@ -286,11 +285,17 @@ export default function Home() {
                   {/* ルート選択 */}
                   {startLocation && endLocation && (
                     <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート選択</h2>
-                      <RouteSelector
-                        startLocation={startLocation}
-                        endLocation={endLocation}
-                        onRouteSelect={setSelectedRoute}
+                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
+                      <RouteInfo
+                        routeInfo={{
+                          distance: selectedRoute?.distance * 1000 || 0,
+                          duration: {
+                            driving: selectedRoute?.duration * 60 || 0,
+                            walking: selectedRoute?.duration * 60 * 1.5 || 0
+                          },
+                          isTollRoad: selectedRoute?.isTollRoad || false
+                        }}
+                        onClose={() => setSelectedRoute(null)}
                       />
                     </div>
                   )}
