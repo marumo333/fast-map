@@ -90,9 +90,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
-  const { currentLocation, getCurrentLocation } = useLocation() as { 
+  const { currentLocation, getCurrentLocation, isLocationInitialized } = useLocation() as { 
     currentLocation: LocationWithAddress | null;
     getCurrentLocation: () => Promise<void>;
+    isLocationInitialized: boolean;
   };
 
   const updateLocationAddress = useCallback(async (
@@ -189,24 +190,22 @@ export default function Home() {
     const initializeCurrentLocation = async () => {
       if (currentLocation && !startLocation) {
         console.log('初期化: 現在地を出発地として設定:', currentLocation);
-        // 現在地を即座に設定
-        const locationWithAddress = { ...currentLocation };
-        setStartLocation(locationWithAddress);
-        console.log('親: startLocationを更新:', locationWithAddress);
+        // まず緯度経度のみを設定
+        setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
         
         try {
           const address = await getAddressFromLocation(currentLocation);
-          const updatedLocation = { ...locationWithAddress, address };
-          setStartLocation(updatedLocation);
-          console.log('親: startLocationを住所付きで更新:', updatedLocation);
+          setStartLocation(prev => prev ? { ...prev, address } : null);
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
         }
       }
     };
 
-    initializeCurrentLocation();
-  }, [currentLocation]);
+    if (isLocationInitialized) {
+      initializeCurrentLocation();
+    }
+  }, [currentLocation, isLocationInitialized]);
 
   // デバッグ用：startLocationの変更を監視
   useEffect(() => {
@@ -247,42 +246,18 @@ export default function Home() {
 
   const handleMapClick = async (lat: number, lng: number) => {
     console.log('親: 地図クリック - 現在のstartLocation:', startLocation);
-    console.log('親: 地図クリック - 現在のcurrentLocation:', currentLocation);
     
-    let currentStartLocation = startLocation;
-    
-    if (!currentStartLocation) {
+    if (!startLocation) {
       console.log('出発地が設定されていません');
-      try {
-        await getCurrentLocation();
-        if (currentLocation) {
-          const locationWithAddress = { ...currentLocation };
-          setStartLocation(locationWithAddress);
-          currentStartLocation = locationWithAddress;
-          console.log('親: 地図クリック後、現在地を出発地として設定:', locationWithAddress);
-          
-          try {
-            const address = await getAddressFromLocation(currentLocation);
-            const updatedLocation = { ...locationWithAddress, address };
-            setStartLocation(updatedLocation);
-            currentStartLocation = updatedLocation;
-            console.log('親: 地図クリック後、startLocationを住所付きで更新:', updatedLocation);
-          } catch (error) {
-            console.error('現在地の住所取得に失敗:', error);
-          }
-        } else {
+      if (!isLocationInitialized) {
+        try {
+          await getCurrentLocation();
+        } catch (error) {
+          console.error('位置情報の取得に失敗:', error);
           setError('位置情報の取得に失敗しました。もう一度お試しください。');
           return;
         }
-      } catch (error) {
-        console.error('位置情報の取得に失敗:', error);
-        setError('位置情報の取得に失敗しました。もう一度お試しください。');
-        return;
       }
-    }
-
-    if (!currentStartLocation) {
-      setError('出発地の設定に失敗しました。もう一度お試しください。');
       return;
     }
 
@@ -294,7 +269,7 @@ export default function Home() {
     try {
       const directionsService = new google.maps.DirectionsService();
       const result = await directionsService.route({
-        origin: new google.maps.LatLng(currentStartLocation.lat, currentStartLocation.lng),
+        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
         destination: new google.maps.LatLng(lat, lng),
         travelMode: google.maps.TravelMode.DRIVING
       });

@@ -30,6 +30,7 @@ interface LocationContextType {
   isGettingLocation: boolean;
   locationError: string | null;
   clearLocationError: () => void;
+  isLocationInitialized: boolean;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -45,11 +46,15 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
   const [destination, setDestination] = React.useState<Location | null>(null);
   const [route, setRoute] = React.useState<Route | null>(null);
+  const [isLocationInitialized, setIsLocationInitialized] = React.useState(false);
 
-  // currentLocationの変更を監視
+  // currentLocationの変更を監視し、初期化状態を管理
   React.useEffect(() => {
-    console.log('LocationContext: currentLocationが変更:', currentLocation);
-  }, [currentLocation]);
+    if (currentLocation && !isLocationInitialized) {
+      console.log('LocationContext: 現在地を初期化:', currentLocation);
+      setIsLocationInitialized(true);
+    }
+  }, [currentLocation, isLocationInitialized]);
 
   return (
     <LocationContext.Provider
@@ -63,7 +68,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         getCurrentLocation,
         isGettingLocation,
         locationError,
-        clearLocationError
+        clearLocationError,
+        isLocationInitialized
       }}
     >
       {children}
