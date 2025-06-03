@@ -58,6 +58,7 @@ export const searchRoute = async (
         start,
         end,
       }),
+      credentials: 'include',
     });
 
     if (!response.ok) {

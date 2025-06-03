@@ -135,7 +135,7 @@ export async function GET(
   try {
     console.log('ルート情報を取得開始:', routeId);
     // ルート情報を取得
-    const routeUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'}/route?routeId=${routeId}`;
+    const routeUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/route/${routeId}`;
     console.log('ルート情報取得URL:', routeUrl);
 
     const routeResponse = await fetchWithRetry(routeUrl);
