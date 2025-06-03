@@ -250,22 +250,24 @@ export default function Home() {
   const handleMapClick = async (lat: number, lng: number) => {
     console.log('親: 地図クリック - 現在のstartLocation:', startLocation);
     
-    if (!startLocation) {
+    let currentStartLocation = startLocation;
+    
+    if (!currentStartLocation) {
       console.log('出発地が設定されていません');
       try {
         await getCurrentLocation();
         if (currentLocation) {
           const locationWithAddress = { ...currentLocation };
           setStartLocation(locationWithAddress);
+          currentStartLocation = locationWithAddress;
           console.log('親: 地図クリック後、現在地を出発地として設定:', locationWithAddress);
           
           try {
             const address = await getAddressFromLocation(currentLocation);
-            setStartLocation(prev => {
-              const updated = prev ? { ...prev, address } : null;
-              console.log('親: 地図クリック後、startLocationを住所付きで更新:', updated);
-              return updated;
-            });
+            const updatedLocation = { ...locationWithAddress, address };
+            setStartLocation(updatedLocation);
+            currentStartLocation = updatedLocation;
+            console.log('親: 地図クリック後、startLocationを住所付きで更新:', updatedLocation);
           } catch (error) {
             console.error('現在地の住所取得に失敗:', error);
           }
@@ -280,6 +282,11 @@ export default function Home() {
       }
     }
 
+    if (!currentStartLocation) {
+      setError('出発地の設定に失敗しました。もう一度お試しください。');
+      return;
+    }
+
     const newEndLocation = { lat, lng };
     console.log('親: 目的地を設定:', newEndLocation);
     setEndLocation(newEndLocation);
@@ -288,7 +295,7 @@ export default function Home() {
     try {
       const directionsService = new google.maps.DirectionsService();
       const result = await directionsService.route({
-        origin: new google.maps.LatLng(startLocation?.lat ?? 0, startLocation?.lng ?? 0),
+        origin: new google.maps.LatLng(currentStartLocation.lat, currentStartLocation.lng),
         destination: new google.maps.LatLng(lat, lng),
         travelMode: google.maps.TravelMode.DRIVING
       });
