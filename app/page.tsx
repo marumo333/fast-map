@@ -91,43 +91,38 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
   const [canClickMap, setCanClickMap] = useState(false);
-  const { currentLocation, getCurrentLocation, isLocationInitialized } = useLocation() as { 
+  const { currentLocation, getCurrentLocation } = useLocation() as { 
     currentLocation: LocationWithAddress | null;
     getCurrentLocation: () => Promise<void>;
-    isLocationInitialized: boolean;
   };
 
-  const updateLocationAddress = useCallback(async (
-    location: LocationWithAddress | null,
-    setLocation: (location: LocationWithAddress | null) => void
-  ) => {
-    if (location && !location.address) {
-      try {
-        const address = await getAddressFromLocation(location);
-        setLocation({ ...location, address });
-      } catch (error) {
-        console.error('住所の更新に失敗:', error);
-      }
-    }
+  // ページロード時に現在地を取得
+  useEffect(() => {
+    getCurrentLocation().catch(err => {
+      console.error('初回の位置情報取得に失敗:', err);
+      setError('位置情報取得に失敗しました');
+    });
   }, []);
 
+  // 現在地の初期化を改善
   useEffect(() => {
-    const updateLocations = async () => {
-      if (!startLocation?.address) {
-        await updateLocationAddress(startLocation, setStartLocation);
-      }
-      if (!endLocation?.address) {
-        await updateLocationAddress(endLocation, setEndLocation);
-      }
-      if (currentLocation && !currentLocation.address) {
-        await updateLocationAddress(currentLocation as LocationWithAddress, (loc) => {
-          if (loc) setStartLocation(loc);
-        });
-      }
-    };
+    if (currentLocation && !startLocation) {
+      console.log('初期化: 現在地を出発地として設定:', currentLocation);
+      // 緯度経度のみを即座に設定
+      setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
+      setCanClickMap(true); // クリックを即座に有効化
 
-    updateLocations();
-  }, [startLocation, endLocation, currentLocation, updateLocationAddress, setStartLocation, setEndLocation]);
+      // 住所は後から非同期で取得
+      (async () => {
+        try {
+          const address = await getAddressFromLocation(currentLocation);
+          setStartLocation(prev => prev ? { ...prev, address } : null);
+        } catch (error) {
+          console.error('現在地の住所取得に失敗:', error);
+        }
+      })();
+    }
+  }, [currentLocation]);
 
   const handleTrafficInfoUpdate = useCallback((info: any) => {
     console.log('交通情報更新:', info);
@@ -185,29 +180,6 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-
-  // 現在地の初期化を改善
-  useEffect(() => {
-    const initializeCurrentLocation = async () => {
-      if (currentLocation && !startLocation) {
-        console.log('初期化: 現在地を出発地として設定:', currentLocation);
-        // まず緯度経度のみを設定
-        setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
-        setCanClickMap(true); // 出発地がセットできたら地図クリックを有効にする
-        
-        try {
-          const address = await getAddressFromLocation(currentLocation);
-          setStartLocation(prev => prev ? { ...prev, address } : null);
-        } catch (error) {
-          console.error('現在地の住所取得に失敗:', error);
-        }
-      }
-    };
-
-    if (isLocationInitialized) {
-      initializeCurrentLocation();
-    }
-  }, [currentLocation, isLocationInitialized]);
 
   // デバッグ用：startLocationの変更を監視
   useEffect(() => {
