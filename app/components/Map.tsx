@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { Location } from '../types/location';
 import { useLocation } from '../contexts/LocationContext';
-import { getAddressFromLocation } from '../utils/geocoding';
 import { initializeGoogleMaps, createCustomMarker } from '../utils/googleMaps';
 
 interface MapProps {
