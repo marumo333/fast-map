@@ -125,8 +125,14 @@ const Map: React.FC<MapProps> = ({
       markersRef.current.start = startMarker;
     }
 
-    // 目的地のマーカーを設定（初回のみ）
-    if (endLocation && !markersRef.current.end) {
+    // 目的地のマーカーを設定（毎回更新）
+    if (endLocation) {
+      // 既存の目的地マーカーをクリア
+      if (markersRef.current.end) {
+        markersRef.current.end.map = null;
+        markersRef.current.end = undefined;
+      }
+      // 新しい目的地マーカーを設定
       const endMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: endLocation,
@@ -142,7 +148,7 @@ const Map: React.FC<MapProps> = ({
       bounds.extend(endLocation);
       mapInstanceRef.current.fitBounds(bounds);
     }
-  }, [startLocation, endLocation]);
+  }, [currentLocation, startLocation, endLocation]);
 
   useEffect(() => {
     updateMarkers();
