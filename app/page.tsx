@@ -90,6 +90,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
+  const [canClickMap, setCanClickMap] = useState(false);
   const { currentLocation, getCurrentLocation, isLocationInitialized } = useLocation() as { 
     currentLocation: LocationWithAddress | null;
     getCurrentLocation: () => Promise<void>;
@@ -192,6 +193,7 @@ export default function Home() {
         console.log('初期化: 現在地を出発地として設定:', currentLocation);
         // まず緯度経度のみを設定
         setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
+        setCanClickMap(true); // 出発地がセットできたら地図クリックを有効にする
         
         try {
           const address = await getAddressFromLocation(currentLocation);
@@ -245,19 +247,13 @@ export default function Home() {
   };
 
   const handleMapClick = async (lat: number, lng: number) => {
-    console.log('親: 地図クリック - 現在のstartLocation:', startLocation);
-    
+    if (!canClickMap) {
+      console.warn('出発地をまだ準備中です…');
+      return;
+    }
+
     if (!startLocation) {
       console.log('出発地が設定されていません');
-      if (!isLocationInitialized) {
-        try {
-          await getCurrentLocation();
-        } catch (error) {
-          console.error('位置情報の取得に失敗:', error);
-          setError('位置情報の取得に失敗しました。もう一度お試しください。');
-          return;
-        }
-      }
       return;
     }
 
@@ -356,6 +352,11 @@ export default function Home() {
                 <div className="lg:col-span-2">
                   <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="h-[600px] relative">
+                      {!canClickMap && (
+                        <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+                          <div className="text-gray-600">出発地を準備中...</div>
+                        </div>
+                      )}
                       <Map
                         startLocation={startLocation}
                         endLocation={endLocation}
