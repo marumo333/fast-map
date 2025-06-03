@@ -1,3 +1,29 @@
+'use client';
+import React, { useState } from 'react';
+import { Location } from '../types/location';
+
+interface LocationFormProps {
+  onSearch: (start: Location, end: Location) => void;
+  isSearching: boolean;
+  onClose: () => void;
+}
+
+const LocationForm: React.FC<LocationFormProps> = ({ onSearch, isSearching, onClose }) => {
+  const [startLocation, setStartLocation] = useState('');
+  const [endLocation, setEndLocation] = useState('');
+
+  const handleSearchStartLocation = () => {
+    // 出発地の検索処理
+  };
+
+  const handleSearchEndLocation = () => {
+    // 目的地の検索処理
+  };
+
+  const handleSearch = () => {
+    // 検索処理
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-4">
@@ -40,7 +66,7 @@
       </div>
       <div className="flex justify-end space-x-2">
         <button
-          onClick={() => setIsSearching(!isSearching)}
+          onClick={onClose}
           className="px-4 py-2 text-blue-500 hover:text-blue-600 transition-colors"
         >
           {isSearching ? '現在地を使用' : '出発地を検索'}
@@ -53,4 +79,7 @@
         </button>
       </div>
     </div>
-  ); 
+  );
+};
+
+export default LocationForm; 
