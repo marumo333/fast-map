@@ -61,13 +61,25 @@ export const useGeolocation = (): UseGeolocationReturn => {
         },
         (error) => {
           console.error('位置情報の取得に失敗:', error);
-          setError('位置情報の取得に失敗しました');
+          let errorMessage = '位置情報の取得に失敗しました';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = '位置情報の使用が許可されていません';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = '位置情報を取得できません';
+              break;
+            case error.TIMEOUT:
+              errorMessage = '位置情報の取得がタイムアウトしました';
+              break;
+          }
+          setError(errorMessage);
           setLoading(false);
           reject(error);
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000,
           maximumAge: 0
         }
       );
@@ -103,11 +115,23 @@ export const useGeolocation = (): UseGeolocationReturn => {
       },
       (error) => {
         console.error('位置情報の監視に失敗:', error);
-        setError('位置情報の取得に失敗しました');
+        let errorMessage = '位置情報の取得に失敗しました';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = '位置情報の使用が許可されていません';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = '位置情報を取得できません';
+            break;
+          case error.TIMEOUT:
+            errorMessage = '位置情報の取得がタイムアウトしました';
+            break;
+        }
+        setError(errorMessage);
       },
       {
         enableHighAccuracy: true,
-        timeout: 5000,
+        timeout: 10000,
         maximumAge: UPDATE_INTERVAL
       }
     );
