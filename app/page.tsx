@@ -332,19 +332,26 @@ export default function Home() {
                       {selectedRoute && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-300">
                           <h2 className="text-lg font-semibold mb-4">ルート情報</h2>
-                          <div className="space-y-2">
-                            <p>距離: {selectedRoute.distance.toFixed(1)}km</p>
-                            <p>所要時間: {selectedRoute.duration.toFixed(0)}分</p>
-                            {selectedRoute.durationInTraffic && (
-                              <p>渋滞考慮時間: {selectedRoute.durationInTraffic.toFixed(0)}分</p>
-                            )}
-                          </div>
+                          <RouteInfo
+                            routeInfo={{
+                              distance: selectedRoute.distance * 1000,
+                              duration: {
+                                driving: selectedRoute.duration * 60,
+                                walking: selectedRoute.duration * 60 * 1.5
+                              },
+                              isTollRoad: selectedRoute.isTollRoad
+                            }}
+                          />
                           {startLocation && endLocation && (
                             <div className="mt-4">
                               <RouteSelector
                                 startLocation={startLocation}
                                 endLocation={endLocation}
                                 onRouteSelect={setSelectedRoute}
+                              />
+                              <RouteRecommendation
+                                routes={[selectedRoute]}
+                                onSelect={(route) => setSelectedRoute(route as Route)}
                               />
                             </div>
                           )}
