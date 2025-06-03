@@ -359,10 +359,16 @@ export default function Home() {
                         onMapClick={(location) => {
                           if (startLocation) {
                             console.log('目的地を設定:', location);  // デバッグ用
-                            setEndLocation({
+                            const newEndLocation = {
                               lat: location.lat,
                               lng: location.lng
-                            });
+                            };
+                            setEndLocation(newEndLocation);
+                            // ルート情報をクリア
+                            setSelectedRoute(null);
+                            setShowNotification(false);
+                          } else {
+                            console.log('出発地が設定されていません');
                           }
                         }}
                       />

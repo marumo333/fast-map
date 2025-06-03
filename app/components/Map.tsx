@@ -73,6 +73,11 @@ const Map: React.FC<MapProps> = ({
           });
         }
       });
+
+      // クリックイベントの伝播を停止
+      map.addListener('click', (e: google.maps.MapMouseEvent) => {
+        e.stop();
+      });
     } catch (error) {
       console.error('地図の初期化に失敗:', error);
     }
