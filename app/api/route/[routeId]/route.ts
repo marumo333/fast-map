@@ -1,3 +1,4 @@
+//app/api/route/[routeId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Route } from '../../../types/route';
 
