@@ -28,10 +28,12 @@ const nextConfig = {
         // /api 以下すべてのルートに CORS ヘッダーを付与する
         source: "/api/:path*",
         headers: [
-          { key: "Access-Control-Allow-Origin",      value: "https://fast-map-five.vercel.app" },
-          { key: "Access-Control-Allow-Methods",     value: "GET,POST,OPTIONS" },
-          { key: "Access-Control-Allow-Headers",     value: "Content-Type,Authorization" },
+          { key: "Access-Control-Allow-Origin", value: "https://fast-map-five.vercel.app" },
+          { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, X-Requested-With" },
           { key: "Access-Control-Allow-Credentials", value: "true" },
+          { key: "Access-Control-Max-Age", value: "86400" },
+          { key: "Vary", value: "Origin" }
         ],
       },
     ];

@@ -3,28 +3,6 @@ import { NextResponse } from 'next/server';
 import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@googlemaps/google-maps-services-js';
 import type { NextRequest } from 'next/server';
 
-// 許可するオリジンを列挙
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'https://fast-map-five.vercel.app',
-  'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app'
-];
-
-// CORSヘッダーを設定する関数
-function getCorsHeaders(origin: string | null) {
-  // オリジンが許可リストに含まれているか確認
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-  
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400',
-    'Vary': 'Origin'
-  };
-}
-
 function decodePolyline(encoded: string): [number, number][] {
   const poly: [number, number][] = [];
   let index = 0, lat = 0, lng = 0;
@@ -55,44 +33,16 @@ function decodePolyline(encoded: string): [number, number][] {
   return poly;
 }
 
-// ────────────────────────────────────────────────────────────────────────────────
-// 1) プリフライト (OPTIONS) リクエストへの対応
-// ────────────────────────────────────────────────────────────────────────────────
+// プリフライトリクエストのハンドラ
 export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin');
-  return new NextResponse(null, { 
-    status: 204,
-    headers: getCorsHeaders(origin)
-  });
+  return new NextResponse(null, { status: 204 });
 }
 
-// ────────────────────────────────────────────────────────────────────────────────
-// 2) 実際の POST ハンドラ
-// ────────────────────────────────────────────────────────────────────────────────
+// POSTハンドラ
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get('origin');
-  
-  // オリジンの検証
-  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
-    return NextResponse.json(
-      { error: '許可されていないオリジンからのリクエストです' },
-      { 
-        status: 403,
-        headers: getCorsHeaders(origin)
-      }
-    );
-  }
-
   try {
     const body = await request.json();
     const { start, end } = body;
-
-    // プリフライトリクエストの処理
-    if (request.method === 'OPTIONS') {
-      return new NextResponse(null, { 
-        headers: getCorsHeaders(origin)
-      });
-    }
 
     if (
       !start || !end ||
@@ -101,10 +51,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: '出発地と目的地の座標が不正です。' },
-        { 
-          status: 400,
-          headers: getCorsHeaders(origin)
-        }
+        { status: 400 }
       );
     }
 
@@ -114,20 +61,14 @@ export async function POST(request: NextRequest) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
-        { 
-          status: 500,
-          headers: getCorsHeaders(origin)
-        }
+        { status: 500 }
       );
     }
     if (!apiKey.startsWith('AIza')) {
       console.error('Invalid API key format');
       return NextResponse.json(
         { error: 'Invalid API key format' },
-        { 
-          status: 500,
-          headers: getCorsHeaders(origin)
-        }
+        { status: 500 }
       );
     }
 
@@ -178,10 +119,7 @@ export async function POST(request: NextRequest) {
               error: `車ルート取得失敗: ${drivingStatus}`,
               details: drivingRes.data.error_message || '不明なエラー'
             },
-            {
-              status: statusMap[drivingStatus],
-              headers: getCorsHeaders(origin)
-            }
+            { status: statusMap[drivingStatus] }
           );
         } else {
           throw new Error(`不明なエラー: ${drivingStatus}`);
@@ -220,10 +158,7 @@ export async function POST(request: NextRequest) {
               error: `徒歩ルート取得失敗: ${walkingStatus}`,
               details: walkingRes.data.error_message || '不明なエラー'
             },
-            {
-              status: statusMap[walkingStatus],
-              headers: getCorsHeaders(origin)
-            }
+            { status: statusMap[walkingStatus] }
           );
         } else {
           throw new Error(`不明な徒歩ルートエラー: ${walkingStatus}`);
@@ -264,27 +199,19 @@ export async function POST(request: NextRequest) {
       };
 
       console.log('ルート検索成功:', { response, freeRouteResponse });
-      return NextResponse.json([response, freeRouteResponse], {
-        headers: getCorsHeaders(origin)
-      });
+      return NextResponse.json([response, freeRouteResponse]);
 
     } catch (error) {
       console.error('ルート取得エラー:', error);
       if (error instanceof Error) {
         return NextResponse.json(
           { error: 'ルート取得に失敗しました', details: error.message },
-          {
-            status: 500,
-            headers: getCorsHeaders(origin)
-          }
+          { status: 500 }
         );
       }
       return NextResponse.json(
         { error: 'ルート取得に失敗しました', details: '不明なエラーが発生しました' },
-        {
-          status: 500,
-          headers: getCorsHeaders(origin)
-        }
+        { status: 500 }
       );
     }
 
@@ -295,10 +222,7 @@ export async function POST(request: NextRequest) {
         error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました',
         details: error instanceof Error ? error.stack : undefined
       },
-      {
-        status: 500,
-        headers: getCorsHeaders(origin)
-      }
+      { status: 500 }
     );
   }
 }
