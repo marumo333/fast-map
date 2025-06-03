@@ -176,9 +176,12 @@ export default function Home() {
         console.log('初期化: 現在地を出発地として設定:', currentLocation);
         try {
           const address = await getAddressFromLocation(currentLocation);
-          setStartLocation({ ...currentLocation, address });
+          const locationWithAddress = { ...currentLocation, address };
+          console.log('出発地を設定:', locationWithAddress);
+          setStartLocation(locationWithAddress);
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
+          console.log('住所なしで出発地を設定:', currentLocation);
           setStartLocation(currentLocation as LocationWithAddress);
         }
       }
