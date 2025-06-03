@@ -192,10 +192,15 @@ export default function Home() {
         // 現在地を即座に設定
         const locationWithAddress = { ...currentLocation };
         setStartLocation(locationWithAddress);
+        console.log('親: startLocationを更新:', locationWithAddress);
         
         try {
           const address = await getAddressFromLocation(currentLocation);
-          setStartLocation(prev => prev ? { ...prev, address } : null);
+          setStartLocation(prev => {
+            const updated = prev ? { ...prev, address } : null;
+            console.log('親: startLocationを住所付きで更新:', updated);
+            return updated;
+          });
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
         }
@@ -203,7 +208,12 @@ export default function Home() {
     };
 
     initializeCurrentLocation();
-  }, [currentLocation, startLocation]);
+  }, [currentLocation]);
+
+  // デバッグ用：startLocationの変更を監視
+  useEffect(() => {
+    console.log('親: startLocationが変更:', startLocation);
+  }, [startLocation]);
 
   const handleSearch = (start: Location, end: Location) => {
     setStartLocation(start);
@@ -238,6 +248,8 @@ export default function Home() {
   };
 
   const handleMapClick = async (lat: number, lng: number) => {
+    console.log('親: 地図クリック - 現在のstartLocation:', startLocation);
+    
     if (!startLocation) {
       console.log('出発地が設定されていません');
       try {
@@ -245,12 +257,15 @@ export default function Home() {
         if (currentLocation) {
           const locationWithAddress = { ...currentLocation };
           setStartLocation(locationWithAddress);
-          console.log('現在地を出発地として設定:', locationWithAddress);
+          console.log('親: 地図クリック後、現在地を出発地として設定:', locationWithAddress);
           
-          // 住所情報を非同期で更新
           try {
             const address = await getAddressFromLocation(currentLocation);
-            setStartLocation(prev => prev ? { ...prev, address } : null);
+            setStartLocation(prev => {
+              const updated = prev ? { ...prev, address } : null;
+              console.log('親: 地図クリック後、startLocationを住所付きで更新:', updated);
+              return updated;
+            });
           } catch (error) {
             console.error('現在地の住所取得に失敗:', error);
           }
@@ -266,7 +281,7 @@ export default function Home() {
     }
 
     const newEndLocation = { lat, lng };
-    console.log('目的地を設定:', newEndLocation);
+    console.log('親: 目的地を設定:', newEndLocation);
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
 
