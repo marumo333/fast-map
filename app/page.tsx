@@ -155,9 +155,25 @@ export default function Home() {
     handleRouteChange
   );
 
+  const handleGetCurrentLocation = async () => {
+    try {
+      await getCurrentLocation();
+      if (currentLocation) {
+        console.log('現在地を出発地として設定:', currentLocation);
+        setStartLocation(currentLocation);
+        setEndLocation(null);
+        setSelectedRoute(null);
+        setShowSearchForm(false);
+      }
+    } catch (error) {
+      console.error('位置情報の取得に失敗しました:', error);
+    }
+  };
+
   useEffect(() => {
     const initializeCurrentLocation = async () => {
       if (currentLocation && !startLocation) {
+        console.log('初期化: 現在地を出発地として設定:', currentLocation);
         try {
           const address = await getAddressFromLocation(currentLocation);
           setStartLocation({ ...currentLocation, address });
@@ -201,19 +217,6 @@ export default function Home() {
       toll: 0
     };
     setSelectedRoute(selectedRoute);
-  };
-
-  const handleGetCurrentLocation = async () => {
-    try {
-      await getCurrentLocation();
-      if (currentLocation) {
-        setStartLocation(currentLocation);
-        setEndLocation(null);
-        setSelectedRoute(null);
-      }
-    } catch (error) {
-      console.error('位置情報の取得に失敗しました:', error);
-    }
   };
 
   const handleMapClick = async (lat: number, lng: number) => {

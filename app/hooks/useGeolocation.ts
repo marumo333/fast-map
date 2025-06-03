@@ -52,23 +52,29 @@ export const useGeolocation = (): UseGeolocationReturn => {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
+          console.log('現在地を設定:', location);
           setCurrentLocation(location);
           setLastUpdateTime(Date.now());
           setLoading(false);
-          setIsWatching(true); // 位置情報の監視を開始
+          setIsWatching(true);
           resolve();
         },
         (error) => {
+          console.error('位置情報の取得に失敗:', error);
           setError('位置情報の取得に失敗しました');
           setLoading(false);
           reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
         }
       );
     });
   };
 
   useEffect(() => {
-    // 監視が開始されていない場合は何もしない
     if (!isWatching) return;
 
     if (watchId) {
@@ -96,12 +102,13 @@ export const useGeolocation = (): UseGeolocationReturn => {
         }
       },
       (error) => {
+        console.error('位置情報の監視に失敗:', error);
         setError('位置情報の取得に失敗しました');
       },
       {
         enableHighAccuracy: true,
         timeout: 5000,
-        maximumAge: UPDATE_INTERVAL  // 30秒前までの位置情報を使用可能に
+        maximumAge: UPDATE_INTERVAL
       }
     );
 
