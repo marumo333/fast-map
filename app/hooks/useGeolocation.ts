@@ -93,7 +93,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
       {
         enableHighAccuracy: true,
         timeout: 5000,
-        maximumAge: 0
+        maximumAge: UPDATE_INTERVAL  // 30秒前までの位置情報を使用可能に
       }
     );
 
