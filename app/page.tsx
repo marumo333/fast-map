@@ -106,11 +106,15 @@ export default function Home() {
 
   // 2) currentLocation が取れたらすぐ startLocation と canClickMap をセット
   useEffect(() => {
-    if (!currentLocation || startLocation) return;
+    if (!currentLocation) return;
 
     console.log('初期化: 現在地を出発地として設定:', currentLocation);
     // 緯度経度だけでも即座に出発地にしてしまう
-    setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
+    setStartLocation(prev => {
+      // すでに他の手段で startLocation がセット済みなら何もしない
+      if (prev) return prev;
+      return { lat: currentLocation.lat, lng: currentLocation.lng };
+    });
     // クリックをここで有効化
     setCanClickMap(true);
 
