@@ -253,138 +253,115 @@ export default function Home() {
           <Navbar onGetCurrentLocation={handleGetCurrentLocation} />
           <div className="flex-grow pb-32 pt-16">
             <div className="container mx-auto px-4 py-8">
-              <h1 className={`text-3xl font-bold mb-8 text-center transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                最適なルートを探す
-              </h1>
-              
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  <div className="h-[calc(100vh-12rem)] rounded-lg overflow-hidden shadow-lg">
-                    <Map
-                      startLocation={startLocation}
-                      endLocation={endLocation}
-                      onRouteSelect={handleRouteSelect}
-                      selectedRoute={selectedRoute ? {
-                        bounds: new google.maps.LatLngBounds(
-                          new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
-                          new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0)
-                        ),
-                        copyrights: '',
-                        legs: [{
-                          distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
-                          duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
-                          duration_in_traffic: selectedRoute.durationInTraffic ? {
-                            text: `${selectedRoute.durationInTraffic}分`,
-                            value: selectedRoute.durationInTraffic * 60
-                          } : undefined,
-                          start_address: startLocation?.address || '',
-                          end_address: endLocation?.address || '',
-                          start_location: new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
-                          end_location: new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0),
-                          steps: [],
-                          traffic_speed_entry: [],
-                          via_waypoints: []
-                        }],
-                        overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
-                        overview_polyline: '',
-                        warnings: [],
-                        waypoint_order: [],
-                        summary: `${startLocation?.address || ''}から${endLocation?.address || ''}まで`,
-                        fare: undefined
-                      } as google.maps.DirectionsRoute : null}
-                      suggestedRoute={null}
-                      onMapClick={(location) => {
-                        handleMapClick(location.lat, location.lng);
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="lg:col-span-1">
-                  {showSearchForm ? (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-300">
+                {/* 左サイドバー */}
+                <div className="lg:col-span-1 space-y-6">
+                  {showSearchForm && (
+                    <div className={`rounded-lg shadow-md p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                       <SearchForm
                         onSearch={handleSearch}
-                        isSearching={false}
+                        isSearching={isLoading}
                         onClose={() => setShowSearchForm(false)}
                       />
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-300">
-                        <LocationInfo
-                          location={startLocation}
-                          label="出発地"
-                          setStartLocation={setStartLocation}
-                          setEndLocation={setEndLocation}
-                          getAddressFromLocation={getAddressFromLocation}
-                        />
-                        <LocationInfo
-                          location={endLocation}
-                          label="目的地"
-                          setStartLocation={setStartLocation}
-                          setEndLocation={setEndLocation}
-                          getAddressFromLocation={getAddressFromLocation}
-                        />
-                        <button
-                          onClick={() => setShowSearchForm(true)}
-                          className="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          場所を検索
-                        </button>
-                      </div>
-                      {selectedRoute && (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 transition-colors duration-300">
-                          <h2 className="text-lg font-semibold mb-4">ルート情報</h2>
-                          <RouteInfo
-                            routeInfo={{
-                              distance: selectedRoute.distance * 1000,
-                              duration: {
-                                driving: selectedRoute.duration * 60,
-                                walking: selectedRoute.duration * 60 * 1.5
-                              },
-                              isTollRoad: selectedRoute.isTollRoad
-                            }}
-                          />
-                          {startLocation && endLocation && (
-                            <div className="mt-4">
-                              <RouteSelector
-                                startLocation={startLocation}
-                                endLocation={endLocation}
-                                onRouteSelect={setSelectedRoute}
-                              />
-                              <RouteRecommendation
-                                routes={[selectedRoute]}
-                                onSelect={(route) => setSelectedRoute(route as Route)}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
+                  )}
+
+                  {/* 位置情報表示 */}
+                  <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                    <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>位置情報</h2>
+                    <LocationInfo location={startLocation} label="出発地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getAddressFromLocation} />
+                    <LocationInfo location={endLocation} label="目的地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getAddressFromLocation} />
+                  </div>
+
+                  {/* ルート選択 */}
+                  {startLocation && endLocation && (
+                    <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート選択</h2>
+                      <RouteSelector
+                        startLocation={startLocation}
+                        endLocation={endLocation}
+                        onRouteSelect={setSelectedRoute}
+                      />
                     </div>
                   )}
+
+                  {/* ルート情報 */}
+                  {selectedRoute && (
+                    <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
+                      <RouteInfo
+                        routeInfo={{
+                          distance: selectedRoute.distance * 1000,
+                          duration: {
+                            driving: selectedRoute.duration * 60,
+                            walking: selectedRoute.duration * 60 * 1.5
+                          },
+                          isTollRoad: selectedRoute.isTollRoad
+                        }}
+                      />
+                      <RouteRecommendation
+                        routes={[selectedRoute]}
+                        onSelect={(route) => setSelectedRoute(route as Route)}
+                      />
+                      <RouteNotification
+                        type="congestion"
+                        message={selectedRoute.isTollRoad ? '有料ルート' : '無料ルート'}
+                        onAccept={() => {}}
+                        onDismiss={() => {}}
+                        currentRoute={selectedRoute}
+                        suggestedRoute={undefined}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 地図表示エリア */}
+                <div className="lg:col-span-2">
+                  <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                    <div className="h-[600px] relative">
+                      <Map
+                        startLocation={startLocation}
+                        endLocation={endLocation}
+                        onRouteSelect={handleRouteSelect}
+                        selectedRoute={selectedRoute ? {
+                          bounds: new google.maps.LatLngBounds(
+                            new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
+                            new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0)
+                          ),
+                          copyrights: '',
+                          legs: [{
+                            distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
+                            duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
+                            duration_in_traffic: selectedRoute.durationInTraffic ? {
+                              text: `${selectedRoute.durationInTraffic}分`,
+                              value: selectedRoute.durationInTraffic * 60
+                            } : undefined,
+                            start_address: startLocation?.address || '',
+                            end_address: endLocation?.address || '',
+                            start_location: new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
+                            end_location: new google.maps.LatLng(endLocation?.lat || 0, endLocation?.lng || 0),
+                            steps: [],
+                            traffic_speed_entry: [],
+                            via_waypoints: []
+                          }],
+                          overview_path: selectedRoute.path.map(([lat, lng]) => new google.maps.LatLng(lat, lng)),
+                          overview_polyline: '',
+                          warnings: [],
+                          waypoint_order: [],
+                          summary: `${startLocation?.address || ''}から${endLocation?.address || ''}まで`,
+                          fare: undefined
+                        } as google.maps.DirectionsRoute : null}
+                        suggestedRoute={null}
+                        onMapClick={(location) => {
+                          handleMapClick(location.lat, location.lng);
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* 通知 */}
-          {showNotification && notification && (
-            <RouteNotification
-              type={notification.type}
-              message={notification.message}
-              onAccept={() => handleNotificationAction('accept')}
-              onDismiss={() => handleNotificationAction('dismiss')}
-              currentRoute={selectedRoute || undefined}
-              suggestedRoute={notification.alternativeRoute || undefined}
-            />
-          )}
-
-          {/* 交通情報通知 */}
-          {showTrafficInfo && trafficInfo && (
-            <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
-              <p className="text-sm">交通情報が更新されました</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
