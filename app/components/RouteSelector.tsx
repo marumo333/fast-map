@@ -18,6 +18,7 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
   const [routes, setRoutes] = useState<Route[]>([]);
+  const [dismissedRoutes, setDismissedRoutes] = useState<number[]>([]);
 
   const handleRouteSelect = async (routeId: number) => {
     if (!startLocation || !endLocation) {
@@ -62,6 +63,8 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
       }
 
       onRouteSelect(selectedRoute);
+      // 選択したルートを非表示リストに追加
+      setDismissedRoutes(prev => [...prev, routeId]);
     } catch (error) {
       console.error('ルート検索エラー:', error);
       setError(error instanceof Error ? error.message : 'ルートの検索に失敗しました。もう一度お試しください。');
@@ -69,6 +72,13 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
       setIsLoading(false);
     }
   };
+
+  const handleDismiss = (routeId: number) => {
+    setDismissedRoutes(prev => [...prev, routeId]);
+  };
+
+  // 表示するルートをフィルタリング
+  const visibleRoutes = routes.filter(route => !dismissedRoutes.includes(route.routeId));
 
   return (
     <div className="space-y-4">
@@ -79,13 +89,13 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
       )}
 
       <div className="grid grid-cols-1 gap-4">
-        {routes.map((route) => (
+        {visibleRoutes.map((route) => (
           <RouteNotification
             key={route.routeId}
             type="congestion"
             message={route.isTollRoad ? '有料ルート' : '無料ルート'}
             onAccept={() => handleRouteSelect(route.routeId)}
-            onDismiss={() => {}}
+            onDismiss={() => handleDismiss(route.routeId)}
             currentRoute={route}
             suggestedRoute={undefined}
           />
