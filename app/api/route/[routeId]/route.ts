@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Route } from '../../../types/route';
 
+// 許可するオリジンを列挙
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'https://fast-map-five.vercel.app',
+  'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app'
+];
+
+// CORSヘッダーを設定する関数
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin'
+  };
+}
+
+// プリフライトリクエストのハンドラ
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin');
+  return new NextResponse(null, { 
+    status: 204,
+    headers: getCorsHeaders(origin)
+  });
+}
+
 // キャッシュの実装
 const routeCache = new Map<number, {
   route: Route;
@@ -13,12 +42,28 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { routeId: string } }
 ) {
+  const origin = request.headers.get('origin');
+  
+  // オリジンの検証
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return NextResponse.json(
+      { error: '許可されていないオリジンからのリクエストです' },
+      { 
+        status: 403,
+        headers: getCorsHeaders(origin)
+      }
+    );
+  }
+
   const routeId = parseInt(params.routeId, 10);
 
   if (isNaN(routeId)) {
     return NextResponse.json(
       { error: '無効なルートIDです' },
-      { status: 400 }
+      { 
+        status: 400,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 
@@ -28,6 +73,8 @@ export async function GET(
     return NextResponse.json({
       ...cachedData.route,
       fromCache: true
+    }, {
+      headers: getCorsHeaders(origin)
     });
   }
 
@@ -57,12 +104,17 @@ export async function GET(
     return NextResponse.json({
       ...route,
       fromCache: false
+    }, {
+      headers: getCorsHeaders(origin)
     });
   } catch (error) {
     console.error('ルート情報取得エラー:', error);
     return NextResponse.json(
       { error: 'ルート情報の取得に失敗しました' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 } 

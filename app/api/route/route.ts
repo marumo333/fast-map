@@ -1,4 +1,4 @@
-// app/api/routes/route.ts
+// app/api/route/route.ts
 import { NextResponse } from 'next/server';
 import { Client, TravelMode, TrafficModel, TravelRestriction, Language } from '@googlemaps/google-maps-services-js';
 import type { NextRequest } from 'next/server';
@@ -124,7 +124,10 @@ export async function POST(request: NextRequest) {
       console.error('Invalid API key format');
       return NextResponse.json(
         { error: 'Invalid API key format' },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
