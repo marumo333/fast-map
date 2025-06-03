@@ -199,7 +199,11 @@ const Map: React.FC<MapProps> = ({
     if (directions) {
       const routeIndex = directions.routes.indexOf(route);
       if (routeIndex !== -1) {
-        directionsRendererRef.current.setRouteIndex(routeIndex);
+        // ルートの表示を更新
+        directionsRendererRef.current.setDirections({
+          ...directions,
+          routes: [route]
+        });
         onRouteSelect(route);
         // ルート選択時に選択肢欄を非表示にする
         setShowRouteOptions(false);
