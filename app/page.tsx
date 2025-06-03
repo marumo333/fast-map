@@ -240,14 +240,17 @@ export default function Home() {
   const handleMapClick = async (lat: number, lng: number) => {
     if (!startLocation) {
       console.log('出発地が設定されていません');
-      // 現在地を再取得して設定を試みる
       try {
-        await handleGetCurrentLocation();
-        if (!startLocation) {
-          setError('出発地の設定に失敗しました。もう一度お試しください。');
+        await getCurrentLocation();
+        if (currentLocation) {
+          setStartLocation(currentLocation);
+          console.log('現在地を出発地として設定:', currentLocation);
+        } else {
+          setError('位置情報の取得に失敗しました。もう一度お試しください。');
           return;
         }
       } catch (error) {
+        console.error('位置情報の取得に失敗:', error);
         setError('位置情報の取得に失敗しました。もう一度お試しください。');
         return;
       }
@@ -261,7 +264,7 @@ export default function Home() {
     try {
       const directionsService = new google.maps.DirectionsService();
       const result = await directionsService.route({
-        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
+        origin: new google.maps.LatLng(startLocation?.lat ?? 0, startLocation?.lng ?? 0),
         destination: new google.maps.LatLng(lat, lng),
         travelMode: google.maps.TravelMode.DRIVING
       });
