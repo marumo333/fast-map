@@ -96,7 +96,7 @@ export default function Home() {
     getCurrentLocation: () => Promise<void>;
   };
 
-  // ページロード時に現在地を取得
+  // 1) マウント直後に現在地を取りに行く
   useEffect(() => {
     getCurrentLocation().catch(err => {
       console.error('初回の位置情報取得に失敗:', err);
@@ -104,24 +104,25 @@ export default function Home() {
     });
   }, []);
 
-  // 現在地の初期化を改善
+  // 2) currentLocation が取れたらすぐ startLocation と canClickMap をセット
   useEffect(() => {
-    if (currentLocation && !startLocation) {
-      console.log('初期化: 現在地を出発地として設定:', currentLocation);
-      // 緯度経度のみを即座に設定
-      setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
-      setCanClickMap(true); // クリックを即座に有効化
+    if (!currentLocation || startLocation) return;
 
-      // 住所は後から非同期で取得
-      (async () => {
-        try {
-          const address = await getAddressFromLocation(currentLocation);
-          setStartLocation(prev => prev ? { ...prev, address } : null);
-        } catch (error) {
-          console.error('現在地の住所取得に失敗:', error);
-        }
-      })();
-    }
+    console.log('初期化: 現在地を出発地として設定:', currentLocation);
+    // 緯度経度だけでも即座に出発地にしてしまう
+    setStartLocation({ lat: currentLocation.lat, lng: currentLocation.lng });
+    // クリックをここで有効化
+    setCanClickMap(true);
+
+    // 住所取得は後回し
+    (async () => {
+      try {
+        const addr = await getAddressFromLocation(currentLocation);
+        setStartLocation(prev => prev ? { ...prev, address: addr } : null);
+      } catch (err) {
+        console.error('現在地の住所取得に失敗:', err);
+      }
+    })();
   }, [currentLocation]);
 
   const handleTrafficInfoUpdate = useCallback((info: any) => {
@@ -325,8 +326,8 @@ export default function Home() {
                   <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="h-[600px] relative">
                       {!canClickMap && (
-                        <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
-                          <div className="text-gray-600">出発地を準備中...</div>
+                        <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
+                          <span className="text-gray-600">出発地を準備中…</span>
                         </div>
                       )}
                       <Map
