@@ -161,11 +161,7 @@ const Map: React.FC<MapProps> = ({
         origin: startLocation,
         destination: endLocation,
         travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true,
-        // @ts-ignore: Google Maps APIの型定義が古いため
-        departureTime: new Date(),
-        // @ts-ignore: Google Maps APIの型定義が古いため
-        trafficModel: 'best_guess'
+        provideRouteAlternatives: true
       });
 
       if (result.routes.length > 0) {

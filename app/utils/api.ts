@@ -42,7 +42,7 @@ export const getTrafficInfo = async (
   }
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app/api';
 
 export const searchRoute = async (
   start: [number, number],
