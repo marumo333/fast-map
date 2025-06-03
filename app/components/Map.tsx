@@ -11,6 +11,7 @@ interface MapProps {
   onRouteSelect: (route: google.maps.DirectionsRoute) => void;
   selectedRoute: google.maps.DirectionsRoute | null;
   suggestedRoute: google.maps.DirectionsRoute | null;
+  onMapClick?: (location: Location) => void;
 }
 
 const Map: React.FC<MapProps> = ({
@@ -18,7 +19,8 @@ const Map: React.FC<MapProps> = ({
   endLocation,
   onRouteSelect,
   selectedRoute,
-  suggestedRoute
+  suggestedRoute,
+  onMapClick
 }) => {
   const { currentLocation } = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -60,22 +62,18 @@ const Map: React.FC<MapProps> = ({
       directionsServiceRef.current = directionsService;
       directionsRendererRef.current = directionsRenderer;
 
-      map.addListener('click', () => {
-        if (directionsRendererRef.current) {
-          directionsRendererRef.current.setDirections({
-            routes: [],
-            request: {
-              origin: { lat: 0, lng: 0 },
-              destination: { lat: 0, lng: 0 },
-              travelMode: google.maps.TravelMode.DRIVING
-            }
+      map.addListener('click', (e: google.maps.MapMouseEvent) => {
+        if (e.latLng && onMapClick) {
+          onMapClick({
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng()
           });
         }
       });
     } catch (error) {
       console.error('地図の初期化に失敗:', error);
     }
-  }, []);
+  }, [onMapClick]);
 
   useEffect(() => {
     initializeMap();

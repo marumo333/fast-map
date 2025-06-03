@@ -34,6 +34,7 @@ interface MapComponentProps {
   onRouteSelect: (route: google.maps.DirectionsRoute) => void;
   selectedRoute: google.maps.DirectionsRoute | null;
   suggestedRoute: google.maps.DirectionsRoute | null;
+  onMapClick: (location: google.maps.LatLng) => void;
 }
 
 // Leafletのマップコンポーネントを動的にインポート
@@ -227,6 +228,24 @@ export default function Home() {
     setNotification(null);
   }, [notification]);
 
+  const handleRouteSelect = useCallback((route: google.maps.DirectionsRoute) => {
+    const convertedRoute: Route = {
+      routeId: 1,
+      path: route.overview_path.map(point => [point.lat(), point.lng()]),
+      distance: route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0,
+      duration: route.legs[0].duration?.value ? Math.ceil(route.legs[0].duration.value / 60) : 0,
+      durationInTraffic: route.legs[0].duration_in_traffic?.value ? Math.ceil(route.legs[0].duration_in_traffic.value / 60) : undefined,
+      isTollRoad: route.legs.some(leg => leg.steps.some(step => 'toll' in step && step.toll)),
+      toll: route.legs.reduce((total, leg) => {
+        return total + leg.steps.reduce((stepTotal, step) => {
+          return stepTotal + ('toll' in step && step.toll ? Number(step.toll) : 0);
+        }, 0);
+      }, 0)
+    };
+    setSelectedRoute(convertedRoute);
+    setShowNotification(true);
+  }, []);
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
       <div className="w-full h-full">
@@ -307,23 +326,7 @@ export default function Home() {
                       <Map
                         startLocation={startLocation}
                         endLocation={endLocation}
-                        onRouteSelect={(route) => {
-                          // ルート情報を変換して保存
-                          const convertedRoute: Route = {
-                            routeId: 1,
-                            path: route.overview_path.map(point => [point.lat(), point.lng()]),
-                            distance: route.legs[0].distance?.value ? route.legs[0].distance.value / 1000 : 0,
-                            duration: route.legs[0].duration?.value ? Math.ceil(route.legs[0].duration.value / 60) : 0,
-                            durationInTraffic: route.legs[0].duration_in_traffic?.value ? Math.ceil(route.legs[0].duration_in_traffic.value / 60) : undefined,
-                            isTollRoad: route.legs.some(leg => leg.steps.some(step => 'toll' in step && step.toll)),
-                            toll: route.legs.reduce((total, leg) => {
-                              return total + leg.steps.reduce((stepTotal, step) => {
-                                return stepTotal + ('toll' in step && step.toll ? Number(step.toll) : 0);
-                              }, 0);
-                            }, 0)
-                          };
-                          setSelectedRoute(convertedRoute);
-                        }}
+                        onRouteSelect={handleRouteSelect}
                         selectedRoute={selectedRoute ? {
                           bounds: new google.maps.LatLngBounds(
                             new google.maps.LatLng(startLocation?.lat || 0, startLocation?.lng || 0),
@@ -353,6 +356,11 @@ export default function Home() {
                           fare: undefined
                         } as google.maps.DirectionsRoute : null}
                         suggestedRoute={null}
+                        onMapClick={(location) => {
+                          if (startLocation) {
+                            setEndLocation(location);
+                          }
+                        }}
                       />
                     </div>
                   </div>
