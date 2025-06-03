@@ -16,9 +16,17 @@ import { getAddressFromLocation } from './utils/geocoding';
 
 // Notification型を定義
 type Notification = {
-  type: 'congestion' | 'accident' | 'construction';
+  id: string;
   message: string;
+  type: 'success' | 'error' | 'info';
   alternativeRoute?: Route;
+};
+
+// RouteInfo型を定義
+type RouteInfo = {
+  distance: string;
+  duration: string;
+  steps: string[];
 };
 
 // 位置情報の型を拡張
@@ -254,6 +262,23 @@ export default function Home() {
       setError('経路の計算に失敗しました。もう一度お試しください。');
     }
   };
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, [getCurrentLocation]);
+
+  useEffect(() => {
+    if (startLocation) {
+      getAddressFromLocation(startLocation).then(address => {
+        setStartLocation(prev => prev ? { ...prev, address } : null);
+      });
+    }
+    if (endLocation) {
+      getAddressFromLocation(endLocation).then(address => {
+        setEndLocation(prev => prev ? { ...prev, address } : null);
+      });
+    }
+  }, [startLocation, endLocation, getAddressFromLocation]);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} transition-colors duration-300`}>
