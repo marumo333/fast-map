@@ -46,6 +46,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [destination, setDestination] = React.useState<Location | null>(null);
   const [route, setRoute] = React.useState<Route | null>(null);
 
+  // currentLocationの変更を監視
+  React.useEffect(() => {
+    console.log('LocationContext: currentLocationが変更:', currentLocation);
+  }, [currentLocation]);
+
   return (
     <LocationContext.Provider
       value={{

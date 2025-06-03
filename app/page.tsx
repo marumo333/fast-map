@@ -196,11 +196,9 @@ export default function Home() {
         
         try {
           const address = await getAddressFromLocation(currentLocation);
-          setStartLocation(prev => {
-            const updated = prev ? { ...prev, address } : null;
-            console.log('親: startLocationを住所付きで更新:', updated);
-            return updated;
-          });
+          const updatedLocation = { ...locationWithAddress, address };
+          setStartLocation(updatedLocation);
+          console.log('親: startLocationを住所付きで更新:', updatedLocation);
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
         }
@@ -249,6 +247,7 @@ export default function Home() {
 
   const handleMapClick = async (lat: number, lng: number) => {
     console.log('親: 地図クリック - 現在のstartLocation:', startLocation);
+    console.log('親: 地図クリック - 現在のcurrentLocation:', currentLocation);
     
     let currentStartLocation = startLocation;
     
