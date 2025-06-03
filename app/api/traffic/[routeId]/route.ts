@@ -1,3 +1,4 @@
+//app/api/traffic/[routeId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 // 許可するオリジンを列挙
