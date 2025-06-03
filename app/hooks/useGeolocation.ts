@@ -78,11 +78,19 @@ export const useGeolocation = (): UseGeolocationReturn => {
     const id = navigator.geolocation.watchPosition(
       (position) => {
         const now = Date.now();
+        console.log('位置情報更新チェック:', {
+          lastUpdate: new Date(lastUpdateTime).toLocaleTimeString(),
+          now: new Date(now).toLocaleTimeString(),
+          diff: (now - lastUpdateTime) / 1000,
+          shouldUpdate: now - lastUpdateTime >= UPDATE_INTERVAL
+        });
+
         if (now - lastUpdateTime >= UPDATE_INTERVAL) {
           const location: Location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
+          console.log('位置情報を更新:', location);
           setCurrentLocation(location);
           setLastUpdateTime(now);
         }
