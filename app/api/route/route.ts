@@ -12,7 +12,9 @@ const ALLOWED_ORIGINS = [
 
 // CORSヘッダーを設定する関数
 function getCorsHeaders(origin: string | null) {
+  // オリジンが許可リストに含まれているか確認
   const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -70,6 +72,17 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   
+  // オリジンの検証
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return NextResponse.json(
+      { error: '許可されていないオリジンからのリクエストです' },
+      { 
+        status: 403,
+        headers: getCorsHeaders(origin)
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const { start, end } = body;
@@ -273,18 +286,12 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('ルート取得エラー（Catch）:', error);
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message, stack: error.stack, name: error.name },
-        {
-          status: 500,
-          headers: getCorsHeaders(origin)
-        }
-      );
-    }
+    console.error('ルート取得エラー:', error);
     return NextResponse.json(
-      { error: 'ルート情報の取得に失敗しました' },
+      { 
+        error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました',
+        details: error instanceof Error ? error.stack : undefined
+      },
       {
         status: 500,
         headers: getCorsHeaders(origin)
