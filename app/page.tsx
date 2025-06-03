@@ -324,6 +324,15 @@ export default function Home() {
                               <p>渋滞考慮時間: {selectedRoute.durationInTraffic.toFixed(0)}分</p>
                             )}
                           </div>
+                          {startLocation && endLocation && (
+                            <div className="mt-4">
+                              <RouteSelector
+                                startLocation={startLocation}
+                                endLocation={endLocation}
+                                onRouteSelect={setSelectedRoute}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
