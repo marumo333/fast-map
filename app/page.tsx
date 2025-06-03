@@ -161,7 +161,9 @@ export default function Home() {
       await getCurrentLocation();
       if (currentLocation) {
         console.log('現在地を出発地として設定:', currentLocation);
-        setStartLocation(currentLocation);
+        // 現在地を即座に設定
+        const locationWithAddress = { ...currentLocation };
+        setStartLocation(locationWithAddress);
         setEndLocation(null);
         setSelectedRoute(null);
         setShowSearchForm(false);
@@ -182,25 +184,26 @@ export default function Home() {
     }
   };
 
+  // 現在地の初期化を改善
   useEffect(() => {
     const initializeCurrentLocation = async () => {
       if (currentLocation && !startLocation) {
         console.log('初期化: 現在地を出発地として設定:', currentLocation);
+        // 現在地を即座に設定
+        const locationWithAddress = { ...currentLocation };
+        setStartLocation(locationWithAddress);
+        
         try {
           const address = await getAddressFromLocation(currentLocation);
-          const locationWithAddress = { ...currentLocation, address };
-          console.log('出発地を設定:', locationWithAddress);
-          setStartLocation(locationWithAddress);
+          setStartLocation(prev => prev ? { ...prev, address } : null);
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
-          console.log('住所なしで出発地を設定:', currentLocation);
-          setStartLocation(currentLocation as LocationWithAddress);
         }
       }
     };
 
     initializeCurrentLocation();
-  }, [currentLocation, startLocation, getAddressFromLocation]);
+  }, [currentLocation, startLocation]);
 
   const handleSearch = (start: Location, end: Location) => {
     setStartLocation(start);
@@ -237,7 +240,17 @@ export default function Home() {
   const handleMapClick = async (lat: number, lng: number) => {
     if (!startLocation) {
       console.log('出発地が設定されていません');
-      return;
+      // 現在地を再取得して設定を試みる
+      try {
+        await handleGetCurrentLocation();
+        if (!startLocation) {
+          setError('出発地の設定に失敗しました。もう一度お試しください。');
+          return;
+        }
+      } catch (error) {
+        setError('位置情報の取得に失敗しました。もう一度お試しください。');
+        return;
+      }
     }
 
     const newEndLocation = { lat, lng };
@@ -258,6 +271,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('経路の計算に失敗しました:', error);
+      setError('経路の計算に失敗しました。もう一度お試しください。');
     }
   };
 
