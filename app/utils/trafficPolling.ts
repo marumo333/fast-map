@@ -78,12 +78,11 @@ export const startTrafficPolling = (
   // 30秒ごとに交通情報を更新
   pollingInterval = setInterval(async () => {
     try {
-      const response = await fetch('/api/traffic', {
-        method: 'POST',
+      const response = await fetch(`/api/traffic/${route.routeId}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ route }),
+        }
       });
 
       if (!response.ok) {

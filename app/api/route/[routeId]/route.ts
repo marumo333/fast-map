@@ -82,7 +82,7 @@ export async function GET(
   try {
     // ルート情報を取得
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api'}/route?routeId=${routeId}`
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/route/${routeId}`
     );
 
     if (!response.ok) {
