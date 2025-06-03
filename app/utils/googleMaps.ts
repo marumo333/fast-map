@@ -1,5 +1,3 @@
-import { Location } from '../types/location';
-
 interface GoogleMapsLibraries {
   Map: typeof google.maps.Map;
   DirectionsService: typeof google.maps.DirectionsService;
