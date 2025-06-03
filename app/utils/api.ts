@@ -49,7 +49,7 @@ export const searchRoute = async (
   end: [number, number]
 ): Promise<Route[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/routes/route`, {
+    const response = await fetch(`${API_BASE_URL}/api/route`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

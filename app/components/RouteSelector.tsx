@@ -34,7 +34,7 @@ const RouteSelector: React.FC<RouteSelectorProps> = ({
           end: [endLocation.lat, endLocation.lng]
         });
 
-        const response = await fetch('/api/routes/route', {
+        const response = await fetch('/api/route', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
