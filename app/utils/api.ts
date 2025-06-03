@@ -1,3 +1,4 @@
+//app/utils/api.ts
 import { Route } from '../types/route';
 import { TrafficInfo } from './trafficPolling';
 import { Feedback } from '../components/FeedbackForm';
@@ -49,14 +50,14 @@ export const searchRoute = async (
   end: [number, number]
 ): Promise<Route[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/route`, {
+    const response = await fetch(`${API_BASE_URL}/api/route`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        start,
-        end,
+        start: { lat: start[0], lng: start[1] },
+        end: { lat: end[0], lng: end[1] }
       }),
       credentials: 'include',
     });
@@ -66,12 +67,17 @@ export const searchRoute = async (
       console.error('ルート検索エラーの詳細:', {
         status: response.status,
         statusText: response.statusText,
-        error: errorData
+        error: errorData,
+        url: `${API_BASE_URL}/api/route`
       });
       throw new Error(`ルート検索に失敗しました: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
+    if (!Array.isArray(data)) {
+      console.error('無効なレスポンス形式:', data);
+      throw new Error('無効なレスポンス形式です');
+    }
     return data;
   } catch (error) {
     console.error('ルート検索エラー:', error);
