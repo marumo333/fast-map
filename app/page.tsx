@@ -288,12 +288,12 @@ export default function Home() {
                       <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
                       <RouteInfo
                         routeInfo={{
-                          distance: selectedRoute?.distance * 1000 || 0,
+                          distance: (selectedRoute?.distance ?? 0) * 1000,
                           duration: {
-                            driving: selectedRoute?.duration * 60 || 0,
-                            walking: selectedRoute?.duration * 60 * 1.5 || 0
+                            driving: (selectedRoute?.duration ?? 0) * 60,
+                            walking: (selectedRoute?.duration ?? 0) * 60 * 1.5
                           },
-                          isTollRoad: selectedRoute?.isTollRoad || false
+                          isTollRoad: selectedRoute?.isTollRoad ?? false
                         }}
                         onClose={() => setSelectedRoute(null)}
                       />
@@ -306,12 +306,12 @@ export default function Home() {
                       <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
                       <RouteInfo
                         routeInfo={{
-                          distance: selectedRoute.distance * 1000,
+                          distance: (selectedRoute?.distance ?? 0) * 1000,
                           duration: {
-                            driving: selectedRoute.duration * 60,
-                            walking: selectedRoute.duration * 60 * 1.5
+                            driving: (selectedRoute?.duration ?? 0) * 60,
+                            walking: (selectedRoute?.duration ?? 0) * 60 * 1.5
                           },
-                          isTollRoad: selectedRoute.isTollRoad
+                          isTollRoad: selectedRoute?.isTollRoad ?? false
                         }}
                         onClose={() => setSelectedRoute(null)}
                       />
