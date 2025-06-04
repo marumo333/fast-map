@@ -114,31 +114,6 @@ export default function Home() {
     );
   };
 
-  // 2) currentLocation が取れたらすぐ startLocation と canClickMap をセット
-  useEffect(() => {
-    if (!currentLocation) return;
-
-    console.log('初期化: 現在地を出発地として設定:', currentLocation);
-    // 緯度経度だけでも即座に出発地にしてしまう
-    setStartLocation(prev => {
-      // すでに他の手段で startLocation がセット済みなら何もしない
-      if (prev) return prev;
-      return { lat: currentLocation.lat, lng: currentLocation.lng };
-    });
-    // クリックをここで有効化
-    setCanClickMap(true);
-
-    // 住所取得は後回し
-    (async () => {
-      try {
-        const addr = await getCachedAddress(currentLocation);
-        setStartLocation(prev => prev ? { ...prev, address: addr } : null);
-      } catch (err) {
-        console.error('現在地の住所取得に失敗:', err);
-      }
-    })();
-  }, [currentLocation]);
-
   const handleTrafficInfoUpdate = useCallback((info: any) => {
     console.log('交通情報更新:', info);
     setTrafficInfo(info);
@@ -167,7 +142,6 @@ export default function Home() {
     handleRouteChange
   );
 
-  // 現在地を取得
   const handleGetCurrentLocation = async (): Promise<Location | null> => {
     try {
       setIsLoading(true);
@@ -236,6 +210,7 @@ export default function Home() {
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
     setShouldFitBounds(true);
+    setCanClickMap(false);
   };
 
   useEffect(() => {
