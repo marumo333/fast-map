@@ -119,8 +119,12 @@ const Map: React.FC<MapProps> = ({
       }
     }
 
-    // 出発地のマーカーを設定（初回のみ）
-    if (startLocation && !markersRef.current.start) {
+    // 出発地のマーカーを設定（毎回更新）
+    if (markersRef.current.start) {
+      markersRef.current.start.map = null;
+      markersRef.current.start = undefined;
+    }
+    if (startLocation) {
       const startMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: startLocation,
@@ -130,11 +134,11 @@ const Map: React.FC<MapProps> = ({
     }
 
     // 目的地のマーカーを設定（毎回更新）
+    if (markersRef.current.end) {
+      markersRef.current.end.map = null;
+      markersRef.current.end = undefined;
+    }
     if (endLocation) {
-      if (markersRef.current.end) {
-        markersRef.current.end.map = null;
-        markersRef.current.end = undefined;
-      }
       const endMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: endLocation,
