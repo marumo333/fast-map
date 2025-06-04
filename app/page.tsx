@@ -171,10 +171,34 @@ export default function Home() {
     }
   };
 
-  // デバッグ用：startLocationの変更を監視
+  // startLocationの変更を監視
   useEffect(() => {
     console.log('親: startLocationが変更:', startLocation);
+    if (startLocation) {
+      setCanClickMap(true);
+    }
   }, [startLocation]);
+
+  useEffect(() => {
+    if (startLocation && !startLocation.address) {
+      getCachedAddress(startLocation).then(address => {
+        setStartLocation(prev => {
+          if (!prev) return prev;
+          if (prev.address === address) return prev;
+          return { ...prev, address };
+        });
+      });
+    }
+    if (endLocation && !endLocation.address) {
+      getCachedAddress(endLocation).then(address => {
+        setEndLocation(prev => {
+          if (!prev) return prev;
+          if (prev.address === address) return prev;
+          return { ...prev, address };
+        });
+      });
+    }
+  }, [startLocation, endLocation, getCachedAddress]);
 
   const handleNotificationAction = useCallback((action: 'accept' | 'dismiss') => {
     if (action === 'accept' && notification?.alternativeRoute) {
@@ -216,29 +240,6 @@ export default function Home() {
     setSelectedRoute(null);
     setShouldFitBounds(true);
   };
-
-  useEffect(() => {
-    if (startLocation && !startLocation.address) {
-      getCachedAddress(startLocation).then(address => {
-        setStartLocation(prev => {
-          if (!prev) return prev;
-          if (prev.address === address) return prev;
-          return { ...prev, address };
-        });
-        // 住所更新後もcanClickMapを維持
-        setCanClickMap(true);
-      });
-    }
-    if (endLocation && !endLocation.address) {
-      getCachedAddress(endLocation).then(address => {
-        setEndLocation(prev => {
-          if (!prev) return prev;
-          if (prev.address === address) return prev;
-          return { ...prev, address };
-        });
-      });
-    }
-  }, [startLocation, endLocation, getCachedAddress, canClickMap]);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
