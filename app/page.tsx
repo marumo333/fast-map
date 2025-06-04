@@ -102,14 +102,6 @@ export default function Home() {
   };
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
 
-  // 1) マウント直後に現在地を取りに行く
-  useEffect(() => {
-    getCurrentLocation().catch(err => {
-      console.error('初回の位置情報取得に失敗:', err);
-      setError('位置情報取得に失敗しました');
-    });
-  }, []);
-
   // 2) currentLocation が取れたらすぐ startLocation と canClickMap をセット
   useEffect(() => {
     if (!currentLocation) return;

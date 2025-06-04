@@ -153,11 +153,17 @@ const Map: React.FC<MapProps> = ({
     }
   }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete, hasCenteredCurrent]);
 
-  // 目的地や出発地が変わったらfitBoundsフラグとセンターフラグをリセット
+  // 現在地が変わったときだけセンターフラグをリセット
   useEffect(() => {
-    setHasFitBounds(false);
     setHasCenteredCurrent(false);
-  }, [startLocation, endLocation]);
+  }, [currentLocation]);
+
+  // shouldFitBoundsがtrueになったときだけfitBoundsフラグをリセット
+  useEffect(() => {
+    if (shouldFitBounds) {
+      setHasFitBounds(false);
+    }
+  }, [shouldFitBounds]);
 
   useEffect(() => {
     updateMarkers();
