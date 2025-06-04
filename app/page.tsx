@@ -150,7 +150,7 @@ export default function Home() {
         try {
           const address = await getCachedAddress(location);
           if (address) {
-            setStartLocation(prev => prev ? { ...prev, address } : null);
+            setStartLocation(prev => ({ ...prev!, address }));
           }
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
