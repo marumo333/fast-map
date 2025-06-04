@@ -202,8 +202,13 @@ export default function Home() {
   };
 
   const handleMapClick = (lat: number, lng: number) => {
-    if (!canClickMap || !startLocation) {
-      console.warn('出発地をまだ準備中です…');
+    console.log('地図クリック時の状態:', { canClickMap, startLocation });
+    if (!canClickMap) {
+      console.warn('地図をクリックできない状態です');
+      return;
+    }
+    if (!startLocation) {
+      console.warn('出発地が設定されていません');
       return;
     }
     const newEndLocation = { lat, lng };
@@ -220,6 +225,8 @@ export default function Home() {
           if (prev.address === address) return prev;
           return { ...prev, address };
         });
+        // 住所更新後もcanClickMapを維持
+        setCanClickMap(true);
       });
     }
     if (endLocation && !endLocation.address) {
@@ -231,7 +238,7 @@ export default function Home() {
         });
       });
     }
-  }, [startLocation, endLocation, getCachedAddress]);
+  }, [startLocation, endLocation, getCachedAddress, canClickMap]);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
