@@ -31,6 +31,7 @@ const Map: React.FC<MapProps> = ({
     start?: google.maps.marker.AdvancedMarkerElement;
     end?: google.maps.marker.AdvancedMarkerElement;
   }>({});
+  const [hasFitBounds, setHasFitBounds] = useState(false);
 
   const initializeMap = useCallback(async () => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -138,14 +139,20 @@ const Map: React.FC<MapProps> = ({
       markersRef.current.end = endMarker;
     }
 
-    // 出発地と目的地の両方が設定されている場合、地図の表示範囲を調整
-    if (startLocation && endLocation) {
+    // 出発地と目的地の両方が設定されていて、まだfitBoundsしていない場合のみfitBoundsを実行
+    if (startLocation && endLocation && !hasFitBounds) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(startLocation);
       bounds.extend(endLocation);
       mapInstanceRef.current.fitBounds(bounds);
+      setHasFitBounds(true);
     }
-  }, [currentLocation, startLocation, endLocation]);
+  }, [currentLocation, startLocation, endLocation, hasFitBounds]);
+
+  // 目的地や出発地が変わったらfitBoundsフラグをリセット
+  useEffect(() => {
+    setHasFitBounds(false);
+  }, [startLocation, endLocation]);
 
   useEffect(() => {
     updateMarkers();
