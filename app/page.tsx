@@ -84,23 +84,18 @@ export default function Home() {
   }, []);
 
   // LocationInfoコンポーネントを通常の関数コンポーネントとして分離
-  const LocationInfo: React.FC<{ location: LocationWithAddress | null, label: string, setStartLocation: any, setEndLocation: any, getAddressFromLocation: (location: Location) => Promise<string> }> = ({ location, label, setStartLocation, setEndLocation, getAddressFromLocation }) => {
+  const LocationInfo: React.FC<{ location: LocationWithAddress | null, label: string }> = ({ location, label }) => {
     const [address, setAddress] = useState<string | null>(null);
 
     useEffect(() => {
       if (location && !location.address) {
         getAddressFromLocation(location).then(newAddress => {
           setAddress(newAddress);
-          if (label === '出発地') {
-            setStartLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
-          } else {
-            setEndLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
-          }
         });
       } else if (location?.address) {
         setAddress(location.address);
       }
-    }, [location, label]);
+    }, [location]);
 
     if (!location) return null;
 
@@ -236,8 +231,8 @@ export default function Home() {
             {/* 位置情報表示 */}
             <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>位置情報</h2>
-              <LocationInfo location={startLocation} label="出発地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getCachedAddress} />
-              <LocationInfo location={endLocation} label="目的地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getCachedAddress} />
+              <LocationInfo location={startLocation} label="出発地" />
+              <LocationInfo location={endLocation} label="目的地" />
             </div>
 
             {/* ルート選択 */}
