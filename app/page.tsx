@@ -143,26 +143,31 @@ export default function Home() {
     try {
       setIsLoading(true);
       const location = await getCurrentLocation();
-      if (location) {
-        console.log('現在地を出発地として設定:', location);
-        setStartLocation(location);
-        setEndLocation(null);
-        setSelectedRoute(null);
-        setCanClickMap(true);
-        try {
-          const address = await getCachedAddress(location);
-          if (address) {
-            setStartLocation(prev => {
-              if (!prev) return null;
-              return { ...prev, address };
-            });
-            // 住所更新後もcanClickMapを維持
-            setCanClickMap(true);
-          }
-        } catch (error) {
-          console.error('現在地の住所取得に失敗:', error);
-        }
+      if (!location) {
+        throw new Error('位置情報が取得できませんでした');
       }
+
+      console.log('現在地を出発地として設定:', location);
+      // まず緯度経度だけセット
+      setStartLocation(location);
+      setEndLocation(null);
+      setSelectedRoute(null);
+
+      // 住所を取得
+      try {
+        const address = await getCachedAddress(location);
+        if (address) {
+          setStartLocation(prev => {
+            if (!prev) return null;
+            return { ...prev, address };
+          });
+        }
+      } catch (error) {
+        console.error('現在地の住所取得に失敗:', error);
+      }
+
+      // 緯度経度が取得できた時点でクリックを許可
+      setCanClickMap(true);
       return location;
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
@@ -175,8 +180,9 @@ export default function Home() {
 
   // startLocationの変更を監視
   useEffect(() => {
-    console.log('親: startLocationが変更:', startLocation);
-    if (startLocation) {
+    console.log('［useEffect］startLocationが更新されました:', startLocation);
+    // startLocationが更新された時点でcanClickMapをtrueに設定
+    if (startLocation && startLocation.lat && startLocation.lng) {
       setCanClickMap(true);
     }
   }, [startLocation]);
@@ -228,7 +234,7 @@ export default function Home() {
   };
 
   const handleMapClick = (lat: number, lng: number) => {
-    console.log('地図クリック時の状態:', { canClickMap, startLocation });
+    console.log('［handleMapClick］直前の状態:', { canClickMap, startLocation });
     if (!canClickMap) {
       console.warn('地図をクリックできない状態です');
       return;
