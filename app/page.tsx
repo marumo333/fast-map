@@ -53,50 +53,6 @@ const Map = dynamic(() => import('./components/Map'), {
   )
 });
 
-// 住所キャッシュ
-const addressCache = useRef<globalThis.Map<string, string>>(new globalThis.Map()).current;
-
-const getCachedAddress = useCallback(async (location: Location) => {
-  const key = `${location.lat},${location.lng}`;
-  if (addressCache.has(key)) {
-    return addressCache.get(key)!;
-  }
-  const address = await getAddressFromLocation(location);
-  addressCache.set(key, address);
-  return address;
-}, [addressCache]);
-
-// LocationInfoコンポーネントを通常の関数コンポーネントとして分離
-const LocationInfo: React.FC<{ location: LocationWithAddress | null, label: string, setStartLocation: any, setEndLocation: any, getAddressFromLocation: (location: Location) => Promise<string> }> = ({ location, label, setStartLocation, setEndLocation, getAddressFromLocation }) => {
-  const [address, setAddress] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (location && !location.address) {
-      getAddressFromLocation(location).then(newAddress => {
-        setAddress(newAddress);
-        if (label === '出発地') {
-          setStartLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
-        } else {
-          setEndLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
-        }
-      });
-    } else if (location?.address) {
-      setAddress(location.address);
-    }
-  }, [location, label]);
-
-  if (!location) return null;
-
-  return (
-    <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
-      <div className="font-medium">{label}:</div>
-      <div className="pl-2">
-        {address || location.address || '住所を取得中...'}
-      </div>
-    </div>
-  );
-};
-
 export default function Home() {
   const { isDarkMode } = useTheme();
   const [startLocation, setStartLocation] = useState<LocationWithAddress | null>(null);
@@ -114,6 +70,49 @@ export default function Home() {
     getCurrentLocation: () => Promise<Location | null>;
   };
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
+  // 住所キャッシュ
+  const addressCache = useRef(new window.Map<string, string>());
+
+  const getCachedAddress = useCallback(async (location: Location) => {
+    const key = `${location.lat},${location.lng}`;
+    if (addressCache.current.has(key)) {
+      return addressCache.current.get(key)!;
+    }
+    const address = await getAddressFromLocation(location);
+    addressCache.current.set(key, address);
+    return address;
+  }, []);
+
+  // LocationInfoコンポーネントを通常の関数コンポーネントとして分離
+  const LocationInfo: React.FC<{ location: LocationWithAddress | null, label: string, setStartLocation: any, setEndLocation: any, getAddressFromLocation: (location: Location) => Promise<string> }> = ({ location, label, setStartLocation, setEndLocation, getAddressFromLocation }) => {
+    const [address, setAddress] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (location && !location.address) {
+        getAddressFromLocation(location).then(newAddress => {
+          setAddress(newAddress);
+          if (label === '出発地') {
+            setStartLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
+          } else {
+            setEndLocation((prev: any) => prev ? { ...prev, address: newAddress } : null);
+          }
+        });
+      } else if (location?.address) {
+        setAddress(location.address);
+      }
+    }, [location, label]);
+
+    if (!location) return null;
+
+    return (
+      <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
+        <div className="font-medium">{label}:</div>
+        <div className="pl-2">
+          {address || location.address || '住所を取得中...'}
+        </div>
+      </div>
+    );
+  };
 
   // 2) currentLocation が取れたらすぐ startLocation と canClickMap をセット
   useEffect(() => {
