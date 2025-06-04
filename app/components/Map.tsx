@@ -15,6 +15,18 @@ interface MapProps {
   onFitBoundsComplete?: () => void;
 }
 
+// 位置比較用ユーティリティ
+function getLatLngFromPosition(position: any) {
+  if (!position) return { lat: undefined, lng: undefined };
+  if (typeof position.lat === 'function' && typeof position.lng === 'function') {
+    // google.maps.LatLngインスタンス
+    return { lat: position.lat(), lng: position.lng() };
+  } else {
+    // LatLngLiteral
+    return { lat: position.lat, lng: position.lng };
+  }
+}
+
 const Map: React.FC<MapProps> = ({
   startLocation,
   endLocation,
@@ -107,32 +119,52 @@ const Map: React.FC<MapProps> = ({
       }
     }
 
-    // 出発地のマーカーを設定（毎回更新）
-    if (markersRef.current.start) {
-      markersRef.current.start.map = null;
-      markersRef.current.start = undefined;
-    }
-    if (startLocation) {
-      const startMarker = new AdvancedMarkerElement({
-        map: mapInstanceRef.current,
-        position: startLocation,
-        content: createCustomMarker('出発地', '#10B981')
-      });
-      markersRef.current.start = startMarker;
+    // 出発地のマーカーを設定（毎回更新→位置が変わったときだけ更新）
+    const startPos = getLatLngFromPosition(markersRef.current.start?.position);
+    if (
+      markersRef.current.start &&
+      startLocation &&
+      startPos.lat === startLocation.lat &&
+      startPos.lng === startLocation.lng
+    ) {
+      // 位置が同じなら再生成しない
+    } else {
+      if (markersRef.current.start) {
+        markersRef.current.start.map = null;
+        markersRef.current.start = undefined;
+      }
+      if (startLocation) {
+        const startMarker = new AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: startLocation,
+          content: createCustomMarker('出発地', '#10B981')
+        });
+        markersRef.current.start = startMarker;
+      }
     }
 
-    // 目的地のマーカーを設定（毎回更新）
-    if (markersRef.current.end) {
-      markersRef.current.end.map = null;
-      markersRef.current.end = undefined;
-    }
-    if (endLocation) {
-      const endMarker = new AdvancedMarkerElement({
-        map: mapInstanceRef.current,
-        position: endLocation,
-        content: createCustomMarker('目的地', '#EF4444')
-      });
-      markersRef.current.end = endMarker;
+    // 目的地のマーカーを設定（毎回更新→位置が変わったときだけ更新）
+    const endPos = getLatLngFromPosition(markersRef.current.end?.position);
+    if (
+      markersRef.current.end &&
+      endLocation &&
+      endPos.lat === endLocation.lat &&
+      endPos.lng === endLocation.lng
+    ) {
+      // 位置が同じなら再生成しない
+    } else {
+      if (markersRef.current.end) {
+        markersRef.current.end.map = null;
+        markersRef.current.end = undefined;
+      }
+      if (endLocation) {
+        const endMarker = new AdvancedMarkerElement({
+          map: mapInstanceRef.current,
+          position: endLocation,
+          content: createCustomMarker('目的地', '#EF4444')
+        });
+        markersRef.current.end = endMarker;
+      }
     }
 
     // 目的地選択時のみfitBoundsを一度だけ実行
