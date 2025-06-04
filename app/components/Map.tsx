@@ -36,6 +36,7 @@ const Map: React.FC<MapProps> = ({
     end?: google.maps.marker.AdvancedMarkerElement;
   }>({});
   const [hasFitBounds, setHasFitBounds] = useState(false);
+  const [hasCenteredCurrent, setHasCenteredCurrent] = useState(false);
 
   const initializeMap = useCallback(async () => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -110,8 +111,12 @@ const Map: React.FC<MapProps> = ({
         content: createCustomMarker('現在地', '#3B82F6')
       });
       markersRef.current.current = newCurrentMarker;
-      mapInstanceRef.current.setCenter(currentLocation);
-      mapInstanceRef.current.setZoom(15);
+      // 初回のみセンター・ズーム
+      if (!hasCenteredCurrent) {
+        mapInstanceRef.current.setCenter(currentLocation);
+        mapInstanceRef.current.setZoom(15);
+        setHasCenteredCurrent(true);
+      }
     }
 
     // 出発地のマーカーを設定（初回のみ）
@@ -138,19 +143,20 @@ const Map: React.FC<MapProps> = ({
       markersRef.current.end = endMarker;
     }
 
-    // 目的地選択時のみfitBoundsを実行
-    if (startLocation && endLocation && shouldFitBounds && onFitBoundsComplete) {
+    // 目的地選択時のみfitBoundsを一度だけ実行
+    if (startLocation && endLocation && shouldFitBounds) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(startLocation);
       bounds.extend(endLocation);
       mapInstanceRef.current.fitBounds(bounds);
-      onFitBoundsComplete();
+      onFitBoundsComplete?.();
     }
-  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete]);
+  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete, hasCenteredCurrent]);
 
-  // 目的地や出発地が変わったらfitBoundsフラグをリセット
+  // 目的地や出発地が変わったらfitBoundsフラグとセンターフラグをリセット
   useEffect(() => {
     setHasFitBounds(false);
+    setHasCenteredCurrent(false);
   }, [startLocation, endLocation]);
 
   useEffect(() => {
