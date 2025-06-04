@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocation } from '../contexts/LocationContext';
 
 type NavbarProps = {
-  onGetCurrentLocation: () => Promise<void>;
+  onGetCurrentLocation: () => Promise<Location | null>;
 };
 
 const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
