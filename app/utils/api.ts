@@ -45,10 +45,16 @@ export const getTrafficInfo = async (
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app';
 
+const routeCache = new Map<string, Route[]>();
+
 export const searchRoute = async (
   start: [number, number],
   end: [number, number]
 ): Promise<Route[]> => {
+  const key = `${start[0]},${start[1]}_${end[0]},${end[1]}`;
+  if (routeCache.has(key)) {
+    return routeCache.get(key)!;
+  }
   try {
     const response = await fetch(`${API_BASE_URL}/api/route`, {
       method: 'POST',
@@ -78,6 +84,7 @@ export const searchRoute = async (
       console.error('無効なレスポンス形式:', data);
       throw new Error('無効なレスポンス形式です');
     }
+    routeCache.set(key, data);
     return data;
   } catch (error) {
     console.error('ルート検索エラー:', error);
