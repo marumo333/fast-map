@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
 import { Route } from './types/route';
@@ -52,6 +52,19 @@ const Map = dynamic(() => import('./components/Map'), {
     </div>
   )
 });
+
+// 住所キャッシュ
+const addressCache = useRef<globalThis.Map<string, string>>(new globalThis.Map()).current;
+
+const getCachedAddress = useCallback(async (location: Location) => {
+  const key = `${location.lat},${location.lng}`;
+  if (addressCache.has(key)) {
+    return addressCache.get(key)!;
+  }
+  const address = await getAddressFromLocation(location);
+  addressCache.set(key, address);
+  return address;
+}, [addressCache]);
 
 // LocationInfoコンポーネントを通常の関数コンポーネントとして分離
 const LocationInfo: React.FC<{ location: LocationWithAddress | null, label: string, setStartLocation: any, setEndLocation: any, getAddressFromLocation: (location: Location) => Promise<string> }> = ({ location, label, setStartLocation, setEndLocation, getAddressFromLocation }) => {
@@ -119,7 +132,7 @@ export default function Home() {
     // 住所取得は後回し
     (async () => {
       try {
-        const addr = await getAddressFromLocation(currentLocation);
+        const addr = await getCachedAddress(currentLocation);
         setStartLocation(prev => prev ? { ...prev, address: addr } : null);
       } catch (err) {
         console.error('現在地の住所取得に失敗:', err);
@@ -138,7 +151,7 @@ export default function Home() {
 
   useTrafficPolling(
     selectedRoute?.routeId ?? 0,
-    30000,
+    300000, // 5分
     handleTrafficInfoUpdate,
     startLocation ?? undefined,
     endLocation ?? undefined
@@ -167,7 +180,7 @@ export default function Home() {
         setSelectedRoute(null);
         
         try {
-          const address = await getAddressFromLocation(location);
+          const address = await getCachedAddress(location);
           if (address) {
             setStartLocation(prev => prev ? { ...prev, address } : null);
           }
@@ -232,16 +245,16 @@ export default function Home() {
 
   useEffect(() => {
     if (startLocation) {
-      getAddressFromLocation(startLocation).then(address => {
+      getCachedAddress(startLocation).then(address => {
         setStartLocation(prev => prev ? { ...prev, address } : null);
       });
     }
     if (endLocation) {
-      getAddressFromLocation(endLocation).then(address => {
+      getCachedAddress(endLocation).then(address => {
         setEndLocation(prev => prev ? { ...prev, address } : null);
       });
     }
-  }, [startLocation, endLocation, getAddressFromLocation]);
+  }, [startLocation, endLocation, getCachedAddress]);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
@@ -253,8 +266,8 @@ export default function Home() {
             {/* 位置情報表示 */}
             <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>位置情報</h2>
-              <LocationInfo location={startLocation} label="出発地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getAddressFromLocation} />
-              <LocationInfo location={endLocation} label="目的地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getAddressFromLocation} />
+              <LocationInfo location={startLocation} label="出発地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getCachedAddress} />
+              <LocationInfo location={endLocation} label="目的地" setStartLocation={setStartLocation} setEndLocation={setEndLocation} getAddressFromLocation={getCachedAddress} />
             </div>
 
             {/* ルート選択 */}
