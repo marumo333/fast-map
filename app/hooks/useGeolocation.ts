@@ -18,7 +18,7 @@ interface UseGeolocationReturn {
   currentLocation: Location | null;
   isGettingLocation: boolean;
   locationError: string | null;
-  getCurrentLocation: () => Promise<void>;
+  getCurrentLocation: () => Promise<Location | null>;
   clearLocationError: () => void;
 }
 
@@ -35,14 +35,14 @@ export const useGeolocation = (): UseGeolocationReturn => {
     setError(null);
   };
 
-  const getCurrentLocation = async (): Promise<void> => {
+  const getCurrentLocation = async (): Promise<Location | null> => {
     setLoading(true);
     setError(null);
 
     if (!navigator.geolocation) {
       setError('このブラウザは位置情報をサポートしていません');
       setLoading(false);
-      return;
+      return null;
     }
 
     return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
           setLastUpdateTime(Date.now());
           setLoading(false);
           setIsWatching(true);
-          resolve();
+          resolve(location);
         },
         (error) => {
           console.error('位置情報の取得に失敗:', error);
@@ -79,7 +79,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
         },
         {
           enableHighAccuracy: true,
-          timeout: 30000,  // 30秒に延長
+          timeout: 30000,
           maximumAge: 0
         }
       );

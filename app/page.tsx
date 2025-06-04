@@ -98,7 +98,7 @@ export default function Home() {
   const [canClickMap, setCanClickMap] = useState(false);
   const { currentLocation, getCurrentLocation } = useLocation() as { 
     currentLocation: LocationWithAddress | null;
-    getCurrentLocation: () => Promise<void>;
+    getCurrentLocation: () => Promise<Location | null>;
   };
 
   // 1) マウント直後に現在地を取りに行く
@@ -162,22 +162,24 @@ export default function Home() {
     handleRouteChange
   );
 
+  // 現在地を取得
   const handleGetCurrentLocation = async () => {
     try {
       setIsLoading(true);
-      await getCurrentLocation();
-      if (currentLocation) {
-        console.log('現在地を出発地として設定:', currentLocation);
+      const location = await getCurrentLocation();
+      if (location) {
+        console.log('現在地を出発地として設定:', location);
         // 現在地を即座に設定
-        const locationWithAddress = { ...currentLocation };
-        setStartLocation(locationWithAddress);
+        setStartLocation(location);
         setEndLocation(null);
         setSelectedRoute(null);
         
         // 住所情報を非同期で更新
         try {
-          const address = await getAddressFromLocation(currentLocation);
-          setStartLocation(prev => prev ? { ...prev, address } : null);
+          const address = await getAddressFromLocation(location);
+          if (address) {
+            setStartLocation(prev => prev ? { ...prev, address } : null);
+          }
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
         }
@@ -252,10 +254,6 @@ export default function Home() {
       setError('経路の計算に失敗しました。もう一度お試しください。');
     }
   };
-
-  useEffect(() => {
-    getCurrentLocation();
-  }, [getCurrentLocation]);
 
   useEffect(() => {
     if (startLocation) {

@@ -26,7 +26,7 @@ interface LocationContextType {
   setDestination: (location: Location | null) => void;
   route: Route | null;
   setRoute: (route: Route | null) => void;
-  getCurrentLocation: () => Promise<void>;
+  getCurrentLocation: () => Promise<Location | null>;
   isGettingLocation: boolean;
   locationError: string | null;
   clearLocationError: () => void;
