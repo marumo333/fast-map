@@ -150,7 +150,12 @@ export default function Home() {
         try {
           const address = await getCachedAddress(location);
           if (address) {
-            setStartLocation(prev => ({ ...prev!, address }));
+            setStartLocation(prev => {
+              if (!prev) return null;
+              return { ...prev, address };
+            });
+            // 住所更新後もcanClickMapを維持
+            setCanClickMap(true);
           }
         } catch (error) {
           console.error('現在地の住所取得に失敗:', error);
