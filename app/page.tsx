@@ -44,7 +44,7 @@ interface MapComponentProps {
 }
 
 // Leafletのマップコンポーネントを動的にインポート
-const Map = dynamic(() => import('./components/Map'), {
+const MapComponent = dynamic(() => import('./components/Map'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 transition-colors duration-300">
@@ -71,7 +71,7 @@ export default function Home() {
   };
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
   // 住所キャッシュ
-  const addressCache = useRef(new window.Map<string, string>());
+  const addressCache = useRef<Map<string, string>>(new Map());
 
   const getCachedAddress = useCallback(async (location: Location) => {
     const key = `${location.lat},${location.lng}`;
@@ -330,7 +330,7 @@ export default function Home() {
                     <span className="text-gray-600">出発地を準備中…</span>
                   </div>
                 )}
-                <Map
+                <MapComponent
                   startLocation={startLocation}
                   endLocation={endLocation}
                   onRouteSelect={handleRouteSelect}
