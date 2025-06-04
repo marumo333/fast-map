@@ -178,7 +178,7 @@ export default function Home() {
         setStartLocation(location);
         setEndLocation(null);
         setSelectedRoute(null);
-        
+        setCanClickMap(true);
         try {
           const address = await getCachedAddress(location);
           if (address) {
@@ -229,12 +229,8 @@ export default function Home() {
   };
 
   const handleMapClick = (lat: number, lng: number) => {
-    if (!canClickMap) {
+    if (!canClickMap || !startLocation) {
       console.warn('出発地をまだ準備中です…');
-      return;
-    }
-    if (!startLocation) {
-      console.log('出発地が設定されていません');
       return;
     }
     const newEndLocation = { lat, lng };
