@@ -166,8 +166,7 @@ export default function Home() {
         console.error('現在地の住所取得に失敗:', error);
       }
 
-      // 緯度経度が取得できた時点でクリックを許可
-      setCanClickMap(true);
+      // canClickMapの設定はuseEffectに任せる
       return location;
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
@@ -183,7 +182,11 @@ export default function Home() {
     console.log('[useEffect]startLocationが更新されました:', startLocation);
     // startLocationが更新された時点でcanClickMapをtrueに設定
     if (startLocation && startLocation.lat && startLocation.lng) {
+      console.log('startLocationが有効なため、canClickMapをtrueに設定します');
       setCanClickMap(true);
+    } else {
+      console.log('startLocationが無効なため、canClickMapをfalseに設定します');
+      setCanClickMap(false);
     }
   }, [startLocation]);
 
@@ -233,21 +236,28 @@ export default function Home() {
     setSelectedRoute(selectedRoute);
   };
 
-  const handleMapClick = (lat: number, lng: number) => {
-    console.log('［handleMapClick］直前の状態:', { canClickMap, startLocation });
+  const handleMapClick = useCallback((lat: number, lng: number) => {
+    console.log('[handleMapClick]直前の状態:', { canClickMap, startLocation });
+    
+    // まだ出発地が未設定なら、ここを出発地として扱う
+    if (!startLocation) {
+      console.log('地図クリック → ここをstartLocationに設定します', { lat, lng });
+      setStartLocation({ lat, lng });
+      return;
+    }
+
+    // すでにstartLocationがあるときは、canClickMapをチェックしてendLocationを設定
     if (!canClickMap) {
-      console.warn('地図をクリックできない状態です');
+      console.warn('出発地がまだ準備できていないため、目的地に設定できません');
       return;
     }
-    if (!startLocation || !startLocation.lat || !startLocation.lng) {
-      console.warn('出発地が設定されていません');
-      return;
-    }
+
+    console.log('目的地を設定します:', { lat, lng });
     const newEndLocation = { lat, lng };
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
     setShouldFitBounds(true);
-  };
+  }, [canClickMap, startLocation]);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
