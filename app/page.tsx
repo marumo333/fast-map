@@ -211,16 +211,20 @@ export default function Home() {
   useEffect(() => {
     if (startLocation && !startLocation.address) {
       getCachedAddress(startLocation).then(address => {
-        if (address && startLocation.address !== address) {
-          setStartLocation(prev => prev ? { ...prev, address } : null);
-        }
+        setStartLocation(prev => {
+          if (!prev) return prev;
+          if (prev.address === address) return prev;
+          return { ...prev, address };
+        });
       });
     }
     if (endLocation && !endLocation.address) {
       getCachedAddress(endLocation).then(address => {
-        if (address && endLocation.address !== address) {
-          setEndLocation(prev => prev ? { ...prev, address } : null);
-        }
+        setEndLocation(prev => {
+          if (!prev) return prev;
+          if (prev.address === address) return prev;
+          return { ...prev, address };
+        });
       });
     }
   }, [startLocation, endLocation, getCachedAddress]);
