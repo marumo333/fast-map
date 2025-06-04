@@ -239,19 +239,13 @@ export default function Home() {
   const handleMapClick = useCallback((lat: number, lng: number) => {
     console.log('[handleMapClick]直前の状態:', { canClickMap, startLocation });
     
-    // まだ出発地が未設定なら、ここを出発地として扱う
-    if (!startLocation) {
-      console.log('地図クリック → ここをstartLocationに設定します', { lat, lng });
-      setStartLocation({ lat, lng });
-      return;
-    }
-
-    // すでにstartLocationがあるときは、canClickMapをチェックしてendLocationを設定
-    if (!canClickMap) {
+    // 「出発地がセットされていない」または「クリック受付前」なら警告だけ出す
+    if (!startLocation || !canClickMap) {
       console.warn('出発地がまだ準備できていないため、目的地に設定できません');
       return;
     }
 
+    // ここまできたら「目的地として」endLocationをセット
     console.log('目的地を設定します:', { lat, lng });
     const newEndLocation = { lat, lng };
     setEndLocation(newEndLocation);
