@@ -100,6 +100,7 @@ export default function Home() {
     currentLocation: LocationWithAddress | null;
     getCurrentLocation: () => Promise<Location | null>;
   };
+  const [shouldFitBounds, setShouldFitBounds] = useState(false);
 
   // 1) マウント直後に現在地を取りに行く
   useEffect(() => {
@@ -222,37 +223,19 @@ export default function Home() {
     setSelectedRoute(selectedRoute);
   };
 
-  const handleMapClick = async (lat: number, lng: number) => {
+  const handleMapClick = (lat: number, lng: number) => {
     if (!canClickMap) {
       console.warn('出発地をまだ準備中です…');
       return;
     }
-
     if (!startLocation) {
       console.log('出発地が設定されていません');
       return;
     }
-
     const newEndLocation = { lat, lng };
-    console.log('親: 目的地を設定:', newEndLocation);
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
-
-    try {
-      const directionsService = new google.maps.DirectionsService();
-      const result = await directionsService.route({
-        origin: new google.maps.LatLng(startLocation.lat, startLocation.lng),
-        destination: new google.maps.LatLng(lat, lng),
-        travelMode: google.maps.TravelMode.DRIVING
-      });
-
-      if (result.routes.length > 0) {
-        handleRouteSelect(result.routes[0]);
-      }
-    } catch (error) {
-      console.error('経路の計算に失敗しました:', error);
-      setError('経路の計算に失敗しました。もう一度お試しください。');
-    }
+    setShouldFitBounds(true);
   };
 
   useEffect(() => {
@@ -383,6 +366,8 @@ export default function Home() {
                   onMapClick={(location) => {
                     handleMapClick(location.lat, location.lng);
                   }}
+                  shouldFitBounds={shouldFitBounds}
+                  onFitBoundsComplete={() => setShouldFitBounds(false)}
                 />
               </div>
             </div>
