@@ -180,7 +180,7 @@ export default function Home() {
 
   // startLocationの変更を監視
   useEffect(() => {
-    console.log('［useEffect］startLocationが更新されました:', startLocation);
+    console.log('[useEffect]startLocationが更新されました:', startLocation);
     // startLocationが更新された時点でcanClickMapをtrueに設定
     if (startLocation && startLocation.lat && startLocation.lng) {
       setCanClickMap(true);
