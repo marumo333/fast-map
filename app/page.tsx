@@ -35,12 +35,14 @@ type LocationWithAddress = Location & {
 
 // Mapコンポーネントのpropsの型を更新
 interface MapComponentProps {
-  startLocation: Location | null;
-  endLocation: Location | null;
+  startLocation: LocationWithAddress | null;
+  endLocation: LocationWithAddress | null;
   onRouteSelect: (route: google.maps.DirectionsRoute) => void;
   selectedRoute: google.maps.DirectionsRoute | null;
   suggestedRoute: google.maps.DirectionsRoute | null;
   onMapClick: (location: google.maps.LatLng) => void;
+  shouldFitBounds?: boolean;
+  onFitBoundsComplete?: () => void;
 }
 
 // Leafletのマップコンポーネントを動的にインポート
@@ -231,7 +233,7 @@ export default function Home() {
       console.warn('地図をクリックできない状態です');
       return;
     }
-    if (!startLocation) {
+    if (!startLocation || !startLocation.lat || !startLocation.lng) {
       console.warn('出発地が設定されていません');
       return;
     }
