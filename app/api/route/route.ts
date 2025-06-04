@@ -11,15 +11,17 @@ const ALLOWED_ORIGINS = [
 ];
 
 // CORSヘッダーを設定する関数
-function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+function getCorsHeaders(origin: string | null): Record<string, string> | undefined {
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+    return undefined;
+  }
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400',
-    'Vary': 'Origin'
+    'Access-Control-Max-Age': '600',
+    'Vary': 'Origin',
   };
 }
 
@@ -54,14 +56,21 @@ function decodePolyline(encoded: string): [number, number][] {
 }
 
 // プリフライトリクエストのハンドラ
-export async function OPTIONS(req: Request) {
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+    return new Response(null, { status: 403 });
+  }
+  const corsHeaders = getCorsHeaders(origin);
+  if (!corsHeaders) {
+    return new Response(null, { status: 204 });
+  }
   return new Response(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': 'https://fast-map-five.vercel.app',
-      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Credentials': 'true',
+      ...corsHeaders,
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     },
   });
 }
@@ -69,22 +78,17 @@ export async function OPTIONS(req: Request) {
 // POSTハンドラ
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
-  
-  // オリジンの検証
-  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
     return NextResponse.json(
       { error: '許可されていないオリジンからのリクエストです' },
-      { 
-        status: 403,
-        headers: getCorsHeaders(origin)
-      }
+      { status: 403 }
     );
   }
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
     const body = await request.json();
     const { start, end } = body;
-
     if (
       !start || !end ||
       typeof start.lat !== 'number' || typeof start.lng !== 'number' ||
@@ -92,27 +96,23 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: '出発地と目的地の座標が不正です。' },
-        { 
-          status: 400,
-          headers: getCorsHeaders(origin)
-        }
+        corsHeaders ? { status: 400, headers: corsHeaders } : { status: 400 }
       );
     }
 
-    // サーバー用キーを取得
     const apiKey = process.env.GOOGLE_MAPS_SERVER_KEY;
     if (!apiKey) {
       console.error('Google Maps API key is not set');
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
-        { status: 500 }
+        corsHeaders ? { status: 500, headers: corsHeaders } : { status: 500 }
       );
     }
     if (!apiKey.startsWith('AIza')) {
       console.error('Invalid API key format');
       return NextResponse.json(
         { error: 'Invalid API key format' },
-        { status: 500 }
+        corsHeaders ? { status: 500, headers: corsHeaders } : { status: 500 }
       );
     }
 
@@ -153,21 +153,18 @@ export async function POST(request: NextRequest) {
 
       const drivingStatus = drivingRes.data.status;
       if (drivingStatus !== 'OK') {
-        if (statusMap[drivingStatus]) {
-          console.warn('車ルートエラー:', {
-            status: drivingStatus,
-            error_message: drivingRes.data.error_message
-          });
-          return NextResponse.json(
-            {
-              error: `車ルート取得失敗: ${drivingStatus}`,
-              details: drivingRes.data.error_message || '不明なエラー'
-            },
-            { status: statusMap[drivingStatus] }
-          );
-        } else {
-          throw new Error(`不明なエラー: ${drivingStatus}`);
-        }
+        const mapped = statusMap[drivingStatus];
+        console.warn('車ルートエラー:', {
+          status: drivingStatus,
+          error_message: drivingRes.data.error_message
+        });
+        return NextResponse.json(
+          {
+            error: `車ルート取得失敗: ${drivingStatus}`,
+            details: drivingRes.data.error_message || '不明なエラー'
+          },
+          corsHeaders ? { status: mapped || 500, headers: corsHeaders } : { status: mapped || 500 }
+        );
       }
 
       // --- 徒歩モードのルート取得 ---
@@ -192,21 +189,18 @@ export async function POST(request: NextRequest) {
 
       const walkingStatus = walkingRes.data.status;
       if (walkingStatus !== 'OK') {
-        if (statusMap[walkingStatus]) {
-          console.warn('徒歩ルートエラー:', {
-            status: walkingStatus,
-            error_message: walkingRes.data.error_message
-          });
-          return NextResponse.json(
-            {
-              error: `徒歩ルート取得失敗: ${walkingStatus}`,
-              details: walkingRes.data.error_message || '不明なエラー'
-            },
-            { status: statusMap[walkingStatus] }
-          );
-        } else {
-          throw new Error(`不明な徒歩ルートエラー: ${walkingStatus}`);
-        }
+        const mapped = statusMap[walkingStatus];
+        console.warn('徒歩ルートエラー:', {
+          status: walkingStatus,
+          error_message: walkingRes.data.error_message
+        });
+        return NextResponse.json(
+          {
+            error: `徒歩ルート取得失敗: ${walkingStatus}`,
+            details: walkingRes.data.error_message || '不明なエラー'
+          },
+          corsHeaders ? { status: mapped || 500, headers: corsHeaders } : { status: mapped || 500 }
+        );
       }
 
       // レスポンス整形
@@ -243,38 +237,25 @@ export async function POST(request: NextRequest) {
       };
 
       console.log('ルート検索成功:', { response, freeRouteResponse });
-      return NextResponse.json([response, freeRouteResponse], {
-        headers: {
-          ...getCorsHeaders(origin),
-          'Access-Control-Allow-Credentials': 'true',
-        }
-      });
+      return NextResponse.json([response, freeRouteResponse],
+        corsHeaders ? { status: 200, headers: corsHeaders } : { status: 200 }
+      );
 
     } catch (error) {
       console.error('ルート取得エラー:', error);
-      if (error instanceof Error) {
-        return NextResponse.json(
-          { error: 'ルート取得に失敗しました', details: error.message },
-          { status: 500 }
-        );
-      }
+      const message = error instanceof Error ? error.message : '不明なエラー';
       return NextResponse.json(
-        { error: 'ルート取得に失敗しました', details: '不明なエラーが発生しました' },
-        { status: 500 }
+        { error: 'ルート取得に失敗しました', details: message },
+        corsHeaders ? { status: 500, headers: corsHeaders } : { status: 500 }
       );
     }
 
   } catch (error) {
     console.error('ルート取得エラー:', error);
+    const message = error instanceof Error ? error.message : '不明なエラー';
     return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'ルート情報の取得に失敗しました',
-        details: error instanceof Error ? error.stack : undefined
-      },
-      { 
-        status: 500,
-        headers: getCorsHeaders(origin)
-      }
+      { error: 'ルート情報の取得に失敗しました', details: message },
+      corsHeaders ? { status: 500, headers: corsHeaders } : { status: 500 }
     );
   }
 }
