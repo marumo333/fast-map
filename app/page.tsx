@@ -205,7 +205,6 @@ export default function Home() {
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
     setShouldFitBounds(true);
-    setCanClickMap(false);
   };
 
   useEffect(() => {
