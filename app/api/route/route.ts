@@ -54,11 +54,15 @@ function decodePolyline(encoded: string): [number, number][] {
 }
 
 // プリフライトリクエストのハンドラ
-export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin');
-  return new NextResponse(null, { 
+export async function OPTIONS(req: Request) {
+  return new Response(null, {
     status: 204,
-    headers: getCorsHeaders(origin)
+    headers: {
+      'Access-Control-Allow-Origin': 'https://fast-map-five.vercel.app',
+      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    },
   });
 }
 
@@ -240,7 +244,10 @@ export async function POST(request: NextRequest) {
 
       console.log('ルート検索成功:', { response, freeRouteResponse });
       return NextResponse.json([response, freeRouteResponse], {
-        headers: getCorsHeaders(origin)
+        headers: {
+          ...getCorsHeaders(origin),
+          'Access-Control-Allow-Credentials': 'true',
+        }
       });
 
     } catch (error) {
