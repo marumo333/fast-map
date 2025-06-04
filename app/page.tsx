@@ -209,14 +209,18 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (startLocation) {
+    if (startLocation && !startLocation.address) {
       getCachedAddress(startLocation).then(address => {
-        setStartLocation(prev => prev ? { ...prev, address } : null);
+        if (address && startLocation.address !== address) {
+          setStartLocation(prev => prev ? { ...prev, address } : null);
+        }
       });
     }
-    if (endLocation) {
+    if (endLocation && !endLocation.address) {
       getCachedAddress(endLocation).then(address => {
-        setEndLocation(prev => prev ? { ...prev, address } : null);
+        if (address && endLocation.address !== address) {
+          setEndLocation(prev => prev ? { ...prev, address } : null);
+        }
       });
     }
   }, [startLocation, endLocation, getCachedAddress]);
