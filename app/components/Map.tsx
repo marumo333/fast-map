@@ -67,18 +67,6 @@ const Map: React.FC<MapProps> = ({
       directionsServiceRef.current = directionsService;
       directionsRendererRef.current = directionsRenderer;
 
-      map.addListener('click', (e: google.maps.MapMouseEvent) => {
-        if (e.latLng && onMapClick) {
-          const lat = e.latLng.lat();
-          const lng = e.latLng.lng();
-          console.log('地図クリック:', { lat, lng });  // デバッグ用
-          onMapClick({
-            lat,
-            lng
-          });
-        }
-      });
-
       // クリックイベントの伝播を停止
       map.addListener('click', (e: google.maps.MapMouseEvent) => {
         e.stop();
@@ -86,7 +74,7 @@ const Map: React.FC<MapProps> = ({
     } catch (error) {
       console.error('地図の初期化に失敗:', error);
     }
-  }, [onMapClick]);
+  }, []);
 
   useEffect(() => {
     initializeMap();
@@ -285,6 +273,32 @@ const Map: React.FC<MapProps> = ({
       );
     });
   }, [selectedRoute, suggestedRoute, handleRouteClick, showRouteOptions]);
+
+  // クリックリスナーを管理するuseEffect
+  useEffect(() => {
+    if (!mapInstanceRef.current || !onMapClick) return;
+
+    console.log('[MapComponent] クリックリスナーを更新します');
+
+    // 既存のクリックリスナーを解除
+    google.maps.event.clearListeners(mapInstanceRef.current, 'click');
+
+    // 新しいクリックリスナーを登録
+    const listener = mapInstanceRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
+      if (e.latLng) {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+        console.log('[MapComponent] 地図がクリックされました:', { lat, lng });
+        onMapClick({ lat, lng });
+      }
+    });
+
+    // クリーンアップ
+    return () => {
+      console.log('[MapComponent] クリックリスナーを解除します');
+      listener.remove();
+    };
+  }, [onMapClick]); // onMapClickが変更されるたびにリスナーを更新
 
   return (
     <div className="relative h-full">
