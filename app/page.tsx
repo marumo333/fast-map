@@ -163,18 +163,16 @@ export default function Home() {
   );
 
   // 現在地を取得
-  const handleGetCurrentLocation = async () => {
+  const handleGetCurrentLocation = async (): Promise<Location | null> => {
     try {
       setIsLoading(true);
       const location = await getCurrentLocation();
       if (location) {
         console.log('現在地を出発地として設定:', location);
-        // 現在地を即座に設定
         setStartLocation(location);
         setEndLocation(null);
         setSelectedRoute(null);
         
-        // 住所情報を非同期で更新
         try {
           const address = await getAddressFromLocation(location);
           if (address) {
@@ -184,9 +182,11 @@ export default function Home() {
           console.error('現在地の住所取得に失敗:', error);
         }
       }
+      return location;
     } catch (error) {
       console.error('位置情報の取得に失敗しました:', error);
       setError('位置情報の取得に失敗しました');
+      return null;
     } finally {
       setIsLoading(false);
     }
