@@ -11,6 +11,8 @@ interface MapProps {
   selectedRoute: google.maps.DirectionsRoute | null;
   suggestedRoute: google.maps.DirectionsRoute | null;
   onMapClick?: (location: Location) => void;
+  shouldFitBounds?: boolean;
+  onFitBoundsComplete?: () => void;
 }
 
 const Map: React.FC<MapProps> = ({
@@ -19,7 +21,9 @@ const Map: React.FC<MapProps> = ({
   onRouteSelect,
   selectedRoute,
   suggestedRoute,
-  onMapClick
+  onMapClick,
+  shouldFitBounds = false,
+  onFitBoundsComplete
 }) => {
   const { currentLocation } = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -100,15 +104,12 @@ const Map: React.FC<MapProps> = ({
 
     // 現在地のマーカーを設定
     if (currentLocation) {
-      console.log('現在地のマーカーを更新:', currentLocation);
       const newCurrentMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: currentLocation,
         content: createCustomMarker('現在地', '#3B82F6')
       });
       markersRef.current.current = newCurrentMarker;
-
-      // 地図の中心を現在地に設定
       mapInstanceRef.current.setCenter(currentLocation);
       mapInstanceRef.current.setZoom(15);
     }
@@ -125,12 +126,10 @@ const Map: React.FC<MapProps> = ({
 
     // 目的地のマーカーを設定（毎回更新）
     if (endLocation) {
-      // 既存の目的地マーカーをクリア
       if (markersRef.current.end) {
         markersRef.current.end.map = null;
         markersRef.current.end = undefined;
       }
-      // 新しい目的地マーカーを設定
       const endMarker = new AdvancedMarkerElement({
         map: mapInstanceRef.current,
         position: endLocation,
@@ -139,15 +138,15 @@ const Map: React.FC<MapProps> = ({
       markersRef.current.end = endMarker;
     }
 
-    // 出発地と目的地の両方が設定されていて、まだfitBoundsしていない場合のみfitBoundsを実行
-    if (startLocation && endLocation && !hasFitBounds) {
+    // 目的地選択時のみfitBoundsを実行
+    if (startLocation && endLocation && shouldFitBounds && onFitBoundsComplete) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(startLocation);
       bounds.extend(endLocation);
       mapInstanceRef.current.fitBounds(bounds);
-      setHasFitBounds(true);
+      onFitBoundsComplete();
     }
-  }, [currentLocation, startLocation, endLocation, hasFitBounds]);
+  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete]);
 
   // 目的地や出発地が変わったらfitBoundsフラグをリセット
   useEffect(() => {
