@@ -58,6 +58,7 @@ const Map: React.FC<MapProps> = ({
   const [routeOptions, setRouteOptions] = useState<React.ReactNode | null>(null);
   const [showRouteOptions, setShowRouteOptions] = useState(true);
   const [shouldSearchRoute, setShouldSearchRoute] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // 現在地が更新された時のみ出発地を更新
   useEffect(() => {
@@ -65,6 +66,7 @@ const Map: React.FC<MapProps> = ({
       onMapClick?.(currentLocation);
       setShouldUpdateStartLocation(false);
       setShouldSearchRoute(true);
+      setHasError(false); // エラーフラグをリセット
     }
   }, [currentLocation, shouldUpdateStartLocation, onMapClick]);
 
@@ -73,6 +75,7 @@ const Map: React.FC<MapProps> = ({
     if (shouldUpdateEndLocation && endLocation) {
       setShouldUpdateEndLocation(false);
       setShouldSearchRoute(true);
+      setHasError(false); // エラーフラグをリセット
     }
   }, [endLocation, shouldUpdateEndLocation]);
 
@@ -239,8 +242,8 @@ const Map: React.FC<MapProps> = ({
       return;
     }
 
-    // 既に検索中の場合は中断
-    if (isSearching || !shouldSearchRoute) {
+    // 既に検索中の場合、エラーが発生している場合、または検索が必要ない場合は中断
+    if (isSearching || hasError || !shouldSearchRoute) {
       return;
     }
 
@@ -291,6 +294,7 @@ const Map: React.FC<MapProps> = ({
     } catch (error) {
       console.error('ルート計算に失敗:', error);
       setRouteError('ルート計算に失敗しました。しばらく時間をおいて再度お試しください。');
+      setHasError(true); // エラーフラグを設定
       // エラー発生時はルートをクリア
       if (directionsRendererRef.current) {
         const emptyResult: google.maps.DirectionsResult = {
@@ -306,14 +310,14 @@ const Map: React.FC<MapProps> = ({
     } finally {
       setIsSearching(false);
     }
-  }, [startLocation, endLocation, onRouteSelect, isSearching]);
+  }, [startLocation, endLocation, onRouteSelect, isSearching, hasError, shouldSearchRoute]);
 
   // 位置情報が変更されたときのみルート検索を実行
   useEffect(() => {
-    if (startLocation && endLocation) {
+    if (startLocation && endLocation && !hasError) {
       executeRouteSearch();
     }
-  }, [startLocation, endLocation, executeRouteSearch]);
+  }, [startLocation, endLocation, executeRouteSearch, hasError]);
 
   const handleRouteClick = useCallback((route: google.maps.DirectionsRoute) => {
     if (!directionsRendererRef.current) return;
