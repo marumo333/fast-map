@@ -54,6 +54,9 @@ const Map: React.FC<MapProps> = ({
   const MAX_RETRIES = 3;
   const [shouldUpdateStartLocation, setShouldUpdateStartLocation] = useState(false);
   const [shouldUpdateEndLocation, setShouldUpdateEndLocation] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [routeOptions, setRouteOptions] = useState<React.ReactNode | null>(null);
+  const [showRouteOptions, setShowRouteOptions] = useState(true);
 
   // 現在地が更新された時のみ出発地を更新
   useEffect(() => {
@@ -227,10 +230,18 @@ const Map: React.FC<MapProps> = ({
     }
   }, [currentLocation, startLocation, endLocation, shouldFitBounds, updateMarkers]);
 
-  const calculateRoute = useCallback(async () => {
-    if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) return;
+  // ルート検索を実行する関数
+  const executeRouteSearch = useCallback(async () => {
+    if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) {
+      return;
+    }
 
-    // エラー状態をリセット
+    // 既に検索中の場合は中断
+    if (isSearching) {
+      return;
+    }
+
+    setIsSearching(true);
     setRouteError(null);
 
     try {
@@ -242,12 +253,9 @@ const Map: React.FC<MapProps> = ({
       });
 
       if (result.routes.length > 0) {
-        console.log('ルート計算結果:', result);
         directionsRendererRef.current.setDirections(result);
         onRouteSelect(result.routes[0]);
-        setRetryCount(0); // 成功したらリトライカウントをリセット
 
-        // 代替ルートを表示
         if (result.routes.length > 1) {
           const routeOptions = result.routes.map((route, index) => {
             const isShortest = index === 0;
@@ -257,32 +265,51 @@ const Map: React.FC<MapProps> = ({
               type: isShortest ? '最短ルート' : isLessCongested ? '混雑回避ルート' : 'その他のルート'
             };
           });
-          console.log('代替ルート:', routeOptions);
+          setRouteOptions(
+            <div className="space-y-2">
+              {routeOptions.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleRouteClick(option.route)}
+                  className="w-full p-2 text-left hover:bg-gray-100 rounded"
+                >
+                  <div className="font-medium">{option.type}</div>
+                  <div className="text-sm text-gray-600">
+                    距離: {option.route.legs[0]?.distance?.value ? (option.route.legs[0].distance.value / 1000).toFixed(1) : '不明'}km
+                    所要時間: {option.route.legs[0]?.duration?.value ? Math.ceil(option.route.legs[0].duration.value / 60) : '不明'}分
+                  </div>
+                </button>
+              ))}
+            </div>
+          );
         }
       }
     } catch (error) {
       console.error('ルート計算に失敗:', error);
-      setRetryCount(prev => prev + 1);
-      
-      if (retryCount < MAX_RETRIES) {
-        setRouteError(`ルート計算に失敗しました。再試行中... (${retryCount + 1}/${MAX_RETRIES})`);
-        // 3秒後に再試行
-        setTimeout(() => {
-          calculateRoute();
-        }, 3000);
-      } else {
-        setRouteError('ルート計算に失敗しました。しばらく時間をおいて再度お試しください。');
-        // リトライカウントをリセット
-        setRetryCount(0);
+      setRouteError('ルート計算に失敗しました。しばらく時間をおいて再度お試しください。');
+      // エラー発生時はルートをクリア
+      if (directionsRendererRef.current) {
+        const emptyResult: google.maps.DirectionsResult = {
+          routes: [],
+          request: {
+            origin: startLocation,
+            destination: endLocation,
+            travelMode: google.maps.TravelMode.DRIVING
+          }
+        };
+        directionsRendererRef.current.setDirections(emptyResult);
       }
+    } finally {
+      setIsSearching(false);
     }
-  }, [startLocation, endLocation, onRouteSelect, retryCount]);
+  }, [startLocation, endLocation, onRouteSelect, isSearching]);
 
+  // 位置情報が変更されたときのみルート検索を実行
   useEffect(() => {
     if (startLocation && endLocation) {
-      calculateRoute();
+      executeRouteSearch();
     }
-  }, [startLocation, endLocation, calculateRoute]);
+  }, [startLocation, endLocation, executeRouteSearch]);
 
   const handleRouteClick = useCallback((route: google.maps.DirectionsRoute) => {
     if (!directionsRendererRef.current) return;
@@ -301,61 +328,6 @@ const Map: React.FC<MapProps> = ({
       }
     }
   }, [onRouteSelect]);
-
-  const [showRouteOptions, setShowRouteOptions] = useState(true);
-
-  const routeOptions = useMemo(() => {
-    if (!showRouteOptions) return null;
-    
-    const directions = directionsRendererRef.current?.getDirections();
-    if (!directions?.routes) return null;
-
-    return directions.routes.map((route, index) => {
-      const isSelected = selectedRoute === route;
-      const isSuggested = suggestedRoute === route;
-      const hasToll = route.legs.some(leg => 
-        leg.steps.some(step => 'toll' in step && step.toll)
-      );
-      const routeType = index === 0 ? '最短ルート' : index === 1 ? '混雑回避ルート' : 'その他のルート';
-
-      return (
-        <div
-          key={index}
-          onClick={() => handleRouteClick(route)}
-          className={`p-4 mb-2 rounded-lg cursor-pointer transition-colors ${
-            isSelected
-              ? 'bg-blue-100 border-2 border-blue-500'
-              : isSuggested
-              ? 'bg-green-100 border-2 border-green-500'
-              : 'bg-white border border-gray-200 hover:bg-gray-50'
-          }`}
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="font-medium text-gray-900">
-                {routeType}
-              </div>
-              <div className="text-sm text-gray-600">
-                {route.legs[0].distance?.text} ({route.legs[0].duration?.text})
-              </div>
-              {hasToll && (
-                <div className="text-sm text-red-600 mt-1">
-                  有料道路を含む
-                </div>
-              )}
-            </div>
-            {isSelected && (
-              <div className="text-blue-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    });
-  }, [selectedRoute, suggestedRoute, handleRouteClick, showRouteOptions]);
 
   // クリックリスナーを管理するuseEffect
   useEffect(() => {
@@ -391,52 +363,6 @@ const Map: React.FC<MapProps> = ({
     };
   }, [onMapClick]); // onMapClickが変更されるたびにリスナーを更新
 
-  // ルート計算のuseEffectを最適化
-  useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
-
-    const calculateRouteWithDebounce = async () => {
-      if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) return;
-
-      try {
-        const result = await directionsServiceRef.current.route({
-          origin: startLocation,
-          destination: endLocation,
-          travelMode: google.maps.TravelMode.DRIVING,
-          provideRouteAlternatives: true
-        });
-
-        if (!isMounted) return;
-
-        if (result.routes.length > 0) {
-          directionsRendererRef.current.setDirections(result);
-          onRouteSelect(result.routes[0]);
-
-          if (result.routes.length > 1) {
-            const routeOptions = result.routes.map((route, index) => ({
-              route,
-              type: index === 0 ? '最短ルート' : index === 1 ? '混雑回避ルート' : 'その他のルート'
-            }));
-            console.log('代替ルート:', routeOptions);
-          }
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error('ルート計算に失敗:', error);
-        }
-      }
-    };
-
-    // デバウンス処理を追加
-    timeoutId = setTimeout(calculateRouteWithDebounce, 300);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [startLocation, endLocation, onRouteSelect]);
-
   return (
     <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full" />
@@ -445,7 +371,12 @@ const Map: React.FC<MapProps> = ({
           {routeError}
         </div>
       )}
-      {routeOptions && (
+      {isSearching && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 rounded shadow-lg z-10">
+          ルートを検索中...
+        </div>
+      )}
+      {routeOptions && showRouteOptions && (
         <div className="absolute bottom-4 left-4 right-4 max-h-[40vh] overflow-y-auto bg-white rounded-lg shadow-lg p-4">
           {routeOptions}
         </div>
