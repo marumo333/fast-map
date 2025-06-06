@@ -49,6 +49,9 @@ const Map: React.FC<MapProps> = ({
   }>({});
   const [hasFitBounds, setHasFitBounds] = useState(false);
   const [hasCenteredCurrent, setHasCenteredCurrent] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   const initializeMap = useCallback(async () => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -200,6 +203,9 @@ const Map: React.FC<MapProps> = ({
   const calculateRoute = useCallback(async () => {
     if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) return;
 
+    // エラー状態をリセット
+    setRouteError(null);
+
     try {
       const result = await directionsServiceRef.current.route({
         origin: startLocation,
@@ -212,6 +218,7 @@ const Map: React.FC<MapProps> = ({
         console.log('ルート計算結果:', result);
         directionsRendererRef.current.setDirections(result);
         onRouteSelect(result.routes[0]);
+        setRetryCount(0); // 成功したらリトライカウントをリセット
 
         // 代替ルートを表示
         if (result.routes.length > 1) {
@@ -228,8 +235,21 @@ const Map: React.FC<MapProps> = ({
       }
     } catch (error) {
       console.error('ルート計算に失敗:', error);
+      setRetryCount(prev => prev + 1);
+      
+      if (retryCount < MAX_RETRIES) {
+        setRouteError(`ルート計算に失敗しました。再試行中... (${retryCount + 1}/${MAX_RETRIES})`);
+        // 3秒後に再試行
+        setTimeout(() => {
+          calculateRoute();
+        }, 3000);
+      } else {
+        setRouteError('ルート計算に失敗しました。しばらく時間をおいて再度お試しください。');
+        // リトライカウントをリセット
+        setRetryCount(0);
+      }
     }
-  }, [startLocation, endLocation, onRouteSelect]);
+  }, [startLocation, endLocation, onRouteSelect, retryCount]);
 
   useEffect(() => {
     if (startLocation && endLocation) {
@@ -391,8 +411,13 @@ const Map: React.FC<MapProps> = ({
   }, [startLocation, endLocation, onRouteSelect]);
 
   return (
-    <div className="relative h-full">
+    <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full" />
+      {routeError && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded shadow-lg z-10">
+          {routeError}
+        </div>
+      )}
       {routeOptions && (
         <div className="absolute bottom-4 left-4 right-4 max-h-[40vh] overflow-y-auto bg-white rounded-lg shadow-lg p-4">
           {routeOptions}
