@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Route } from '../types/route';
 import { TrafficInfo } from '../utils/trafficPolling';
 import { api } from '../utils/api';
@@ -9,10 +9,19 @@ export const useRouteChangeDetection = (
   onRouteChange: (newRoute: Route) => void
 ) => {
   const [isChecking, setIsChecking] = useState(false);
+  const errorCountRef = useRef(0);
+  const MAX_ERROR_COUNT = 3;
 
   useEffect(() => {
     const checkRouteChange = async () => {
       if (isChecking || !currentRoute || !trafficInfo) return;
+      
+      // エラー回数が上限に達している場合は処理を中断
+      if (errorCountRef.current >= MAX_ERROR_COUNT) {
+        console.log('エラー回数が上限に達したため、ルート変更の確認を停止します');
+        return;
+      }
+
       setIsChecking(true);
 
       try {
@@ -34,8 +43,15 @@ export const useRouteChangeDetection = (
             onRouteChange(betterRoute);
           }
         }
+        // 成功したらエラーカウントをリセット
+        errorCountRef.current = 0;
       } catch (error) {
         console.error('ルート変更の確認中にエラーが発生しました:', error);
+        errorCountRef.current += 1;
+        
+        if (errorCountRef.current >= MAX_ERROR_COUNT) {
+          console.log('エラー回数が上限に達したため、ルート変更の確認を停止します');
+        }
       } finally {
         setIsChecking(false);
       }
