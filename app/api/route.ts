@@ -5,23 +5,17 @@ import type { NextRequest } from 'next/server';
 
 // 許可するオリジンを列挙
 const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
   'https://fast-map-five.vercel.app',
-  'https://fast-6ir0sv4r8-marumo333s-projects.vercel.app'
+  'http://localhost:3000'
 ];
 
 // CORSヘッダーを設定する関数
-function getCorsHeaders(origin: string | null): Record<string, string> | undefined {
-  if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
-    return undefined;
-  }
+function getCorsHeaders(origin: string) {
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '600',
-    'Vary': 'Origin',
   };
 }
 
@@ -59,19 +53,11 @@ function decodePolyline(encoded: string): [number, number][] {
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin');
   if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
-    return new Response(null, { status: 403 });
+    return new NextResponse(null, { status: 403 });
   }
-  const corsHeaders = getCorsHeaders(origin);
-  if (!corsHeaders) {
-    return new Response(null, { status: 204 });
-  }
-  return new Response(null, {
+  return new NextResponse(null, {
     status: 204,
-    headers: {
-      ...corsHeaders,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-    },
+    headers: getCorsHeaders(origin)
   });
 }
 

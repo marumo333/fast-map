@@ -66,6 +66,7 @@ export const searchRoute = async (
         end: { lat: end[0], lng: end[1] }
       }),
       credentials: 'include',
+      mode: 'cors'
     });
 
     if (!response.ok) {
