@@ -10,7 +10,9 @@ export const useRouteChangeDetection = (
 ) => {
   const [isChecking, setIsChecking] = useState(false);
   const errorCountRef = useRef(0);
+  const lastCheckTimeRef = useRef(0);
   const MAX_ERROR_COUNT = 3;
+  const MIN_CHECK_INTERVAL = 60000; // 1分間隔
 
   useEffect(() => {
     const checkRouteChange = async () => {
@@ -22,7 +24,14 @@ export const useRouteChangeDetection = (
         return;
       }
 
+      // 前回のチェックから一定時間経過していない場合はスキップ
+      const now = Date.now();
+      if (now - lastCheckTimeRef.current < MIN_CHECK_INTERVAL) {
+        return;
+      }
+
       setIsChecking(true);
+      lastCheckTimeRef.current = now;
 
       try {
         // 渋滞が発生した場合

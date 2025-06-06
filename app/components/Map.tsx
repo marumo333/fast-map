@@ -57,12 +57,14 @@ const Map: React.FC<MapProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [routeOptions, setRouteOptions] = useState<React.ReactNode | null>(null);
   const [showRouteOptions, setShowRouteOptions] = useState(true);
+  const [shouldSearchRoute, setShouldSearchRoute] = useState(false);
 
   // 現在地が更新された時のみ出発地を更新
   useEffect(() => {
     if (shouldUpdateStartLocation && currentLocation) {
       onMapClick?.(currentLocation);
       setShouldUpdateStartLocation(false);
+      setShouldSearchRoute(true);
     }
   }, [currentLocation, shouldUpdateStartLocation, onMapClick]);
 
@@ -70,6 +72,7 @@ const Map: React.FC<MapProps> = ({
   useEffect(() => {
     if (shouldUpdateEndLocation && endLocation) {
       setShouldUpdateEndLocation(false);
+      setShouldSearchRoute(true);
     }
   }, [endLocation, shouldUpdateEndLocation]);
 
@@ -237,12 +240,13 @@ const Map: React.FC<MapProps> = ({
     }
 
     // 既に検索中の場合は中断
-    if (isSearching) {
+    if (isSearching || !shouldSearchRoute) {
       return;
     }
 
     setIsSearching(true);
     setRouteError(null);
+    setShouldSearchRoute(false);
 
     try {
       const result = await directionsServiceRef.current.route({
