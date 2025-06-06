@@ -8,6 +8,12 @@ type HeaderProps = {
 };
 
 const Header: React.FC<HeaderProps> = ({ onToggleMenu, onGetCurrentLocation }) => {
+  const handleGetCurrentLocation = () => {
+    onGetCurrentLocation();
+    // Mapコンポーネントにメッセージを送信
+    window.postMessage('getCurrentLocation', '*');
+  };
+
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleMenu, onGetCurrentLocation }) =
           </div>
           <div className="flex items-center space-x-4">
             <button
-              onClick={onGetCurrentLocation}
+              onClick={handleGetCurrentLocation}
               className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
             >
               現在地を取得

@@ -52,6 +52,47 @@ const Map: React.FC<MapProps> = ({
   const [routeError, setRouteError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
+  const [shouldUpdateStartLocation, setShouldUpdateStartLocation] = useState(false);
+  const [shouldUpdateEndLocation, setShouldUpdateEndLocation] = useState(false);
+
+  // 現在地が更新された時のみ出発地を更新
+  useEffect(() => {
+    if (shouldUpdateStartLocation && currentLocation) {
+      onMapClick?.(currentLocation);
+      setShouldUpdateStartLocation(false);
+    }
+  }, [currentLocation, shouldUpdateStartLocation, onMapClick]);
+
+  // 目的地が更新された時のみ目的地を更新
+  useEffect(() => {
+    if (shouldUpdateEndLocation && endLocation) {
+      setShouldUpdateEndLocation(false);
+    }
+  }, [endLocation, shouldUpdateEndLocation]);
+
+  // 現在地取得ボタンが押された時のハンドラ
+  const handleGetCurrentLocation = useCallback(() => {
+    setShouldUpdateStartLocation(true);
+  }, []);
+
+  // 目的地選択時のハンドラ
+  const handleEndLocationSelect = useCallback(() => {
+    setShouldUpdateEndLocation(true);
+  }, []);
+
+  // 現在地取得ボタンのイベントリスナーを設定
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === 'getCurrentLocation') {
+        handleGetCurrentLocation();
+      } else if (event.data === 'selectEndLocation') {
+        handleEndLocationSelect();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handleGetCurrentLocation, handleEndLocationSelect]);
 
   const initializeMap = useCallback(async () => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -122,46 +163,32 @@ const Map: React.FC<MapProps> = ({
       }
     }
 
-    // 出発地のマーカーを設定（位置が変わったときだけ更新）
-    const startPos = getLatLngFromPosition(markersRef.current.start?.position);
-    const shouldUpdateStart = !markersRef.current.start || 
-      !startLocation || 
-      (startPos.lat !== startLocation.lat || startPos.lng !== startLocation.lng);
-
-    if (shouldUpdateStart) {
+    // 出発地のマーカーを設定（現在地取得ボタンが押された時のみ更新）
+    if (shouldUpdateStartLocation && startLocation) {
       if (markersRef.current.start) {
         markersRef.current.start.map = null;
         markersRef.current.start = undefined;
       }
-      if (startLocation) {
-        const startMarker = new AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: startLocation,
-          content: createCustomMarker('出発地', '#10B981')
-        });
-        markersRef.current.start = startMarker;
-      }
+      const startMarker = new AdvancedMarkerElement({
+        map: mapInstanceRef.current,
+        position: startLocation,
+        content: createCustomMarker('出発地', '#10B981')
+      });
+      markersRef.current.start = startMarker;
     }
 
-    // 目的地のマーカーを設定（位置が変わったときだけ更新）
-    const endPos = getLatLngFromPosition(markersRef.current.end?.position);
-    const shouldUpdateEnd = !markersRef.current.end || 
-      !endLocation || 
-      (endPos.lat !== endLocation.lat || endPos.lng !== endLocation.lng);
-
-    if (shouldUpdateEnd) {
+    // 目的地のマーカーを設定（目的地選択時のみ更新）
+    if (shouldUpdateEndLocation && endLocation) {
       if (markersRef.current.end) {
         markersRef.current.end.map = null;
         markersRef.current.end = undefined;
       }
-      if (endLocation) {
-        const endMarker = new AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: endLocation,
-          content: createCustomMarker('目的地', '#EF4444')
-        });
-        markersRef.current.end = endMarker;
-      }
+      const endMarker = new AdvancedMarkerElement({
+        map: mapInstanceRef.current,
+        position: endLocation,
+        content: createCustomMarker('目的地', '#EF4444')
+      });
+      markersRef.current.end = endMarker;
     }
 
     // 目的地選択時のみfitBoundsを一度だけ実行
@@ -173,7 +200,7 @@ const Map: React.FC<MapProps> = ({
       setHasFitBounds(true);
       onFitBoundsComplete?.();
     }
-  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete, hasCenteredCurrent, hasFitBounds]);
+  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete, hasCenteredCurrent, hasFitBounds, shouldUpdateStartLocation, shouldUpdateEndLocation]);
 
   // 現在地が変わったときだけセンターフラグをリセット
   useEffect(() => {

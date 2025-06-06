@@ -251,6 +251,8 @@ export default function Home() {
     setEndLocation(newEndLocation);
     setSelectedRoute(null);
     setShouldFitBounds(true);
+    // 目的地選択時にメッセージを送信
+    window.postMessage('selectEndLocation', '*');
   }, [canClickMap, startLocation]);
 
   return (
