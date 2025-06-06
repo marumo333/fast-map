@@ -119,16 +119,13 @@ const Map: React.FC<MapProps> = ({
       }
     }
 
-    // 出発地のマーカーを設定（毎回更新→位置が変わったときだけ更新）
+    // 出発地のマーカーを設定（位置が変わったときだけ更新）
     const startPos = getLatLngFromPosition(markersRef.current.start?.position);
-    if (
-      markersRef.current.start &&
-      startLocation &&
-      startPos.lat === startLocation.lat &&
-      startPos.lng === startLocation.lng
-    ) {
-      // 位置が同じなら再生成しない
-    } else {
+    const shouldUpdateStart = !markersRef.current.start || 
+      !startLocation || 
+      (startPos.lat !== startLocation.lat || startPos.lng !== startLocation.lng);
+
+    if (shouldUpdateStart) {
       if (markersRef.current.start) {
         markersRef.current.start.map = null;
         markersRef.current.start = undefined;
@@ -143,16 +140,13 @@ const Map: React.FC<MapProps> = ({
       }
     }
 
-    // 目的地のマーカーを設定（毎回更新→位置が変わったときだけ更新）
+    // 目的地のマーカーを設定（位置が変わったときだけ更新）
     const endPos = getLatLngFromPosition(markersRef.current.end?.position);
-    if (
-      markersRef.current.end &&
-      endLocation &&
-      endPos.lat === endLocation.lat &&
-      endPos.lng === endLocation.lng
-    ) {
-      // 位置が同じなら再生成しない
-    } else {
+    const shouldUpdateEnd = !markersRef.current.end || 
+      !endLocation || 
+      (endPos.lat !== endLocation.lat || endPos.lng !== endLocation.lng);
+
+    if (shouldUpdateEnd) {
       if (markersRef.current.end) {
         markersRef.current.end.map = null;
         markersRef.current.end = undefined;
@@ -168,14 +162,15 @@ const Map: React.FC<MapProps> = ({
     }
 
     // 目的地選択時のみfitBoundsを一度だけ実行
-    if (startLocation && endLocation && shouldFitBounds) {
+    if (startLocation && endLocation && shouldFitBounds && !hasFitBounds) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(startLocation);
       bounds.extend(endLocation);
       mapInstanceRef.current.fitBounds(bounds);
+      setHasFitBounds(true);
       onFitBoundsComplete?.();
     }
-  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete, hasCenteredCurrent]);
+  }, [currentLocation, startLocation, endLocation, shouldFitBounds, onFitBoundsComplete, hasCenteredCurrent, hasFitBounds]);
 
   // 現在地が変わったときだけセンターフラグをリセット
   useEffect(() => {
@@ -189,9 +184,18 @@ const Map: React.FC<MapProps> = ({
     }
   }, [shouldFitBounds]);
 
+  // マーカーの更新を最適化
   useEffect(() => {
-    updateMarkers();
-  }, [updateMarkers]);
+    const shouldUpdate = 
+      currentLocation !== null || 
+      startLocation !== null || 
+      endLocation !== null || 
+      shouldFitBounds;
+
+    if (shouldUpdate) {
+      updateMarkers();
+    }
+  }, [currentLocation, startLocation, endLocation, shouldFitBounds, updateMarkers]);
 
   const calculateRoute = useCallback(async () => {
     if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) return;
@@ -310,27 +314,81 @@ const Map: React.FC<MapProps> = ({
   useEffect(() => {
     if (!mapInstanceRef.current || !onMapClick) return;
 
-    console.log('[MapComponent] クリックリスナーを更新します');
+    const map = mapInstanceRef.current;
+    let isListenerActive = true;
 
-    // 既存のクリックリスナーを解除
-    google.maps.event.clearListeners(mapInstanceRef.current, 'click');
-
-    // 新しいクリックリスナーを登録
-    const listener = mapInstanceRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
+    const handleClick = (e: google.maps.MapMouseEvent) => {
+      if (!isListenerActive) return;
+      
       if (e.latLng) {
         const lat = e.latLng.lat();
         const lng = e.latLng.lng();
-        console.log('[MapComponent] 地図がクリックされました:', { lat, lng });
         onMapClick({ lat, lng });
       }
+    };
+
+    // クリックイベントの伝播を停止
+    map.addListener('click', (e: google.maps.MapMouseEvent) => {
+      e.stop();
     });
+
+    // 新しいクリックリスナーを登録
+    const listener = map.addListener('click', handleClick);
 
     // クリーンアップ
     return () => {
-      console.log('[MapComponent] クリックリスナーを解除します');
-      listener.remove();
+      isListenerActive = false;
+      if (listener) {
+        google.maps.event.removeListener(listener);
+      }
     };
   }, [onMapClick]); // onMapClickが変更されるたびにリスナーを更新
+
+  // ルート計算のuseEffectを最適化
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    const calculateRouteWithDebounce = async () => {
+      if (!directionsServiceRef.current || !directionsRendererRef.current || !startLocation || !endLocation) return;
+
+      try {
+        const result = await directionsServiceRef.current.route({
+          origin: startLocation,
+          destination: endLocation,
+          travelMode: google.maps.TravelMode.DRIVING,
+          provideRouteAlternatives: true
+        });
+
+        if (!isMounted) return;
+
+        if (result.routes.length > 0) {
+          directionsRendererRef.current.setDirections(result);
+          onRouteSelect(result.routes[0]);
+
+          if (result.routes.length > 1) {
+            const routeOptions = result.routes.map((route, index) => ({
+              route,
+              type: index === 0 ? '最短ルート' : index === 1 ? '混雑回避ルート' : 'その他のルート'
+            }));
+            console.log('代替ルート:', routeOptions);
+          }
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('ルート計算に失敗:', error);
+        }
+      }
+    };
+
+    // デバウンス処理を追加
+    timeoutId = setTimeout(calculateRouteWithDebounce, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [startLocation, endLocation, onRouteSelect]);
 
   return (
     <div className="relative h-full">

@@ -118,4 +118,74 @@ export async function GET(
       }
     );
   }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { routeId: string } }
+) {
+  const origin = request.headers.get('origin');
+  
+  // オリジンの検証
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return NextResponse.json(
+      { error: '許可されていないオリジンからのリクエストです' },
+      { 
+        status: 403,
+        headers: getCorsHeaders(origin)
+      }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const routeId = parseInt(params.routeId, 10);
+
+    if (isNaN(routeId)) {
+      return NextResponse.json(
+        { error: '無効なルートIDです' },
+        { 
+          status: 400,
+          headers: getCorsHeaders(origin)
+        }
+      );
+    }
+
+    // ルート情報を更新
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/route/${routeId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('ルート情報の更新に失敗しました');
+    }
+
+    const data = await response.json();
+
+    // キャッシュを更新
+    routeCache.set(routeId, {
+      route: data,
+      timestamp: Date.now()
+    });
+
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(origin)
+    });
+  } catch (error) {
+    console.error('ルート情報更新エラー:', error);
+    return NextResponse.json(
+      { error: 'ルート情報の更新に失敗しました' },
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
+    );
+  }
 } 
