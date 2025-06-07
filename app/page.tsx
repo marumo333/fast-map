@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
-import { Route } from './types/route';
+import type { RouteInfo } from './types/route';
 import { useRouteChangeDetection } from './hooks/useRouteChangeDetection';
 import RouteNotification from './components/RouteNotification';
 import RouteInfo from './components/RouteInfo';
@@ -24,14 +24,7 @@ type Notification = {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
-  alternativeRoute?: Route;
-};
-
-// RouteInfo型を定義
-type RouteInfo = {
-  distance: string;
-  duration: string;
-  steps: string[];
+  alternativeRoute?: RouteInfo;
 };
 
 // 位置情報の型を拡張
@@ -65,7 +58,7 @@ export default function Home() {
   const { isDarkMode } = useTheme();
   const [startLocation, setStartLocation] = useState<LocationWithAddress | null>(null);
   const [endLocation, setEndLocation] = useState<LocationWithAddress | null>(null);
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<RouteInfo | null>(null);
   const [trafficInfo, setTrafficInfo] = useState<any>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [showTrafficInfo, setShowTrafficInfo] = useState(false);
@@ -138,7 +131,7 @@ export default function Home() {
     endLocation ?? undefined
   );
 
-  const handleRouteChange = useCallback((newRoute: Route) => {
+  const handleRouteChange = useCallback((newRoute: RouteInfo) => {
     setSelectedRoute(newRoute);
     setShowNotification(true);
   }, []);
@@ -234,7 +227,7 @@ export default function Home() {
       return;
     }
 
-    const selectedRoute: Route = {
+    const selectedRoute: RouteInfo = {
       routeId: 1,
       path: route.overview_path.map(latLng => [latLng.lat(), latLng.lng()]),
       distance: route.legs[0].distance.value / 1000,
@@ -332,7 +325,7 @@ export default function Home() {
                 />
                 <RouteRecommendation
                   routes={[selectedRoute]}
-                  onSelect={(route) => setSelectedRoute(route as Route)}
+                  onSelect={(route) => setSelectedRoute(route as RouteInfo)}
                   onClose={() => {
                     // おすすめルートだけを閉じる
                     const routeInfo = document.querySelector('.route-recommendations');

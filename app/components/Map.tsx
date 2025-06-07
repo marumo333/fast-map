@@ -371,6 +371,31 @@ const Map: React.FC<MapProps> = ({
     };
   }, [onMapClick]); // onMapClickが変更されるたびにリスナーを更新
 
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (!canClickMap || !e.latLng) return;
+
+    const location = {
+      lat: e.latLng.lat(),
+      lng: e.latLng.lng()
+    };
+
+    if (!startLocation) {
+      setStartLocation(location);
+      getCachedAddress(location).then(address => {
+        if (address) {
+          setStartAddress(address);
+        }
+      });
+    } else {
+      setEndLocation(location);
+      getCachedAddress(location).then(address => {
+        if (address) {
+          setEndAddress(address);
+        }
+      });
+    }
+  }, [canClickMap, startLocation, getCachedAddress, setStartLocation, setEndLocation, setStartAddress, setEndAddress]);
+
   return (
     <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full" />

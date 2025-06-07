@@ -87,63 +87,57 @@ export const useGeolocation = (): UseGeolocationReturn => {
   };
 
   useEffect(() => {
-    if (!isWatching) return;
+    if (isWatching) {
+      watchId.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const now = Date.now();
+          console.log('位置情報更新チェック:', {
+            lastUpdate: new Date(lastUpdateTime).toLocaleTimeString(),
+            now: new Date(now).toLocaleTimeString(),
+            diff: (now - lastUpdateTime) / 1000,
+            shouldUpdate: now - lastUpdateTime >= UPDATE_INTERVAL
+          });
 
-    if (watchId) {
-      navigator.geolocation.clearWatch(watchId);
+          if (now - lastUpdateTime >= UPDATE_INTERVAL) {
+            const location: Location = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            console.log('位置情報を更新:', location);
+            setCurrentLocation(location);
+            setLastUpdateTime(now);
+          }
+        },
+        (error) => {
+          console.error('位置情報の監視に失敗:', error);
+          let errorMessage = '位置情報の取得に失敗しました';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = '位置情報の使用が許可されていません';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = '位置情報を取得できません';
+              break;
+            case error.TIMEOUT:
+              errorMessage = '位置情報の取得がタイムアウトしました';
+              break;
+          }
+          setError(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 30000,  // 30秒に延長
+          maximumAge: UPDATE_INTERVAL
+        }
+      );
     }
 
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        const now = Date.now();
-        console.log('位置情報更新チェック:', {
-          lastUpdate: new Date(lastUpdateTime).toLocaleTimeString(),
-          now: new Date(now).toLocaleTimeString(),
-          diff: (now - lastUpdateTime) / 1000,
-          shouldUpdate: now - lastUpdateTime >= UPDATE_INTERVAL
-        });
-
-        if (now - lastUpdateTime >= UPDATE_INTERVAL) {
-          const location: Location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          console.log('位置情報を更新:', location);
-          setCurrentLocation(location);
-          setLastUpdateTime(now);
-        }
-      },
-      (error) => {
-        console.error('位置情報の監視に失敗:', error);
-        let errorMessage = '位置情報の取得に失敗しました';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = '位置情報の使用が許可されていません';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = '位置情報を取得できません';
-            break;
-          case error.TIMEOUT:
-            errorMessage = '位置情報の取得がタイムアウトしました';
-            break;
-        }
-        setError(errorMessage);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 30000,  // 30秒に延長
-        maximumAge: UPDATE_INTERVAL
-      }
-    );
-
-    setWatchId(id);
-
     return () => {
-      if (id) {
-        navigator.geolocation.clearWatch(id);
+      if (watchId.current) {
+        navigator.geolocation.clearWatch(watchId.current);
       }
     };
-  }, [isWatching, lastUpdateTime]);
+  }, [isWatching, lastUpdateTime, watchId]);
 
   return {
     currentLocation,
