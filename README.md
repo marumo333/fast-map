@@ -1,20 +1,20 @@
 # Fast-Map
 
-Fast-Mapは、Google Maps APIを使用した高速なルート検索アプリケーションです。
+Fast-Mapは、Google Maps Platformを活用した高速なルート検索アプリケーションです。Next.js、TypeScript、Tailwind CSSを使用して構築されています。
 
 ## 主な機能
 
-- ユーザー認証（ログイン/ログアウト）
-- 出発地と目的地の検索（Google Places Autocomplete）
-- 車でのルート検索（所要時間、距離、混雑状況）
-- 徒歩でのルート検索（所要時間、距離）
-- リアルタイムの交通情報表示
-- 複数のルート選択肢の表示（最短ルート/混雑回避ルート）
-- レスポンシブデザイン
-- ダークモード/ライトモードの切り替え
-- 現在地の自動取得と表示
-- 交通情報のリアルタイム通知
-- 代替ルートの提案機能
+- 🗺️ Google Maps Platformを使用した高精度な地図表示
+- 🚗 リアルタイムの交通情報に基づく最適なルート検索
+- 📍 現在地の自動取得と位置情報の利用
+- 🔄 ルート変更の自動検出と通知
+- 🎯 目的地までの所要時間の正確な予測
+- 🔔 交通状況の変化に応じたリアルタイム通知
+- 🔒 ユーザー認証機能（ログイン・ログアウト）
+  - メールアドレスとパスワードによる認証
+  - セッション管理（Cookieベース）
+  - 未認証ユーザーの自動リダイレクト
+  - ナビゲーションバーからのログアウト機能
 
 ## 認証機能
 
@@ -76,25 +76,22 @@ Fast-Mapは、Google Maps APIを使用した高速なルート検索アプリケ
 
 ## 技術スタック
 
-- Next.js 14
-- TypeScript
-- Google Maps API
-- Tailwind CSS
-- Redux Toolkit（状態管理）
-- React Cookie（クッキー管理）
-- Vercel（デプロイ）
+- **フロントエンド**: Next.js 14, TypeScript, Tailwind CSS
+- **状態管理**: Redux Toolkit
+- **地図API**: Google Maps Platform
+- **認証**: カスタム認証システム
+- **デプロイ**: Vercel
 
 ## デプロイ
 
-アプリケーションはVercelでデプロイされています：
-[Fast-Map on Vercel](https://fast-map-five.vercel.app)
+このアプリケーションはVercelにデプロイされています。mainブランチへのプッシュが自動的にデプロイをトリガーします。
 
 ## 環境変数
 
 以下の環境変数を設定する必要があります：
 
 ```env
-GOOGLE_MAPS_API_KEY=your_api_key_here
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key
 ```
 
 ## 開発環境のセットアップ
@@ -102,6 +99,7 @@ GOOGLE_MAPS_API_KEY=your_api_key_here
 1. リポジトリのクローン
 ```bash
 git clone https://github.com/marumo333/fast-map.git
+cd fast-map
 ```
 
 2. 依存関係のインストール
@@ -110,7 +108,10 @@ npm install
 ```
 
 3. 環境変数の設定
-`.env.local`ファイルを作成し、必要な環境変数を設定
+`.env.local`ファイルを作成し、必要な環境変数を設定：
+```
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key
+```
 
 4. 開発サーバーの起動
 ```bash
