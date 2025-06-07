@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocation } from '../contexts/LocationContext';
 import { Location } from '../types/location';
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/authSlice';
+import { useCookies } from 'react-cookie';
 
 type NavbarProps = {
   onGetCurrentLocation: () => Promise<Location | null>;
@@ -14,6 +17,8 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { isGettingLocation, locationError, clearLocationError } = useLocation();
+  const dispatch = useDispatch();
+  const [cookies, setCookie, removeCookie] = useCookies(['userId']);
 
   useEffect(() => {
     clearLocationError();
@@ -22,6 +27,12 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
   const handleGetLocation = async () => {
     await onGetCurrentLocation();
     router.push('/');
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    removeCookie('userId', { path: '/' });
+    router.push('/login');
   };
 
   return (
@@ -70,6 +81,12 @@ const Navbar: React.FC<NavbarProps> = ({ onGetCurrentLocation }) => {
             >
               お問い合わせ
             </Link>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50"
+            >
+              ログアウト
+            </button>
           </div>
         </div>
       </div>
