@@ -79,6 +79,13 @@ export default function Home() {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
 
+  // ログイン状態のチェック
+  useEffect(() => {
+    if (!cookies.userId) {
+      router.push('/login');
+    }
+  }, [cookies.userId, router]);
+
   const getCachedAddress = useCallback(async (location: Location) => {
     const key = `${location.lat},${location.lng}`;
     if (addressCache.current.has(key)) {
