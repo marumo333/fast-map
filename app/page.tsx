@@ -13,6 +13,11 @@ import Navbar from './components/Navbar';
 import { useTheme } from './settings/ThemeContext';
 import { getAddressFromLocation } from './utils/geocoding';
 import { checkSearchLimit, incrementSearchCount, getRemainingSearches } from './utils/searchLimit';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from './store/store';
+import { logout } from './store/authSlice';
+import { useCookies } from 'react-cookie';
+import { useRouter } from 'next/navigation';
 
 // Notification型を定義
 type Notification = {
@@ -75,6 +80,10 @@ export default function Home() {
   const [shouldFitBounds, setShouldFitBounds] = useState(false);
   // 住所キャッシュ
   const addressCache = useRef<Map<string, string>>(new Map());
+  const dispatch = useDispatch();
+  const [cookies, setCookie, removeCookie] = useCookies(['userId']);
+  const router = useRouter();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const getCachedAddress = useCallback(async (location: Location) => {
     const key = `${location.lat},${location.lng}`;
@@ -267,6 +276,12 @@ export default function Home() {
     // 検索回数をインクリメント
     incrementSearchCount();
   }, [canClickMap, startLocation]);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    removeCookie('userId', { path: '/' });
+    router.push('/login');
+  };
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>

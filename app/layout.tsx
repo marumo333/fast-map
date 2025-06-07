@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { Providers } from './providers';
 import { ThemeProvider } from './settings/ThemeContext';
 import ClientLayout from './components/ClientLayout';
 
@@ -19,11 +20,13 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={inter.className}>
-        <ThemeProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
