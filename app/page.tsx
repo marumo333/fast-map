@@ -12,6 +12,7 @@ import { useLocation } from './contexts/LocationContext';
 import Navbar from './components/Navbar';
 import { useTheme } from './settings/ThemeContext';
 import { getAddressFromLocation } from './utils/geocoding';
+import { checkSearchLimit, incrementSearchCount, getRemainingSearches } from './utils/searchLimit';
 
 // Notification型を定義
 type Notification = {
@@ -245,6 +246,13 @@ export default function Home() {
       return;
     }
 
+    // 検索回数の制限をチェック
+    if (!checkSearchLimit()) {
+      const remaining = getRemainingSearches();
+      alert(`本日の検索回数の上限（3回）に達しました。残り${remaining}回です。`);
+      return;
+    }
+
     // ここまできたら「目的地として」endLocationをセット
     console.log('目的地を設定します:', { lat, lng });
     const newEndLocation = { lat, lng };
@@ -253,6 +261,8 @@ export default function Home() {
     setShouldFitBounds(true);
     // 目的地選択時にメッセージを送信
     window.postMessage('selectEndLocation', '*');
+    // 検索回数をインクリメント
+    incrementSearchCount();
   }, [canClickMap, startLocation]);
 
   return (
