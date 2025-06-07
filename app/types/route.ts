@@ -25,11 +25,20 @@ export interface RouteInfo {
 }
 
 export interface Route {
+  routeId: number;
   path: [number, number][];
   distance: number;
-  duration: number;
-  durationInTraffic?: number;
-  routeId: number;
+  duration: {
+    driving: number | null;
+    walking: number;
+  };
+  duration_in_traffic: number;
   isTollRoad: boolean;
-  toll: number;
+  mode: 'driving' | 'walking';
+  trafficInfo: {
+    duration_in_traffic: number;
+    traffic_level: string;
+  }[];
+  tollFee?: number;
+  estimatedTime?: number;
 } 

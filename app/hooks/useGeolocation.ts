@@ -88,7 +88,7 @@ export const useGeolocation = (): UseGeolocationReturn => {
 
   useEffect(() => {
     if (isWatching) {
-      watchId.current = navigator.geolocation.watchPosition(
+      const id = navigator.geolocation.watchPosition(
         (position) => {
           const now = Date.now();
           console.log('位置情報更新チェック:', {
@@ -130,14 +130,15 @@ export const useGeolocation = (): UseGeolocationReturn => {
           maximumAge: UPDATE_INTERVAL
         }
       );
-    }
+      setWatchId(id);
 
-    return () => {
-      if (watchId.current) {
-        navigator.geolocation.clearWatch(watchId.current);
-      }
-    };
-  }, [isWatching, lastUpdateTime, watchId]);
+      return () => {
+        if (id) {
+          navigator.geolocation.clearWatch(id);
+        }
+      };
+    }
+  }, [isWatching, lastUpdateTime]);
 
   return {
     currentLocation,

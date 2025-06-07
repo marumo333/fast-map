@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { Route } from '../types/route';
+import { RouteInfo } from '../types/route';
 import { TrafficInfo } from '../utils/trafficPolling';
 import { api } from '../utils/api';
 
 export const useRouteChangeDetection = (
-  currentRoute: Route | undefined,
+  currentRoute: RouteInfo | undefined,
   trafficInfo: TrafficInfo | null,
-  onRouteChange: (newRoute: Route) => void
+  onRouteChange: (newRoute: RouteInfo) => void
 ) => {
   const [isChecking, setIsChecking] = useState(false);
   const errorCountRef = useRef(0);
@@ -45,7 +45,7 @@ export const useRouteChangeDetection = (
           // 現在のルートより所要時間が短い代替ルートを探す
           const betterRoute = alternativeRoutes.find(route =>
             route.routeId !== currentRoute.routeId &&
-            (route.durationInTraffic || route.duration) < (currentRoute.durationInTraffic || currentRoute.duration) * 0.9 // 10%以上短縮される場合
+            ((route.duration_in_traffic || (route.duration?.driving ?? 0))) < ((currentRoute.duration_in_traffic || (currentRoute.duration?.driving ?? 0))) * 0.9 // 10%以上短縮される場合
           );
 
           if (betterRoute) {

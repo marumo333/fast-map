@@ -4,7 +4,10 @@ type Route = {
   routeId: number;
   path: [number, number][];
   distance: number;
-  duration: number;
+  duration: {
+    driving: number | null;
+    walking: number;
+  };
 };
 
 type RouteRecommendationProps = {
@@ -71,7 +74,7 @@ const RouteRecommendation: React.FC<RouteRecommendationProps> = ({
                   距離: {(route.distance / 1000).toFixed(1)}km
                 </p>
                 <p className="text-sm">
-                  所要時間: {Math.round(route.duration / 60)}分
+                  所要時間: {Math.round(route.duration.driving || 0 / 60)}分
                 </p>
               </div>
             </div>

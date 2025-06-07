@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import { Location } from '../types/location';
-import { Route } from '../types/route';
+import { RouteInfo } from '../types/route';
 import { useGeolocation } from '../hooks/useGeolocation';
 
 // GeolocationPositionの型定義
@@ -24,8 +24,8 @@ interface LocationContextType {
   setCurrentLocation: (location: Location | null) => void;
   destination: Location | null;
   setDestination: (location: Location | null) => void;
-  route: Route | null;
-  setRoute: (route: Route | null) => void;
+  route: RouteInfo | null;
+  setRoute: (route: RouteInfo | null) => void;
   getCurrentLocation: () => Promise<Location | null>;
   isGettingLocation: boolean;
   locationError: string | null;
@@ -45,7 +45,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   } = useGeolocation();
 
   const [destination, setDestination] = React.useState<Location | null>(null);
-  const [route, setRoute] = React.useState<Route | null>(null);
+  const [route, setRoute] = React.useState<RouteInfo | null>(null);
   const [isLocationInitialized, setIsLocationInitialized] = React.useState(false);
 
   // currentLocationの変更を監視し、初期化状態を管理

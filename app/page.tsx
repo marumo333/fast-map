@@ -3,9 +3,10 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTrafficPolling } from './utils/trafficPolling';
 import { Location } from './types/location';
 import type { RouteInfo } from './types/route';
+import type { Route } from './types/route';
 import { useRouteChangeDetection } from './hooks/useRouteChangeDetection';
 import RouteNotification from './components/RouteNotification';
-import RouteInfo from './components/RouteInfo';
+import RouteInfoComponent from './components/RouteInfo';
 import RouteRecommendation from './components/RouteRecomendation';
 import dynamic from 'next/dynamic';
 import { useLocation } from './contexts/LocationContext';
@@ -137,9 +138,9 @@ export default function Home() {
   }, []);
 
   useRouteChangeDetection(
-    selectedRoute ?? undefined,
+    selectedRoute as unknown as Route | undefined,
     trafficInfo,
-    handleRouteChange
+    handleRouteChange as unknown as (newRoute: Route) => void
   );
 
   const handleGetCurrentLocation = async (): Promise<Location | null> => {
@@ -231,10 +232,15 @@ export default function Home() {
       routeId: 1,
       path: route.overview_path.map(latLng => [latLng.lat(), latLng.lng()]),
       distance: route.legs[0].distance.value / 1000,
-      duration: route.legs[0].duration.value / 60,
-      durationInTraffic: route.legs[0].duration_in_traffic?.value ? route.legs[0].duration_in_traffic.value / 60 : undefined,
+      duration: {
+        driving: route.legs[0].duration.value / 60,
+        walking: route.legs[0].duration.value / 60 * 1.5
+      },
+      duration_in_traffic: route.legs[0].duration_in_traffic?.value ? route.legs[0].duration_in_traffic.value / 60 : 0,
       isTollRoad: false,
-      toll: 0
+      mode: 'driving',
+      trafficInfo: [],
+      tollFee: 0
     };
     setSelectedRoute(selectedRoute);
   };
@@ -294,12 +300,12 @@ export default function Home() {
             {startLocation && endLocation && (
               <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
-                <RouteInfo
+                <RouteInfoComponent
                   routeInfo={{
                     distance: (selectedRoute?.distance ?? 0) * 1000,
                     duration: {
-                      driving: (selectedRoute?.duration ?? 0) * 60,
-                      walking: (selectedRoute?.duration ?? 0) * 60 * 1.5
+                      driving: (selectedRoute?.duration?.driving ?? 0) * 60,
+                      walking: (selectedRoute?.duration?.walking ?? 0) * 60
                     },
                     isTollRoad: selectedRoute?.isTollRoad ?? false
                   }}
@@ -312,20 +318,20 @@ export default function Home() {
             {selectedRoute && (
               <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                 <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
-                <RouteInfo
+                <RouteInfoComponent
                   routeInfo={{
                     distance: (selectedRoute?.distance ?? 0) * 1000,
                     duration: {
-                      driving: (selectedRoute?.duration ?? 0) * 60,
-                      walking: (selectedRoute?.duration ?? 0) * 60 * 1.5
+                      driving: (selectedRoute?.duration?.driving ?? 0) * 60,
+                      walking: (selectedRoute?.duration?.walking ?? 0) * 60
                     },
                     isTollRoad: selectedRoute?.isTollRoad ?? false
                   }}
                   onClose={() => setSelectedRoute(null)}
                 />
                 <RouteRecommendation
-                  routes={[selectedRoute]}
-                  onSelect={(route) => setSelectedRoute(route as RouteInfo)}
+                  routes={[selectedRoute as unknown as Route]}
+                  onSelect={(route) => setSelectedRoute(route as unknown as RouteInfo)}
                   onClose={() => {
                     // おすすめルートだけを閉じる
                     const routeInfo = document.querySelector('.route-recommendations');
@@ -367,10 +373,13 @@ export default function Home() {
                     copyrights: '',
                     legs: [{
                       distance: { text: `${selectedRoute.distance}km`, value: selectedRoute.distance * 1000 },
-                      duration: { text: `${selectedRoute.duration}分`, value: selectedRoute.duration * 60 },
-                      duration_in_traffic: selectedRoute.durationInTraffic ? {
-                        text: `${selectedRoute.durationInTraffic}分`,
-                        value: selectedRoute.durationInTraffic * 60
+                      duration: { 
+                        text: `${selectedRoute.duration?.driving ?? 0}分`, 
+                        value: (selectedRoute.duration?.driving ?? 0) * 60 
+                      },
+                      duration_in_traffic: selectedRoute.duration_in_traffic ? {
+                        text: `${selectedRoute.duration_in_traffic}分`,
+                        value: selectedRoute.duration_in_traffic * 60
                       } : undefined,
                       start_address: startLocation?.address || '',
                       end_address: endLocation?.address || '',
