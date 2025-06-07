@@ -57,16 +57,19 @@ const RouteNotification: React.FC<RouteNotificationProps> = ({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">現在のルート:</span>
                 <span className="font-medium text-gray-900">
-                  {Math.round((currentRoute.durationInTraffic || currentRoute.duration) / 60)}分
+                  {Math.round((currentRoute.duration_in_traffic || currentRoute.duration.driving || 0) / 60)}分
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">代替ルート:</span>
+                <span className="text-gray-600">推奨ルート:</span>
                 <span className="font-medium text-gray-900">
-                  {Math.round((suggestedRoute.durationInTraffic || suggestedRoute.duration) / 60)}分
-                  <span className="text-green-600 ml-1">
-                    ({Math.round((1 - (suggestedRoute.durationInTraffic || suggestedRoute.duration) / (currentRoute.durationInTraffic || currentRoute.duration)) * 100)}%短縮)
-                  </span>
+                  {Math.round((suggestedRoute.duration_in_traffic || suggestedRoute.duration.driving || 0) / 60)}分
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">所要時間の差:</span>
+                <span className="font-medium text-gray-900">
+                  {Math.round(((suggestedRoute.duration_in_traffic || suggestedRoute.duration.driving || 0) - (currentRoute.duration_in_traffic || currentRoute.duration.driving || 0)) / 60)}分
                 </span>
               </div>
               <div className="flex justify-between text-sm">
