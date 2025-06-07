@@ -248,13 +248,13 @@ export default function Home() {
 
     // 検索回数の制限をチェック
     if (!checkSearchLimit()) {
-      alert('本日の検索回数の上限（3回）に達しました。明日までお待ちください。');
+      alert('本日の検索回数が3回に達しました。明日までお待ちください。');
       return;
     }
 
     // 残り検索回数を表示
     const remaining = getRemainingSearches();
-    alert(`目的地を設定します。本日の残り検索回数は${remaining}回です。`);
+    alert(`目的地を設定します。あと${remaining}回検索できます。`);
 
     // ここまできたら「目的地として」endLocationをセット
     console.log('目的地を設定します:', { lat, lng });
