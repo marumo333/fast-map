@@ -17,11 +17,25 @@ export default function ContactPage() {
     setSubmitStatus('idle');
 
     try {
-      // TODO: 実際のAPIエンドポイントに送信
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 仮の遅延
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          to: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'your-email@example.com'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('送信に失敗しました');
+      }
+
       setSubmitStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
+      console.error('送信エラー:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
