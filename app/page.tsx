@@ -292,7 +292,7 @@ export default function Home() {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar onGetCurrentLocation={handleGetCurrentLocation} />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 mt-16">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* 左サイドバー */}
           <div className="lg:col-span-1 space-y-6">
@@ -318,7 +318,7 @@ export default function Home() {
           {/* 地図表示エリア */}
           <div className="lg:col-span-3">
             <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className="h-[calc(100vh-8rem)] relative">
+              <div className="h-[calc(100vh-12rem)] relative">
                 {!canClickMap && (
                   <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
                     <span className="text-gray-600">出発地を準備中…</span>
