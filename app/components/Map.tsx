@@ -374,6 +374,22 @@ const Map: React.FC<MapProps> = ({
   return (
     <div className="relative w-full h-full">
       <div ref={mapRef} className="w-full h-full" />
+      {startLocation && (
+        <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span className="text-sm font-medium">出発地: {startLocation.address || '選択済み'}</span>
+          </div>
+        </div>
+      )}
+      {endLocation && (
+        <div className="absolute top-16 left-4 bg-white rounded-lg shadow-lg p-3 z-10">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span className="text-sm font-medium">目的地: {endLocation.address || '選択済み'}</span>
+          </div>
+        </div>
+      )}
       {routeError && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded shadow-lg z-10">
           {routeError}
