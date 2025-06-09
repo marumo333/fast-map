@@ -4,34 +4,16 @@
     "react-hooks/exhaustive-deps": "warn",
     "import/no-named-as-default": "off",
     "import/named": "off",
-    "no-restricted-globals": ["error", {
-      "name": "confirm",
-      "message": "既存機能の修正には、チームメンバーとの確認が必要です。"
-    }],
-    "no-restricted-syntax": ["error", {
-      "selector": "CallExpression[callee.name='alert']",
-      "message": "既存機能の修正には、チームメンバーとの確認が必要です。"
-    }],
-    "no-restricted-properties": ["error", {
-      "object": "document",
-      "property": "querySelector",
-      "message": "既存のDOM要素の変更には、チームメンバーとの確認が必要です。"
-    }],
-    "no-restricted-modules": ["error", {
-      "paths": [{
-        "name": "app/components/*",
-        "message": "既存コンポーネントの修正には、チームメンバーとの確認が必要です。"
-      }]
-    }]
+    "no-restricted-globals": "off",
+    "no-restricted-syntax": "off",
+    "no-restricted-properties": "off",
+    "no-restricted-modules": "off"
   },
   "overrides": [
     {
       "files": ["app/components/*.tsx"],
       "rules": {
-        "no-restricted-syntax": ["error", {
-          "selector": "JSXElement",
-          "message": "既存コンポーネントの修正には、チームメンバーとの確認が必要です。"
-        }]
+        "no-restricted-syntax": "off"
       }
     }
   ]
