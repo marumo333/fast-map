@@ -11,7 +11,7 @@ import { useLocation } from './contexts/LocationContext';
 import Navbar from './components/Navbar';
 import { useTheme } from './settings/ThemeContext';
 import { getAddressFromLocation } from './utils/geocoding';
-import { checkSearchLimit, incrementSearchCount, getRemainingSearches } from './utils/searchLimit';
+import { useSearchLimit } from './hooks/useSearchLimit';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './store/store';
 import { logout } from './store/authSlice';
@@ -76,6 +76,7 @@ export default function Home() {
   const [cookies, setCookie, removeCookie] = useCookies(['userId']);
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { checkSearchLimit, incrementSearchCount, getRemainingSearches } = useSearchLimit();
 
   // ログイン状態のチェック
   useEffect(() => {
