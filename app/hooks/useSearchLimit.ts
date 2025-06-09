@@ -37,8 +37,19 @@ export const useSearchLimit = () => {
     return Math.max(0, MAX_SEARCHES_PER_DAY - user.searchCount);
   };
 
+  const checkSearchLimit = () => {
+    return checkAndUpdateSearchCount();
+  };
+
+  const incrementSearchCount = () => {
+    dispatch(incrementSearchCount());
+  };
+
   return {
     canSearch: checkAndUpdateSearchCount,
     remainingSearches: getRemainingSearches(),
+    checkSearchLimit,
+    incrementSearchCount,
+    getRemainingSearches
   };
 }; 
