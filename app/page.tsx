@@ -293,16 +293,9 @@ export default function Home() {
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar onGetCurrentLocation={handleGetCurrentLocation} />
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* 左サイドバー */}
           <div className="lg:col-span-1 space-y-6">
-            {/* 位置情報表示 */}
-            <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>位置情報</h2>
-              <LocationInfo location={startLocation} label="出発地" />
-              <LocationInfo location={endLocation} label="目的地" />
-            </div>
-
             {/* ルート選択 */}
             {startLocation && endLocation && (
               <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -320,49 +313,12 @@ export default function Home() {
                 />
               </div>
             )}
-
-            {/* ルート情報 */}
-            {selectedRoute && (
-              <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
-                <RouteInfoComponent
-                  routeInfo={{
-                    distance: (selectedRoute?.distance ?? 0) * 1000,
-                    duration: {
-                      driving: (selectedRoute?.duration?.driving ?? 0) * 60,
-                      walking: (selectedRoute?.duration?.walking ?? 0) * 60
-                    },
-                    isTollRoad: selectedRoute?.isTollRoad ?? false
-                  }}
-                  onClose={() => setSelectedRoute(null)}
-                />
-                <RouteRecommendation
-                  routes={[selectedRoute as unknown as Route]}
-                  onSelect={(route) => setSelectedRoute(route as unknown as RouteInfo)}
-                  onClose={() => {
-                    // おすすめルートだけを閉じる
-                    const routeInfo = document.querySelector('.route-recommendations');
-                    if (routeInfo) {
-                      routeInfo.remove();
-                    }
-                  }}
-                />
-                <RouteNotification
-                  type="congestion"
-                  message={selectedRoute.isTollRoad ? '有料ルート' : '無料ルート'}
-                  onAccept={() => {}}
-                  onDismiss={() => setSelectedRoute(null)}
-                  currentRoute={selectedRoute}
-                  suggestedRoute={undefined}
-                />
-              </div>
-            )}
           </div>
 
           {/* 地図表示エリア */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className="h-[600px] relative">
+              <div className="h-[calc(100vh-8rem)] relative">
                 {!canClickMap && (
                   <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
                     <span className="text-gray-600">出発地を準備中…</span>
