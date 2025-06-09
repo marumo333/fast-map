@@ -1,8 +1,14 @@
 //app/utils/api.ts
 import { Route } from '../types/route';
 import { TrafficInfo } from './trafficPolling';
-import { Feedback } from '../components/FeedbackForm';
 import { Location } from '../types/location';
+
+// Feedback型を直接定義
+type Feedback = {
+  routeId: number;
+  rating: number;
+  comment: string;
+};
 
 declare global {
   interface Window {
