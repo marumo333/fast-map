@@ -5,9 +5,7 @@ import { Location } from './types/location';
 import type { RouteInfo } from './types/route';
 import type { Route } from './types/route';
 import { useRouteChangeDetection } from './hooks/useRouteChangeDetection';
-import RouteNotification from './components/RouteNotification';
 import RouteInfoComponent from './components/RouteInfo';
-import RouteRecommendation from './components/RouteRecomendation';
 import dynamic from 'next/dynamic';
 import { useLocation } from './contexts/LocationContext';
 import Navbar from './components/Navbar';
@@ -125,10 +123,6 @@ export default function Home() {
   const handleTrafficInfoUpdate = useCallback((info: any) => {
     console.log('交通情報更新:', info);
     setTrafficInfo(info);
-    setShowTrafficInfo(true);
-    setTimeout(() => {
-      setShowTrafficInfo(false);
-    }, 3000);
   }, []);
 
   useTrafficPolling(
