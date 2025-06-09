@@ -293,30 +293,9 @@ export default function Home() {
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar onGetCurrentLocation={handleGetCurrentLocation} />
       <main className="container mx-auto px-4 py-8 mt-16">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* 左サイドバー */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* ルート選択 */}
-            {startLocation && endLocation && (
-              <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
-                <RouteInfoComponent
-                  routeInfo={{
-                    distance: (selectedRoute?.distance ?? 0) * 1000,
-                    duration: {
-                      driving: (selectedRoute?.duration?.driving ?? 0) * 60,
-                      walking: (selectedRoute?.duration?.walking ?? 0) * 60
-                    },
-                    isTollRoad: selectedRoute?.isTollRoad ?? false
-                  }}
-                  onClose={() => setSelectedRoute(null)}
-                />
-              </div>
-            )}
-          </div>
-
+        <div className="grid grid-cols-1">
           {/* 地図表示エリア */}
-          <div className="lg:col-span-3">
+          <div>
             <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="h-[calc(100vh-12rem)] relative">
                 {!canClickMap && (
@@ -366,6 +345,25 @@ export default function Home() {
                   shouldFitBounds={shouldFitBounds}
                   onFitBoundsComplete={() => setShouldFitBounds(false)}
                 />
+                {/* ルート情報を地図内に移動 */}
+                {startLocation && endLocation && (
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
+                      <RouteInfoComponent
+                        routeInfo={{
+                          distance: (selectedRoute?.distance ?? 0) * 1000,
+                          duration: {
+                            driving: (selectedRoute?.duration?.driving ?? 0) * 60,
+                            walking: (selectedRoute?.duration?.walking ?? 0) * 60
+                          },
+                          isTollRoad: selectedRoute?.isTollRoad ?? false
+                        }}
+                        onClose={() => setSelectedRoute(null)}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
