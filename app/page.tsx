@@ -287,15 +287,15 @@ export default function Home() {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar onGetCurrentLocation={handleGetCurrentLocation} />
-      <main className="container mx-auto px-4 py-8 mt-16">
+      <main className="container mx-auto px-4 py-4 sm:py-8 mt-16">
         <div className="grid grid-cols-1">
           {/* 地図表示エリア */}
           <div>
             <div className={`rounded-lg shadow-md overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className="h-[calc(100vh-12rem)] relative">
+              <div className="h-[calc(100vh-16rem)] sm:h-[calc(100vh-12rem)] relative">
                 {!canClickMap && (
                   <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
-                    <span className="text-gray-600">出発地を準備中…</span>
+                    <span className="text-gray-600 text-sm sm:text-base">出発地を準備中…</span>
                   </div>
                 )}
                 <MapComponent
@@ -342,9 +342,9 @@ export default function Home() {
                 />
                 {/* ルート情報を地図内に移動 */}
                 {startLocation && endLocation && (
-                  <div className="absolute top-4 left-4 z-10">
-                    <div className={`rounded-lg shadow-md p-6 space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                      <h2 className={`text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
+                  <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10">
+                    <div className={`rounded-lg shadow-md p-3 sm:p-6 space-y-2 sm:space-y-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                      <h2 className={`text-base sm:text-lg font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>ルート情報</h2>
                       <RouteInfoComponent
                         routeInfo={{
                           distance: (selectedRoute?.distance ?? 0) * 1000,
