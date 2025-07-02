@@ -5,14 +5,12 @@ export async function POST(request: Request) {
   try {
     const { name, email, message, to } = await request.json();
 
-    // iCloudメール送信用の設定
+    // Gmail送信用の設定
     const transporter = nodemailer.createTransport({
-      host: 'smtp.mail.me.com',
-      port: 587,
-      secure: false, // TLS
+      service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, // 例: "xxxx@icloud.com"
-        pass: process.env.EMAIL_PASSWORD, // Apple IDの「App用パスワード」
+        user: process.env.EMAIL_USER, // 例: "xxxx@gmail.com"
+        pass: process.env.EMAIL_PASSWORD, // Gmailの「アプリパスワード」
       },
     });
 
